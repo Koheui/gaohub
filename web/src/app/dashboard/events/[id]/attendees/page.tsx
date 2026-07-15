@@ -4,6 +4,7 @@ import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
+import { useAuth } from "@/components/AuthProvider";
 import type { Registration } from "@/lib/types";
 import { formatJpy } from "@/lib/format";
 
@@ -43,18 +44,23 @@ function toCsv(regs: Registration[]): string {
 
 export default function AttendeesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { profile } = useAuth();
+  const orgId = profile?.orgId ?? null;
   const [regs, setRegs] = useState<Registration[] | null>(null);
 
   useEffect(() => {
+    if (!orgId) return;
+    // orgId 条件はセキュリティルールを list クエリで満たすために必須
     const q = query(
       collection(db, "registrations"),
+      where("orgId", "==", orgId),
       where("eventId", "==", id),
       orderBy("createdAt", "desc")
     );
     return onSnapshot(q, (snap) => {
       setRegs(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Registration));
     });
-  }, [id]);
+  }, [id, orgId]);
 
   function downloadCsv() {
     if (!regs) return;

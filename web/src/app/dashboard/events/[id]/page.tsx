@@ -12,6 +12,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
+import { useAuth } from "@/components/AuthProvider";
 import type { EventDoc, Registration } from "@/lib/types";
 import { EventForm, eventToFormValues, type EventFormValues } from "@/components/EventForm";
 import { CoverImageUploader } from "@/components/CoverImageUploader";
@@ -28,6 +29,8 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 
 export default function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { profile } = useAuth();
+  const orgId = profile?.orgId ?? null;
   const [event, setEvent] = useState<EventDoc | null>(null);
   const [regs, setRegs] = useState<Registration[]>([]);
   const [editing, setEditing] = useState(false);
@@ -39,11 +42,17 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   }, [id]);
 
   useEffect(() => {
-    const q = query(collection(db, "registrations"), where("eventId", "==", id));
+    if (!orgId) return;
+    // orgId 条件はセキュリティルール(orgメンバーのみ read 可)を list クエリで満たすために必須
+    const q = query(
+      collection(db, "registrations"),
+      where("orgId", "==", orgId),
+      where("eventId", "==", id)
+    );
     return onSnapshot(q, (snap) => {
       setRegs(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Registration));
     });
-  }, [id]);
+  }, [id, orgId]);
 
   if (!event) return <p className="text-sm text-zinc-400">読み込み中…</p>;
 

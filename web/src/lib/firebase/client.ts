@@ -1,7 +1,7 @@
 import { getApps, initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { connectAuthEmulator, getAuth } from "firebase/auth";
+import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
+import { connectStorageEmulator, getStorage } from "firebase/storage";
 
 // NEXT_PUBLIC_* はビルド時にインライン化される。env未設定のビルド(CI等)でも
 // モジュール評価時に initializeApp/getAuth が落ちないようプレースホルダーを入れる。
@@ -19,3 +19,17 @@ const app = getApps()[0] ?? initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// ローカル開発: NEXT_PUBLIC_USE_EMULATORS=1 で Firebase エミュレータに接続
+declare global {
+  var __emulatorsConnected: boolean | undefined;
+}
+if (
+  process.env.NEXT_PUBLIC_USE_EMULATORS === "1" &&
+  !globalThis.__emulatorsConnected
+) {
+  globalThis.__emulatorsConnected = true;
+  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+  connectFirestoreEmulator(db, "127.0.0.1", 8090);
+  connectStorageEmulator(storage, "127.0.0.1", 9199);
+}

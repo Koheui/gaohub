@@ -5,6 +5,7 @@ import { use, useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/client";
+import { useAuth } from "@/components/AuthProvider";
 
 type ScanResult = {
   result: "ok" | "already" | "invalid";
@@ -19,6 +20,8 @@ const READER_ID = "qr-reader";
 
 export default function CheckinPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { profile } = useAuth();
+  const orgId = profile?.orgId ?? null;
   const [scanning, setScanning] = useState(false);
   const [last, setLast] = useState<ScanResult | null>(null);
   const [stats, setStats] = useState({ confirmed: 0, checkedIn: 0 });
@@ -26,10 +29,12 @@ export default function CheckinPage({ params }: { params: Promise<{ id: string }
   const busyRef = useRef(false);
   const lastTokenRef = useRef<{ token: string; at: number }>({ token: "", at: 0 });
 
-  // リアルタイム受付状況
+  // リアルタイム受付状況(orgId 条件はセキュリティルールを満たすために必須)
   useEffect(() => {
+    if (!orgId) return;
     const q = query(
       collection(db, "registrations"),
+      where("orgId", "==", orgId),
       where("eventId", "==", id),
       where("status", "==", "confirmed")
     );
@@ -39,7 +44,7 @@ export default function CheckinPage({ params }: { params: Promise<{ id: string }
         checkedIn: snap.docs.filter((d) => d.get("checkedInAt")).length,
       });
     });
-  }, [id]);
+  }, [id, orgId]);
 
   useEffect(() => {
     return () => {

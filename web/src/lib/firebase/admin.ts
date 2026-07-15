@@ -11,6 +11,11 @@ function getAdminApp(): App {
     app = existing;
     return app;
   }
+  // エミュレータ利用時(FIRESTORE_EMULATOR_HOST 設定時)は認証情報不要
+  if (process.env.FIRESTORE_EMULATOR_HOST) {
+    app = initializeApp({ projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID });
+    return app;
+  }
   // FIREBASE_SERVICE_ACCOUNT: サービスアカウントJSONをbase64エンコードした値
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!raw) {
