@@ -9,6 +9,7 @@ import {
   type PublicSpeaker,
 } from "@/lib/server/events";
 import { formatJpy } from "@/lib/format";
+import { Grain } from "@/components/Grain";
 
 export const dynamic = "force-dynamic";
 
@@ -40,20 +41,10 @@ const timeFmt = new Intl.DateTimeFormat("ja-JP", {
   minute: "2-digit",
   timeZone: "Asia/Tokyo",
 });
-const heroDateFmt = new Intl.DateTimeFormat("ja-JP", {
+const yearFmt = new Intl.DateTimeFormat("ja-JP", {
   year: "numeric",
-  month: "long",
-  day: "numeric",
-  weekday: "short",
   timeZone: "Asia/Tokyo",
 });
-
-function heroDateText(start: Date, end: Date): string {
-  const sameDay = dayFmt.format(start) === dayFmt.format(end);
-  return sameDay
-    ? heroDateFmt.format(start)
-    : `${heroDateFmt.format(start)} — ${dayFmt.format(end)}`;
-}
 
 function groupSessionsByDay(sessions: PublicSession[]): [string, PublicSession[]][] {
   const groups = new Map<string, PublicSession[]>();
@@ -78,14 +69,10 @@ function Avatar({ speaker, size }: { speaker: PublicSpeaker; size: "sm" | "lg" }
   const cls = size === "lg" ? "h-28 w-28 sm:h-32 sm:w-32" : "h-9 w-9";
   return speaker.photoUrl ? (
     // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={speaker.photoUrl}
-      alt={speaker.name}
-      className={`${cls} rounded-full object-cover`}
-    />
+    <img src={speaker.photoUrl} alt={speaker.name} className={`${cls} rounded-full object-cover`} />
   ) : (
     <span
-      className={`${cls} flex items-center justify-center rounded-full bg-zinc-200 font-bold text-zinc-500 ${
+      className={`${cls} flex items-center justify-center rounded-full bg-zinc-950 font-black text-white ${
         size === "lg" ? "text-3xl" : "text-sm"
       }`}
     >
@@ -94,14 +81,24 @@ function Avatar({ speaker, size }: { speaker: PublicSpeaker; size: "sm" | "lg" }
   );
 }
 
-function SectionLabel({ children, color }: { children: React.ReactNode; color: string }) {
+/** Kodakのスペック表記風: 極小ラベル+太い値 */
+function Spec({ label, value }: { label: string; value: string }) {
   return (
-    <p
-      className="text-xs font-bold uppercase tracking-[0.25em]"
-      style={{ color }}
-    >
-      {children}
-    </p>
+    <div className="leading-tight">
+      <p className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-60">{label}</p>
+      <p className="mt-1 text-sm font-black sm:text-base">{value}</p>
+    </div>
+  );
+}
+
+function SectionHead({ label, title }: { label: string; title: string }) {
+  return (
+    <div>
+      <p className="text-[11px] font-black uppercase tracking-[0.35em] text-zinc-950/50">
+        {label}
+      </p>
+      <h2 className="mt-2 text-4xl font-black tracking-tighter sm:text-5xl">{title}</h2>
+    </div>
   );
 }
 
@@ -119,30 +116,33 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
   const color = event.themeColor;
   const registerHref = `/e/${event.slug}/register`;
   const hasTickets = tickets.length > 0;
+  const sameDay = dayFmt.format(event.startsAt) === dayFmt.format(event.endsAt);
+  const dateValue = sameDay
+    ? dayFmt.format(event.startsAt)
+    : `${dayFmt.format(event.startsAt)} – ${dayFmt.format(event.endsAt)}`;
 
   return (
-    <main className="flex-1 bg-white">
+    <main className="flex-1 bg-[#f6f5f2] text-zinc-950">
       {/* ─── 固定ナビ ─── */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-zinc-950/80 text-white backdrop-blur">
+      <header className="sticky top-0 z-50 border-b-2 border-zinc-950 bg-[#f6f5f2]/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-          <span className="truncate pr-4 text-sm font-bold">{event.title}</span>
+          <span className="truncate pr-4 text-sm font-black uppercase tracking-tight">
+            {event.title}
+          </span>
           <nav className="flex items-center gap-5 text-sm">
-            <div className="hidden items-center gap-5 text-zinc-300 sm:flex">
-              {event.description && (
-                <a href="#about" className="hover:text-white">概要</a>
-              )}
+            <div className="hidden items-center gap-5 font-bold text-zinc-600 sm:flex">
+              {event.description && <a href="#about" className="hover:text-zinc-950">概要</a>}
               {sessions.length > 0 && (
-                <a href="#sessions" className="hover:text-white">タイムテーブル</a>
+                <a href="#sessions" className="hover:text-zinc-950">タイムテーブル</a>
               )}
               {speakers.length > 0 && (
-                <a href="#speakers" className="hover:text-white">登壇者</a>
+                <a href="#speakers" className="hover:text-zinc-950">登壇者</a>
               )}
             </div>
             {hasTickets && (
               <Link
                 href={registerHref}
-                className="rounded-full px-4 py-1.5 text-sm font-bold text-white transition-opacity hover:opacity-85"
-                style={{ backgroundColor: color }}
+                className="rounded-full bg-zinc-950 px-5 py-1.5 text-sm font-black text-white hover:bg-zinc-700"
               >
                 参加登録
               </Link>
@@ -151,72 +151,69 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
         </div>
       </header>
 
-      {/* ─── ヒーロー ─── */}
-      <section className="relative overflow-hidden bg-zinc-950 text-white">
+      {/* ─── ヒーロー: ホワイト→テーマカラーのグラデーション+グレイン ─── */}
+      <section className="relative overflow-hidden border-b-2 border-zinc-950">
         {event.coverImageUrl ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={event.coverImageUrl}
               alt=""
-              className="absolute inset-0 h-full w-full object-cover opacity-50"
+              className="absolute inset-0 h-full w-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-zinc-950/30" />
-          </>
-        ) : (
-          <>
-            {/* カバー画像なし: テーマカラーからジェネレーティブ背景を生成 */}
             <div
               className="absolute inset-0"
               style={{
-                background: `
-                  radial-gradient(ellipse 80% 60% at 70% -10%, ${color}66, transparent),
-                  radial-gradient(ellipse 60% 50% at 10% 110%, ${color}40, transparent)
-                `,
-              }}
-            />
-            <div
-              className="absolute inset-0 opacity-[0.15]"
-              style={{
-                backgroundImage: `linear-gradient(to right, ${color} 1px, transparent 1px), linear-gradient(to bottom, ${color} 1px, transparent 1px)`,
-                backgroundSize: "56px 56px",
-                maskImage: "radial-gradient(ellipse 70% 70% at 50% 30%, black, transparent)",
+                background: `linear-gradient(150deg, #f6f5f2ee 0%, #f6f5f2cc 38%, transparent 100%)`,
               }}
             />
           </>
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(150deg, #f6f5f2 0%, #f6f5f2 32%, ${color} 88%)`,
+            }}
+          />
         )}
+        <Grain opacity={0.35} />
 
-        <div className="relative mx-auto max-w-6xl px-6 pb-24 pt-20 sm:pb-32 sm:pt-28">
-          <p
-            className="inline-block rounded-full border px-4 py-1.5 text-sm font-medium tracking-wide"
-            style={{ borderColor: `${color}88`, color: "#fff", backgroundColor: `${color}22` }}
-          >
-            {heroDateText(event.startsAt, event.endsAt)}
-          </p>
-          <h1 className="mt-6 max-w-4xl text-4xl font-black leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl">
+        <div className="relative mx-auto max-w-6xl px-6 pb-20 pt-14 sm:pb-28 sm:pt-20">
+          {/* スペック行(Kodakの 36exp / 200ISO 風) */}
+          <div className="flex flex-wrap gap-x-12 gap-y-4">
+            <Spec label="Date" value={dateValue} />
+            <Spec label="Year" value={yearFmt.format(event.startsAt)} />
+            <Spec label="Venue" value={event.venueName || "Online"} />
+            <Spec
+              label="Doors"
+              value={`${timeFmt.format(event.startsAt)} – ${timeFmt.format(event.endsAt)}`}
+            />
+          </div>
+
+          <h1 className="mt-14 max-w-5xl break-words text-6xl font-black leading-[0.95] tracking-tighter sm:mt-20 sm:text-8xl lg:text-9xl">
             {event.title}
           </h1>
-          <p className="mt-6 text-lg text-zinc-300">
-            {event.venueName || "オンライン開催"}
-            {event.venueAddress && (
-              <span className="ml-3 text-sm text-zinc-500">{event.venueAddress}</span>
-            )}
-          </p>
+
+          {event.venueAddress && (
+            <p className="mt-6 text-xs font-bold uppercase tracking-[0.25em] text-zinc-950/60">
+              {event.venueAddress}
+            </p>
+          )}
+
           {hasTickets && (
-            <div className="mt-10 flex flex-wrap items-center gap-4">
+            <div className="mt-12 flex flex-wrap items-center gap-4">
               <Link
                 href={registerHref}
-                className="rounded-full px-8 py-3.5 text-base font-bold text-white shadow-lg transition-transform hover:scale-[1.02]"
-                style={{ backgroundColor: color, boxShadow: `0 8px 32px ${color}55` }}
+                className="rounded-full bg-zinc-950 px-9 py-4 text-base font-black text-white transition-transform hover:scale-[1.02]"
               >
-                参加登録はこちら
+                参加登録はこちら →
               </Link>
               {sessions.length > 0 && (
                 <a
                   href="#sessions"
-                  className="rounded-full border border-white/25 px-6 py-3.5 text-sm font-medium text-white hover:bg-white/10"
+                  className="rounded-full border-2 border-zinc-950 px-7 py-3.5 text-sm font-black hover:bg-zinc-950 hover:text-white"
                 >
-                  タイムテーブルを見る
+                  タイムテーブル
                 </a>
               )}
             </div>
@@ -227,8 +224,8 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
       {/* ─── 概要 ─── */}
       {event.description && (
         <section id="about" className="mx-auto max-w-3xl scroll-mt-20 px-6 py-20 sm:py-28">
-          <SectionLabel color={color}>About</SectionLabel>
-          <div className="mt-6 whitespace-pre-wrap text-lg leading-relaxed text-zinc-800">
+          <SectionHead label="About" title="開催概要" />
+          <div className="mt-8 whitespace-pre-wrap text-lg font-medium leading-relaxed text-zinc-800">
             {event.description}
           </div>
         </section>
@@ -236,54 +233,59 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
 
       {/* ─── タイムテーブル ─── */}
       {sessions.length > 0 && (
-        <section id="sessions" className="scroll-mt-20 bg-zinc-50 py-20 sm:py-28">
+        <section id="sessions" className="scroll-mt-20 border-y-2 border-zinc-950 bg-white py-20 sm:py-28">
           <div className="mx-auto max-w-4xl px-6">
-            <SectionLabel color={color}>Timetable</SectionLabel>
-            <h2 className="mt-3 text-3xl font-bold sm:text-4xl">タイムテーブル</h2>
+            <SectionHead label="Timetable" title="タイムテーブル" />
 
             {days.map(([day, daySessions], di) => (
-              <div key={day} className="mt-12">
+              <div key={day} className="mt-14">
                 {days.length > 1 && (
-                  <h3 className="flex items-baseline gap-3 text-lg font-bold">
-                    <span style={{ color }}>DAY {di + 1}</span>
-                    <span className="text-zinc-500">{day}</span>
+                  <h3 className="flex items-baseline gap-4">
+                    <span
+                      className="text-3xl font-black tracking-tighter"
+                      style={{ color }}
+                    >
+                      DAY {di + 1}
+                    </span>
+                    <span className="text-sm font-bold text-zinc-500">{day}</span>
                   </h3>
                 )}
-                <ol className="mt-6 space-y-4">
+                <ol className="mt-6 divide-y-2 divide-zinc-950 border-y-2 border-zinc-950">
                   {daySessions.map((s) => (
-                    <li
-                      key={s.id}
-                      className="group rounded-2xl border border-zinc-200 bg-white p-6 transition-shadow hover:shadow-md sm:flex sm:gap-8"
-                    >
-                      <div className="w-32 shrink-0">
-                        <p className="font-mono text-sm font-bold tabular-nums text-zinc-900">
+                    <li key={s.id} className="py-7 sm:flex sm:gap-10">
+                      <div className="w-36 shrink-0">
+                        <p className="font-mono text-lg font-black tabular-nums leading-none">
                           {timeFmt.format(s.startsAt)}
-                          <span className="text-zinc-400"> – {timeFmt.format(s.endsAt)}</span>
+                        </p>
+                        <p className="mt-1 font-mono text-xs font-bold tabular-nums text-zinc-400">
+                          – {timeFmt.format(s.endsAt)}
                         </p>
                         {s.track && (
                           <span
-                            className="mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+                            className="mt-3 inline-block rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white"
                             style={{ backgroundColor: color }}
                           >
                             {s.track}
                           </span>
                         )}
                       </div>
-                      <div className="mt-3 flex-1 sm:mt-0">
-                        <h4 className="text-lg font-bold leading-snug">{s.title}</h4>
+                      <div className="mt-4 flex-1 sm:mt-0">
+                        <h4 className="text-2xl font-black leading-tight tracking-tight">
+                          {s.title}
+                        </h4>
                         {s.description && (
-                          <p className="mt-2 text-sm leading-relaxed text-zinc-600">
+                          <p className="mt-3 text-sm leading-relaxed text-zinc-600">
                             {s.description}
                           </p>
                         )}
                         {s.speakers.length > 0 && (
-                          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-3">
+                          <div className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
                             {s.speakers.map((sp, i) => (
                               <div key={i} className="flex items-center gap-2.5">
                                 <Avatar speaker={sp} size="sm" />
                                 <div className="leading-tight">
-                                  <p className="text-sm font-semibold">{sp.name}</p>
-                                  <p className="text-xs text-zinc-500">
+                                  <p className="text-sm font-black">{sp.name}</p>
+                                  <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
                                     {[sp.company, sp.title].filter(Boolean).join(" / ")}
                                   </p>
                                 </div>
@@ -304,21 +306,16 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
       {/* ─── 登壇者 ─── */}
       {speakers.length > 0 && (
         <section id="speakers" className="mx-auto max-w-5xl scroll-mt-20 px-6 py-20 sm:py-28">
-          <SectionLabel color={color}>Speakers</SectionLabel>
-          <h2 className="mt-3 text-3xl font-bold sm:text-4xl">登壇者</h2>
-          <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-4">
+          <SectionHead label="Speakers" title="登壇者" />
+          <div className="mt-14 grid grid-cols-2 gap-x-6 gap-y-14 sm:grid-cols-3 lg:grid-cols-4">
             {speakers.map((sp) => (
               <div key={sp.name} className="text-center">
-                <div
-                  className="mx-auto w-fit rounded-full p-1"
-                  style={{ background: `linear-gradient(135deg, ${color}, transparent 70%)` }}
-                >
-                  <div className="rounded-full bg-white p-1">
-                    <Avatar speaker={sp} size="lg" />
-                  </div>
+                <div className="relative mx-auto w-fit overflow-hidden rounded-full">
+                  <Avatar speaker={sp} size="lg" />
+                  <Grain opacity={0.25} blend="soft-light" />
                 </div>
-                <p className="mt-4 font-bold">{sp.name}</p>
-                <p className="mt-1 text-sm leading-snug text-zinc-500">
+                <p className="mt-5 text-lg font-black tracking-tight">{sp.name}</p>
+                <p className="mt-1 text-[11px] font-bold uppercase leading-relaxed tracking-[0.15em] text-zinc-500">
                   {sp.company}
                   {sp.company && sp.title && <br />}
                   {sp.title}
@@ -329,39 +326,52 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
         </section>
       )}
 
-      {/* ─── チケット ─── */}
-      <section id="tickets" className="scroll-mt-20 bg-zinc-950 py-20 text-white sm:py-28">
-        <div className="mx-auto max-w-4xl px-6">
-          <SectionLabel color={color}>Tickets</SectionLabel>
-          <h2 className="mt-3 text-3xl font-bold sm:text-4xl">チケット</h2>
+      {/* ─── チケット: テーマカラー全面+グレイン(Kodakの箱の面) ─── */}
+      <section id="tickets" className="relative scroll-mt-20 overflow-hidden border-t-2 border-zinc-950 py-20 sm:py-28">
+        <div
+          className="absolute inset-0"
+          style={{ background: `linear-gradient(165deg, ${color} 0%, ${color} 55%, #f6f5f2 160%)` }}
+        />
+        <Grain opacity={0.35} />
+        <div className="relative mx-auto max-w-4xl px-6">
+          <p className="text-[11px] font-black uppercase tracking-[0.35em] text-zinc-950/60">
+            Tickets
+          </p>
+          <h2 className="mt-2 text-4xl font-black tracking-tighter text-zinc-950 sm:text-5xl">
+            チケット
+          </h2>
           {!hasTickets ? (
-            <p className="mt-6 text-zinc-400">チケットは準備中です。公開までお待ちください。</p>
+            <p className="mt-6 font-bold text-zinc-950/70">
+              チケットは準備中です。公開までお待ちください。
+            </p>
           ) : (
             <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {tickets.map((t) => (
                 <div
                   key={t.id}
-                  className="flex flex-col rounded-3xl border border-white/10 bg-white/5 p-7"
+                  className="flex flex-col border-2 border-zinc-950 bg-[#f6f5f2] p-7"
                 >
-                  <p className="font-bold">{t.name}</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">
+                    1 ticket
+                  </p>
+                  <p className="mt-1 text-xl font-black tracking-tight">{t.name}</p>
                   {t.description && (
-                    <p className="mt-1 text-sm text-zinc-400">{t.description}</p>
+                    <p className="mt-1 text-sm font-medium text-zinc-600">{t.description}</p>
                   )}
-                  <p className="mt-6 text-4xl font-black tabular-nums">
+                  <p className="mt-8 text-5xl font-black tabular-nums tracking-tighter">
                     {formatJpy(t.priceJpy)}
                   </p>
                   <div className="mt-8 flex-1" />
                   {t.soldOut ? (
-                    <span className="rounded-full bg-white/10 py-3 text-center text-sm text-zinc-400">
-                      売り切れ
+                    <span className="border-2 border-zinc-300 py-3 text-center text-sm font-black text-zinc-400">
+                      SOLD OUT
                     </span>
                   ) : (
                     <Link
                       href={`${registerHref}?ticket=${t.id}`}
-                      className="rounded-full py-3 text-center text-sm font-bold text-white transition-opacity hover:opacity-85"
-                      style={{ backgroundColor: color }}
+                      className="bg-zinc-950 py-3.5 text-center text-sm font-black text-white hover:bg-zinc-700"
                     >
-                      このチケットで申し込む
+                      このチケットで申し込む →
                     </Link>
                   )}
                 </div>
@@ -371,9 +381,9 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
         </div>
       </section>
 
-      <footer className="bg-zinc-950 pb-10 text-center">
-        <p className="border-t border-white/10 pt-8 text-xs text-zinc-600">
-          Powered by <span className="font-bold text-zinc-400">GAO HUB</span>
+      <footer className="border-t-2 border-zinc-950 bg-zinc-950 py-8 text-center">
+        <p className="text-[11px] font-black uppercase tracking-[0.35em] text-zinc-500">
+          Powered by <span className="text-white">GAO HUB</span>
         </p>
       </footer>
     </main>

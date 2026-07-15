@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 import { adminDb } from "@/lib/firebase/admin";
 import { formatDateRange, formatJpy } from "@/lib/format";
+import { Grain } from "@/components/Grain";
 
 export const dynamic = "force-dynamic";
 
@@ -50,16 +51,26 @@ export default async function TicketPage(props: {
   });
 
   return (
-    <main className="flex-1 flex items-center justify-center px-6 py-16 bg-zinc-50">
-      <div className="w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-lg">
-        <div className="px-6 py-4 text-white" style={{ backgroundColor: themeColor }}>
-          <p className="text-xs opacity-80">TICKET</p>
-          <h1 className="mt-0.5 font-bold leading-snug">{eventSnap.get("title")}</h1>
+    <main className="flex-1 flex items-center justify-center px-6 py-16 bg-[#f6f5f2]">
+      <div className="w-full max-w-sm overflow-hidden rounded-3xl border-2 border-zinc-950 bg-white">
+        <div
+          className="relative overflow-hidden px-6 py-5 text-zinc-950"
+          style={{
+            background: `linear-gradient(150deg, #f6f5f2 0%, ${themeColor} 120%)`,
+          }}
+        >
+          <Grain opacity={0.3} />
+          <p className="relative text-[10px] font-black uppercase tracking-[0.35em] opacity-60">
+            Ticket
+          </p>
+          <h1 className="relative mt-1 text-lg font-black leading-snug tracking-tight">
+            {eventSnap.get("title")}
+          </h1>
         </div>
         <div className="px-6 py-6 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={qrDataUrl} alt="入場QRコード" className="mx-auto h-64 w-64" />
-          <p className="mt-4 text-lg font-bold">{attendee.name}</p>
+          <p className="mt-4 text-xl font-black tracking-tight">{attendee.name}</p>
           {attendee.company && <p className="text-sm text-zinc-500">{attendee.company}</p>}
           <p className="mt-2 inline-block rounded-full bg-zinc-100 px-3 py-1 text-xs text-zinc-600">
             {regSnap.get("ticketTypeName")} ・ {formatJpy(regSnap.get("amountJpy") ?? 0)}
