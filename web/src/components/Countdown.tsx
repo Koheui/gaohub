@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Grain } from "@/components/Grain";
 
 interface Remaining {
   days: number;
@@ -40,7 +41,11 @@ function Sep() {
   );
 }
 
-export function Countdown({ targetIso }: { targetIso: string }) {
+/**
+ * カウントダウンのバンド(セクションごと)。開催時刻を過ぎたら何も描画しない。
+ * 時刻判定はクライアント側のみで行う(サーバーコンポーネントを純粋に保つ)。
+ */
+export function CountdownBand({ targetIso }: { targetIso: string }) {
   // ハイドレーション不一致を避けるためマウント後に計算
   const [t, setT] = useState<Remaining | null>(null);
 
@@ -56,14 +61,22 @@ export function Countdown({ targetIso }: { targetIso: string }) {
   const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
-    <div className="flex items-center justify-center gap-4 sm:gap-8">
-      <Cell value={t ? String(t.days) : "--"} label="Days" />
-      <Sep />
-      <Cell value={t ? pad(t.hours) : "--"} label="Hours" />
-      <Sep />
-      <Cell value={t ? pad(t.minutes) : "--"} label="Minutes" />
-      <Sep />
-      <Cell value={t ? pad(t.seconds) : "--"} label="Seconds" />
-    </div>
+    <section className="relative overflow-hidden border-b-2 border-zinc-950 bg-zinc-950 py-16 text-white">
+      <Grain opacity={0.25} />
+      <div className="relative mx-auto max-w-6xl px-6">
+        <p className="text-center text-[11px] font-black uppercase tracking-[0.4em] text-white/50">
+          Count every second until the event
+        </p>
+        <div className="mt-8 flex items-center justify-center gap-4 sm:gap-8">
+          <Cell value={t ? String(t.days) : "--"} label="Days" />
+          <Sep />
+          <Cell value={t ? pad(t.hours) : "--"} label="Hours" />
+          <Sep />
+          <Cell value={t ? pad(t.minutes) : "--"} label="Minutes" />
+          <Sep />
+          <Cell value={t ? pad(t.seconds) : "--"} label="Seconds" />
+        </div>
+      </div>
+    </section>
   );
 }

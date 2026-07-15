@@ -10,7 +10,7 @@ import {
 } from "@/lib/server/events";
 import { formatJpy } from "@/lib/format";
 import { Grain } from "@/components/Grain";
-import { Countdown } from "@/components/Countdown";
+import { CountdownBand } from "@/components/Countdown";
 
 export const dynamic = "force-dynamic";
 
@@ -155,8 +155,6 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
   const dateValue = sameDay
     ? dayFmt.format(event.startsAt)
     : `${dayFmt.format(event.startsAt)} – ${dayFmt.format(event.endsAt)}`;
-  const isUpcoming = event.startsAt.getTime() > Date.now();
-
   const stats: [string, string][] = [
     ["Days", String(Math.max(days.length, 1))],
     ["Sessions", String(sessions.length)],
@@ -290,20 +288,8 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
         </section>
       )}
 
-      {/* ─── カウントダウン ─── */}
-      {isUpcoming && (
-        <section className="relative overflow-hidden border-b-2 border-zinc-950 bg-zinc-950 py-16 text-white">
-          <Grain opacity={0.25} />
-          <div className="relative mx-auto max-w-6xl px-6">
-            <p className="text-center text-[11px] font-black uppercase tracking-[0.4em] text-white/50">
-              Count every second until the event
-            </p>
-            <div className="mt-8">
-              <Countdown targetIso={event.startsAt.toISOString()} />
-            </div>
-          </div>
-        </section>
-      )}
+      {/* ─── カウントダウン(開催後は自動で消える) ─── */}
+      <CountdownBand targetIso={event.startsAt.toISOString()} />
 
       {/* ─── 概要 ─── */}
       {event.description && (
