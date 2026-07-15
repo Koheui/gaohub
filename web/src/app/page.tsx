@@ -2,8 +2,8 @@ import Link from "next/link";
 
 const features = [
   {
-    title: "即日セルフサーブ開催",
-    body: "サインアップしたその日にイベントページを公開。営業への問い合わせも、キックオフMTGも不要です。",
+    title: "デザインされたLPを自動生成",
+    body: "セッションや登壇者を登録するだけで、カンファレンス級のランディングページが完成。別途Web制作を発注する必要はありません。",
   },
   {
     title: "チケット決済込み",
@@ -13,6 +13,10 @@ const features = [
     title: "QR受付・リアルタイム集計",
     body: "スマホがそのまま受付端末に。チェックイン状況と申込データは常にリアルタイムで手元に。",
   },
+  {
+    title: "即日セルフサーブ開催",
+    body: "サインアップしたその日にイベントページを公開。営業への問い合わせも、キックオフMTGも不要です。",
+  },
 ];
 
 export default function Home() {
@@ -20,7 +24,7 @@ export default function Home() {
     <main className="flex-1">
       <header className="border-b border-zinc-100">
         <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
-          <span className="font-bold text-lg">Neo EventHub</span>
+          <span className="font-bold text-lg">GAO HUB</span>
           <nav className="flex items-center gap-4 text-sm">
             <Link href="/login" className="text-zinc-600 hover:text-zinc-900">
               ログイン
@@ -55,7 +59,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-5xl px-6 pb-24 grid gap-8 sm:grid-cols-3">
+      <section className="mx-auto max-w-5xl px-6 pb-24 grid gap-8 sm:grid-cols-2">
         {features.map((f) => (
           <div key={f.title} className="rounded-2xl border border-zinc-200 p-6">
             <h2 className="font-semibold text-lg">{f.title}</h2>
@@ -65,7 +69,7 @@ export default function Home() {
       </section>
 
       <footer className="border-t border-zinc-100 py-8 text-center text-sm text-zinc-500">
-        © {new Date().getFullYear()} Neo EventHub
+        © {new Date().getFullYear()} GAO HUB
       </footer>
     </main>
   );

@@ -1,6 +1,7 @@
 import { getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 // NEXT_PUBLIC_* はビルド時にインライン化される。env未設定のビルド(CI等)でも
 // モジュール評価時に initializeApp/getAuth が落ちないようプレースホルダーを入れる。
@@ -17,3 +18,4 @@ const app = getApps()[0] ?? initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);

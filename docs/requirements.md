@@ -1,4 +1,4 @@
-# Neo EventHub 要件定義書 (v0.1 — 2026-07-15)
+# GAO HUB 要件定義書 (v0.2 — 2026-07-15)
 
 ## 1. プロダクト概要
 
@@ -8,7 +8,7 @@
 
 ### ベンチマークの弱点と本プロダクトの差別化軸
 
-| EventHub の弱点 | Neo EventHub の答え |
+| EventHub の弱点 | GAO HUB の答え |
 |---|---|
 | 初期20万円 + 年間71万〜162万円 + 人数課金の複雑な料金 | セルフサーブ・従量課金のシンプルな料金。無料で開催開始できる |
 | チケット決済手数料 **7%** | Stripe 実費(3.6%)+ 低率のプラットフォーム手数料 |
@@ -16,6 +16,18 @@
 | QR受付が「URLコピー+パスコード手入力」で煩雑、オフライン不可 | PWA スキャナー。ログインすれば端末登録不要、オフラインキュー対応 |
 | カスタムドメイン25万円、SSO15万円/年 などの有償オプション | カスタムドメインは Cloudflare for SaaS で標準提供(将来) |
 | 導入に営業・契約・キックオフMTGが必要 | サインアップ即日でイベント公開可能 |
+| LPのデザイン自由度が低く、別途Webサイト制作が必要になる | **コンテンツ登録だけでカンファレンス級のLPを自動生成**。クリエイティブのアップロードにも対応 |
+| 交流機能等の使い方が分からないUI | 機能の導線が自明なUI。説明マニュアルなしで使えることを設計原則にする |
+
+### デザイン原則(ユーザー要求により最重要)
+
+大きな金額が動くカンファレンスで恥ずかしくない見た目を、制作会社なしで実現する。
+
+1. **LPファースト**: セッション・登壇者・チケットを登録するだけで、公開LPに
+   ヒーロー/タイムテーブル/登壇者グリッド/チケットセクションとして自動反映される
+2. **クリエイティブ**: カバー画像・登壇者写真をアップロード可能(Firebase Storage)。
+   画像が無くてもテーマカラーからジェネレーティブな背景を自動生成し、素のまま公開しても様になる
+3. **導線の自明さ**: どの機能も「次に何をすべきか」が画面上で分かる。マニュアル前提のUIは作らない
 
 ## 2. 提供形態
 
@@ -29,7 +41,8 @@
 ### 主催者(Organizer)
 1. メール/Google でサインアップ、Organization 作成
 2. イベント作成・編集(タイトル、日時、会場、説明、カバー画像、テーマカラー)
-3. チケット種別の作成(無料/有料、価格、販売枠、販売期間)
+3. セッション(トークコンテンツ)と登壇者の登録 → LPタイムテーブル/登壇者欄に自動反映
+4. チケット種別の作成(無料/有料、価格、販売枠、販売期間)
 4. Stripe Connect オンボーディング(有料チケット販売の前提)
 5. 公開イベントページ(LP)の自動生成 — `/e/{slug}`
 6. 申込者一覧のリアルタイム閲覧・CSVエクスポート
@@ -44,7 +57,8 @@
 ### フェーズ2以降(スコープ外・設計上考慮のみ)
 - 出展者ブース・リアルタイムリードレポート
 - 交流/面談マッチング、メッセージ
-- セッションタイムテーブル・セッション単位のチェックイン
+- セッション単位のチェックイン・満席管理
+- LPテンプレート複数化、OG画像の自動生成、簡易クリエイティブエディタ
 - アンケート、アーカイブ配信、MA/CRM連携
 - カスタムドメイン(Cloudflare for SaaS)、多言語
 
@@ -78,6 +92,11 @@ events/{eventId}/ticketTypes/{ticketTypeId}
   name, description, priceJpy (0=無料), capacity, soldCount
   salesStartsAt, salesEndsAt, isActive
 
+events/{eventId}/sessions/{sessionId}
+  title, description, track, startsAt, endsAt
+  speakers: [{ name, title, company, photoUrl }]
+  createdAt
+
 registrations/{registrationId}          … コレクショングループで横断検索
   eventId, orgId, ticketTypeId
   attendee: { name, email, company, title }
@@ -101,7 +120,8 @@ registrations/{registrationId}          … コレクショングループで横
 /login, /signup         … 認証
 /dashboard              … Organization ダッシュボード(イベント一覧)
 /dashboard/events/new
-/dashboard/events/[id]          … 概要・申込状況(リアルタイム)
+/dashboard/events/[id]          … 概要・申込状況(リアルタイム)・カバー画像
+/dashboard/events/[id]/sessions … セッション・登壇者管理(写真アップロード)
 /dashboard/events/[id]/tickets  … チケット種別管理
 /dashboard/events/[id]/attendees … 申込者一覧・CSV
 /dashboard/events/[id]/checkin  … PWA QRスキャナー

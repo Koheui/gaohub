@@ -1,0 +1,17 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // イベントのクリエイティブ(カバー画像・登壇者写真など)
+    // 公開LPで使うため read は公開。write はイベントを持つ org のメンバーのみ。
+    match /events/{eventId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*')
+        && firestore.exists(
+          /databases/(default)/documents/organizations/$(firestore.get(/databases/(default)/documents/events/$(eventId)).data.orgId)/members/$(request.auth.uid)
+        );
+    }
+  }
+}

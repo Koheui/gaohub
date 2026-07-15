@@ -29,7 +29,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="font-bold">
-              Neo EventHub
+              GAO HUB
             </Link>
             <nav className="flex items-center gap-4 text-sm text-zinc-600">
               <Link href="/dashboard" className="hover:text-zinc-900">

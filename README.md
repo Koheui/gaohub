@@ -1,4 +1,4 @@
-# Neo EventHub
+# GAO HUB
 
 カンファレンス等のイベントについて「開催準備 → 集客 → チケット決済 → 当日QR受付」を
 ワンストップで提供するマルチテナント SaaS。ベンチマークと要件は
@@ -18,12 +18,13 @@
 1. [Firebase Console](https://console.firebase.google.com) でプロジェクト作成
 2. **Authentication** → ログイン方法で「メール/パスワード」と「Google」を有効化
 3. **Firestore Database** を作成(ロケーション: `asia-northeast1` 推奨)
-4. ルールとインデックスをデプロイ:
+4. **Storage** を有効化(クリエイティブのアップロードに使用)
+5. ルールとインデックスをデプロイ:
    ```bash
    cd web
-   npx firebase-tools deploy --only firestore  # firebase.json を使用
+   npx firebase-tools deploy --only firestore,storage  # firebase.json を使用
    ```
-5. プロジェクトの設定 → サービスアカウント → 新しい秘密鍵を生成し、base64 化:
+6. プロジェクトの設定 → サービスアカウント → 新しい秘密鍵を生成し、base64 化:
    ```bash
    base64 -i serviceAccount.json | tr -d '\n'
    ```
@@ -61,11 +62,12 @@ npm run dev
 ## MVPの流れ
 
 1. `/login` でサインアップ → 組織を登録
-2. ダッシュボードでイベント作成 → チケット種別を追加(無料/有料)
-3. 有料チケットを売る場合は「決済設定」から Stripe Connect をオンボーディング
-4. イベントを「公開」→ `/e/{slug}` が集客ページになる
-5. 参加者が申込(有料は Stripe Checkout)→ QRチケットがメールで届く
-6. 当日はダッシュボードの「受付(QRスキャン)」をスマホで開いてチェックイン
+2. ダッシュボードでイベント作成 → カバー画像をアップロード
+3. 「コンテンツ」でトークセッション・登壇者(写真つき)を登録 → LPのタイムテーブル/登壇者欄に自動反映
+4. チケット種別を追加(無料/有料)。有料は「決済設定」から Stripe Connect をオンボーディング
+5. イベントを「公開」→ `/e/{slug}` がカンファレンスLPになる
+6. 参加者が申込(有料は Stripe Checkout)→ QRチケットがメールで届く
+7. 当日はダッシュボードの「受付(QRスキャン)」をスマホで開いてチェックイン
 
 ## 設計メモ
 

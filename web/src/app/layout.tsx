@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Neo EventHub — イベント開催から決済までワンストップ",
+  title: "GAO HUB — イベント開催から決済までワンストップ",
   description:
     "カンファレンス・セミナーの集客、チケット決済、QR受付までをセルフサーブで。即日開催、透明な料金。",
 };

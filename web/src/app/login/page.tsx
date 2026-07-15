@@ -76,7 +76,7 @@ function LoginForm() {
     <main className="flex-1 flex items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">
         <Link href="/" className="font-bold text-lg">
-          Neo EventHub
+          GAO HUB
         </Link>
         <h1 className="mt-8 text-2xl font-bold">
           {mode === "signup" ? "アカウント作成" : "ログイン"}

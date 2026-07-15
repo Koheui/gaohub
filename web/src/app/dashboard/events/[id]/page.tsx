@@ -14,6 +14,7 @@ import {
 import { db } from "@/lib/firebase/client";
 import type { EventDoc, Registration } from "@/lib/types";
 import { EventForm, eventToFormValues, type EventFormValues } from "@/components/EventForm";
+import { CoverImageUploader } from "@/components/CoverImageUploader";
 import { formatDateRange } from "@/lib/format";
 
 function Stat({ label, value }: { label: string; value: string | number }) {
@@ -103,6 +104,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
       <nav className="mt-6 flex gap-4 border-b border-zinc-200 text-sm">
         <span className="border-b-2 border-zinc-900 pb-2 font-medium">概要</span>
+        <Link href={`/dashboard/events/${id}/sessions`} className="pb-2 text-zinc-500 hover:text-zinc-900">
+          コンテンツ
+        </Link>
         <Link href={`/dashboard/events/${id}/tickets`} className="pb-2 text-zinc-500 hover:text-zinc-900">
           チケット
         </Link>
@@ -118,6 +122,10 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         <Stat label="申込数(確定)" value={confirmed.length} />
         <Stat label="チェックイン" value={checkedIn.length} />
         <Stat label="売上" value={`¥${revenue.toLocaleString("ja-JP")}`} />
+      </div>
+
+      <div className="mt-10 rounded-2xl border border-zinc-200 p-6">
+        <CoverImageUploader eventId={id} coverImageUrl={event.coverImageUrl} />
       </div>
 
       <div className="mt-10">

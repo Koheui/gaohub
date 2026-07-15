@@ -49,6 +49,24 @@ export interface TicketType {
   createdAt: Timestamp;
 }
 
+export interface Speaker {
+  name: string;
+  title: string;
+  company: string;
+  photoUrl: string | null;
+}
+
+export interface SessionDoc {
+  id: string;
+  title: string;
+  description: string;
+  track: string;
+  startsAt: Timestamp;
+  endsAt: Timestamp;
+  speakers: Speaker[];
+  createdAt: Timestamp;
+}
+
 export type RegistrationStatus = "pending_payment" | "confirmed" | "cancelled";
 
 export interface Attendee {
