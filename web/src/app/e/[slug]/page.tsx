@@ -19,13 +19,13 @@ export async function generateMetadata(props: {
   const { slug } = await props.params;
   const event = await getPublishedEventBySlug(slug);
   if (!event) return {};
+  // og:image はファイル規約 opengraph-image.tsx が自動生成する
   return {
     title: event.title,
     description: event.description.slice(0, 120),
     openGraph: {
       title: event.title,
       description: event.description.slice(0, 120),
-      ...(event.coverImageUrl ? { images: [event.coverImageUrl] } : {}),
     },
   };
 }
