@@ -1,0 +1,65 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOrgMember(orgId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/organizations/$(orgId)/members/$(request.auth.uid));
+    }
+
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /organizations/{orgId} {
+      allow read: if isOrgMember(orgId);
+      allow create: if signedIn();
+      // stripeAccountId 等の更新はサーバー(Admin SDK)経由のみ
+      allow update: if isOrgMember(orgId)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['stripeAccountId', 'stripeOnboarded']);
+
+      match /members/{uid} {
+        allow read: if isOrgMember(orgId);
+        // 自分を owner として登録できるのは org 作成時のみ(バッチ書き込み)
+        allow create: if signedIn() && request.auth.uid == uid;
+      }
+    }
+
+    // slug の一意性を担保する予約ドキュメント(PIIなし)
+    match /slugs/{slug} {
+      allow get: if true;
+      allow create: if signedIn();
+      allow update, delete: if false;
+    }
+
+    match /events/{eventId} {
+      // 公開ページはサーバー(Admin SDK)で読むため、クライアント read は org メンバーのみ
+      allow read, delete: if isOrgMember(resource.data.orgId);
+      allow create: if isOrgMember(request.resource.data.orgId);
+      allow update: if isOrgMember(resource.data.orgId)
+        && request.resource.data.orgId == resource.data.orgId;
+
+      match /ticketTypes/{ticketTypeId} {
+        allow read, write: if isOrgMember(
+          get(/databases/$(database)/documents/events/$(eventId)).data.orgId
+        );
+      }
+    }
+
+    match /registrations/{registrationId} {
+      // 作成・確定はサーバー(Admin SDK)のみ。閲覧とチェックインは org メンバー
+      allow read: if isOrgMember(resource.data.orgId);
+      allow create: if false;
+      allow update: if isOrgMember(resource.data.orgId)
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['checkedInAt', 'checkedInBy']);
+      allow delete: if false;
+    }
+  }
+}
