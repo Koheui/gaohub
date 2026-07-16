@@ -85,7 +85,9 @@ export default async function SpeakerDetailPage(props: {
           style={{
             background: dark
               ? `radial-gradient(ellipse 70% 80% at 80% 0%, ${color}66, #09090b 70%)`
-              : `linear-gradient(150deg, ${t.paper} 0%, ${t.paper} 45%, ${color} 130%)`,
+              : t.id === "spectrum"
+                ? `radial-gradient(ellipse 60% 70% at 85% 0%, #ff3d00a8, transparent 60%), radial-gradient(ellipse 55% 60% at 45% 60%, #ff910088, transparent 62%), radial-gradient(ellipse 60% 55% at 0% 110%, #ffd60070, transparent 65%), ${t.paper}`
+                : `linear-gradient(150deg, ${t.paper} 0%, ${t.paper} 45%, ${color} 130%)`,
           }}
         />
         {event.template !== "aurora" && <Grain opacity={0.3} />}

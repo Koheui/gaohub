@@ -82,8 +82,8 @@ function Panel({
   const styles =
     t.id === "kodak"
       ? "border-2 border-zinc-950 bg-[#f6f5f2]/90 backdrop-blur-sm"
-      : t.id === "noir"
-        ? "border border-white/15 bg-zinc-950/70 backdrop-blur-md"
+      : t.id === "spectrum"
+        ? "bg-white/95 shadow-2xl shadow-black/10 backdrop-blur-sm"
         : "rounded-3xl bg-white/75 shadow-xl shadow-black/5 backdrop-blur-xl";
   return <div className={`relative overflow-hidden ${styles} ${className}`}>{children}</div>;
 }
@@ -180,11 +180,17 @@ function BackdropCanvas({ event, t }: { event: PublicEvent; t: LpTheme }) {
             background: `linear-gradient(155deg, ${t.paper} 0%, ${t.paper} 22%, ${color} 70%, #1a1a1a 130%)`,
           }}
         />
-      ) : t.id === "noir" ? (
+      ) : t.id === "spectrum" ? (
+        // グレーのコンクリート地に赤→橙→黄→緑のスペクトラムを重ねる
         <div
           className="h-full w-full"
           style={{
-            background: `radial-gradient(ellipse 70% 45% at 75% 8%, ${color}99, transparent 65%), radial-gradient(ellipse 55% 40% at 5% 55%, ${color}55, transparent 70%), radial-gradient(ellipse 60% 40% at 60% 100%, ${color}44, transparent 70%), #09090b`,
+            background: `
+              radial-gradient(ellipse 55% 38% at 88% 6%, #ff3d00b8, transparent 62%),
+              radial-gradient(ellipse 52% 36% at 58% 34%, #ff9100a6, transparent 62%),
+              radial-gradient(ellipse 55% 38% at 26% 62%, #ffd60096, transparent 62%),
+              radial-gradient(ellipse 62% 42% at -4% 96%, #00c85388, transparent 66%),
+              ${t.paper}`,
           }}
         />
       ) : (
@@ -203,13 +209,13 @@ function BackdropCanvas({ event, t }: { event: PublicEvent; t: LpTheme }) {
           />
         </div>
       )}
-      {t.id !== "aurora" && <Grain opacity={t.mode === "dark" ? 0.28 : 0.32} />}
-      {/* 巨大アウトライン年号もキャンバス側でゆっくり流す */}
+      {t.id !== "aurora" && <Grain opacity={t.id === "spectrum" ? 0.38 : 0.32} />}
+      {/* 巨大アウトライン年号もキャンバス側でゆっくり流す(spectrumは白ストローク=白を色として使う) */}
       <span
         aria-hidden
         className={`absolute right-[2%] top-[52vh] select-none text-[26vw] font-black leading-none tracking-tighter text-transparent sm:text-[20rem] ${
-          t.mode === "dark"
-            ? "[-webkit-text-stroke:2px_rgba(255,255,255,0.14)]"
+          t.ghostLight
+            ? "[-webkit-text-stroke:2px_rgba(255,255,255,0.35)]"
             : "[-webkit-text-stroke:2px_rgba(24,24,27,0.15)]"
         }`}
       >
@@ -230,7 +236,11 @@ function Marquee({ event, t }: { event: PublicEvent; t: LpTheme }) {
           <span
             key={i}
             className={`pr-8 text-5xl font-black uppercase leading-none tracking-tighter sm:text-7xl ${
-              t.mode === "dark" ? "text-white/12" : "text-zinc-950/10"
+              t.mode === "dark"
+                ? "text-white/12"
+                : t.id === "spectrum"
+                  ? "text-white/30"
+                  : "text-zinc-950/10"
             }`}
           >
             {row}
@@ -300,8 +310,14 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
               {hasTickets && (
                 <Link
                   href={registerHref}
-                  className="rounded-full px-5 py-1.5 text-sm font-black text-white hover:opacity-85"
-                  style={{ backgroundColor: dark || t.id === "aurora" ? color : "#09090b" }}
+                  className={`rounded-full px-5 py-1.5 text-sm font-black hover:opacity-85 ${
+                    t.id === "spectrum" ? "bg-white text-zinc-950 shadow-lg" : "text-white"
+                  }`}
+                  style={
+                    t.id === "spectrum"
+                      ? undefined
+                      : { backgroundColor: dark || t.id === "aurora" ? color : "#09090b" }
+                  }
                 >
                   参加登録
                 </Link>
@@ -325,7 +341,11 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
             {event.tagline && (
               <p
                 className="lp-fade-up mt-12 text-xl font-black tracking-tight sm:text-3xl"
-                style={{ animationDelay: "0.95s", color: dark ? "#fff" : "#18181b" }}
+                style={{
+                  animationDelay: "0.95s",
+                  // spectrum は「白を色として使う」: グレー地に白のキャッチコピー
+                  color: dark || t.id === "spectrum" ? "#fff" : "#18181b",
+                }}
               >
                 {event.tagline}
               </p>
@@ -346,11 +366,17 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
               >
                 <Link
                   href={registerHref}
-                  className="rounded-full px-9 py-4 text-base font-black text-white transition-transform hover:scale-[1.02]"
-                  style={{
-                    backgroundColor: dark || t.id === "aurora" ? color : "#09090b",
-                    boxShadow: dark ? `0 8px 40px ${color}66` : undefined,
-                  }}
+                  className={`rounded-full px-9 py-4 text-base font-black transition-transform hover:scale-[1.02] ${
+                    t.id === "spectrum" ? "bg-white text-zinc-950 shadow-2xl shadow-black/20" : "text-white"
+                  }`}
+                  style={
+                    t.id === "spectrum"
+                      ? undefined
+                      : {
+                          backgroundColor: dark || t.id === "aurora" ? color : "#09090b",
+                          boxShadow: dark ? `0 8px 40px ${color}66` : undefined,
+                        }
+                  }
                 >
                   参加登録はこちら →
                 </Link>
@@ -360,7 +386,9 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                     className={`rounded-full px-7 py-3.5 text-sm font-black ${
                       dark
                         ? "border border-white/30 text-white hover:bg-white/10"
-                        : "border-2 border-zinc-950 hover:bg-zinc-950 hover:text-white"
+                        : t.id === "spectrum"
+                          ? "border-2 border-white/70 text-white hover:bg-white hover:text-zinc-950"
+                          : "border-2 border-zinc-950 hover:bg-zinc-950 hover:text-white"
                     }`}
                   >
                     タイムテーブル
@@ -378,7 +406,11 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
             <span className="text-[10px] font-black uppercase tracking-[0.35em] opacity-60 [writing-mode:vertical-rl]">
               Scroll
             </span>
-            <span className={`lp-scroll-line block h-14 w-px ${dark ? "bg-white/60" : "bg-zinc-950/60"}`} />
+            <span
+              className={`lp-scroll-line block h-14 w-px ${
+                dark || t.id === "spectrum" ? "bg-white/70" : "bg-zinc-950/60"
+              }`}
+            />
           </div>
         </section>
 
@@ -417,8 +449,8 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
             className={`relative overflow-hidden py-14 text-white ${
               t.id === "aurora"
                 ? "rounded-3xl bg-zinc-950/90 backdrop-blur"
-                : t.id === "noir"
-                  ? "border border-white/15 bg-zinc-950/80 backdrop-blur"
+                : t.id === "spectrum"
+                  ? "bg-zinc-950/90 shadow-2xl shadow-black/20 backdrop-blur"
                   : "border-2 border-zinc-950 bg-zinc-950/90 backdrop-blur"
             }`}
           />
@@ -590,8 +622,8 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
               className="absolute inset-0"
               style={{
                 background:
-                  t.id === "noir"
-                    ? `radial-gradient(ellipse 90% 100% at 50% 0%, ${color}44, transparent 70%)`
+                  t.id === "spectrum"
+                    ? "linear-gradient(160deg, #ff3d0018 0%, #ff910014 35%, #ffd60010 65%, transparent 90%)"
                     : `linear-gradient(165deg, ${color}22 0%, transparent 60%)`,
               }}
             />
@@ -607,8 +639,8 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                     <Reveal key={tk.id} delayMs={i * 100}>
                       <div
                         className={`flex h-full flex-col p-7 ${t.radius} ${
-                          t.id === "noir"
-                            ? "border border-white/20 bg-zinc-950/70"
+                          t.id === "spectrum"
+                            ? "bg-[#ecece8] shadow-lg shadow-black/10"
                             : t.id === "aurora"
                               ? "bg-white shadow-lg shadow-black/5"
                               : "border-2 border-zinc-950 bg-[#f6f5f2]"
@@ -627,11 +659,7 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                         <div className="mt-8 flex-1" />
                         {tk.soldOut ? (
                           <span
-                            className={`py-3 text-center text-sm font-black ${t.radius} ${
-                              t.id === "noir"
-                                ? "border border-white/20 text-white/40"
-                                : "border-2 border-zinc-300 text-zinc-400"
-                            }`}
+                            className={`py-3 text-center text-sm font-black ${t.radius} border-2 border-zinc-300 text-zinc-400`}
                           >
                             SOLD OUT
                           </span>
@@ -639,7 +667,7 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                           <Link
                             href={`${registerHref}?ticket=${tk.id}`}
                             className={`py-3.5 text-center text-sm font-black text-white hover:opacity-85 ${t.radius}`}
-                            style={{ backgroundColor: t.id === "kodak" ? "#09090b" : color }}
+                            style={{ backgroundColor: t.id === "aurora" ? color : "#09090b" }}
                           >
                             このチケットで申し込む →
                           </Link>
@@ -659,19 +687,33 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
         {hasTickets && (
           <section className="relative mx-auto max-w-4xl px-6 pb-32 text-center">
             <Reveal>
-              <p className={`text-[11px] font-black uppercase tracking-[0.4em] ${dark ? "text-white/50" : "text-zinc-950/50"}`}>
+              <p
+                className={`text-[11px] font-black uppercase tracking-[0.4em] ${
+                  dark || t.id === "spectrum" ? "text-white/60" : "text-zinc-950/50"
+                }`}
+              >
                 Join us
               </p>
-              <p className="mt-4 text-4xl font-black tracking-tighter sm:text-6xl">
+              <p
+                className={`mt-4 text-4xl font-black tracking-tighter sm:text-6xl ${
+                  t.id === "spectrum" ? "text-white" : ""
+                }`}
+              >
                 会場でお会いしましょう。
               </p>
               <Link
                 href={registerHref}
-                className="mt-10 inline-block rounded-full px-10 py-4 text-base font-black text-white transition-transform hover:scale-[1.02]"
-                style={{
-                  backgroundColor: dark || t.id === "aurora" ? color : "#09090b",
-                  boxShadow: dark ? `0 8px 40px ${color}66` : undefined,
-                }}
+                className={`mt-10 inline-block rounded-full px-10 py-4 text-base font-black transition-transform hover:scale-[1.02] ${
+                  t.id === "spectrum" ? "bg-white text-zinc-950 shadow-2xl shadow-black/20" : "text-white"
+                }`}
+                style={
+                  t.id === "spectrum"
+                    ? undefined
+                    : {
+                        backgroundColor: dark || t.id === "aurora" ? color : "#09090b",
+                        boxShadow: dark ? `0 8px 40px ${color}66` : undefined,
+                      }
+                }
               >
                 参加登録はこちら →
               </Link>

@@ -24,10 +24,11 @@ const TEMPLATES: { id: EventTemplate; name: string; desc: string; swatch: string
     swatch: "linear-gradient(150deg, #f6f5f2 25%, #fb4f14 100%)",
   },
   {
-    id: "noir",
-    name: "Noir",
-    desc: "ダーク × ネオン発光",
-    swatch: "radial-gradient(circle at 70% 20%, #7c3aed 0%, #09090b 70%)",
+    id: "spectrum",
+    name: "Spectrum",
+    desc: "グレー × 色彩グラデーション",
+    swatch:
+      "radial-gradient(circle at 85% 10%, #ff3d00cc 0%, transparent 50%), radial-gradient(circle at 55% 45%, #ff9100b0 0%, transparent 50%), radial-gradient(circle at 25% 75%, #ffd600a0 0%, transparent 50%), radial-gradient(circle at 0% 110%, #00c85390 0%, transparent 55%), #a1a19c",
   },
   {
     id: "aurora",
