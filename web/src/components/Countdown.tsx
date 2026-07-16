@@ -45,7 +45,13 @@ function Sep() {
  * カウントダウンのバンド(セクションごと)。開催時刻を過ぎたら何も描画しない。
  * 時刻判定はクライアント側のみで行う(サーバーコンポーネントを純粋に保つ)。
  */
-export function CountdownBand({ targetIso }: { targetIso: string }) {
+export function CountdownBand({
+  targetIso,
+  className,
+}: {
+  targetIso: string;
+  className?: string;
+}) {
   // ハイドレーション不一致を避けるためマウント後に計算
   const [t, setT] = useState<Remaining | null>(null);
 
@@ -61,7 +67,12 @@ export function CountdownBand({ targetIso }: { targetIso: string }) {
   const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
-    <section className="relative overflow-hidden border-b-2 border-zinc-950 bg-zinc-950 py-16 text-white">
+    <section
+      className={
+        className ??
+        "relative overflow-hidden border-b-2 border-zinc-950 bg-zinc-950 py-16 text-white"
+      }
+    >
       <Grain opacity={0.25} />
       <div className="relative mx-auto max-w-6xl px-6">
         <p className="text-center text-[11px] font-black uppercase tracking-[0.4em] text-white/50">

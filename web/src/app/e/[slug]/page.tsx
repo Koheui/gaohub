@@ -6,15 +6,15 @@ import {
   getPublicSpeakers,
   getPublicTicketTypes,
   getPublishedEventBySlug,
+  type PublicEvent,
   type PublicSession,
   type PublicSpeaker,
 } from "@/lib/server/events";
 import { formatJpy } from "@/lib/format";
 import { Grain } from "@/components/Grain";
 import { CountdownBand } from "@/components/Countdown";
-import { Parallax, Reveal } from "@/components/motion";
-import { AnimatedTitle } from "@/components/lp/AnimatedTitle";
-import { LP_THEMES } from "@/components/lp/theme";
+import { FixedBackdrop, Parallax, Reveal } from "@/components/motion";
+import { LP_THEMES, type LpTheme } from "@/components/lp/theme";
 
 export const dynamic = "force-dynamic";
 
@@ -69,24 +69,23 @@ function Spec({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Ghost({ text, light }: { text: string; light: boolean }) {
-  return (
-    <Parallax
-      speed={0.12}
-      className="pointer-events-none absolute -top-4 right-0 select-none"
-    >
-      <span
-        aria-hidden
-        className={`whitespace-nowrap text-[16vw] font-black uppercase leading-none tracking-tighter text-transparent sm:text-[10rem] ${
-          light
-            ? "[-webkit-text-stroke:1.5px_rgba(255,255,255,0.13)]"
-            : "[-webkit-text-stroke:1.5px_rgba(24,24,27,0.12)]"
-        }`}
-      >
-        {text}
-      </span>
-    </Parallax>
-  );
+/** 連続キャンバスの上に浮かぶコンテンツパネル */
+function Panel({
+  t,
+  className = "",
+  children,
+}: {
+  t: LpTheme;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const styles =
+    t.id === "kodak"
+      ? "border-2 border-zinc-950 bg-[#f6f5f2]/90 backdrop-blur-sm"
+      : t.id === "noir"
+        ? "border border-white/15 bg-zinc-950/70 backdrop-blur-md"
+        : "rounded-3xl bg-white/75 shadow-xl shadow-black/5 backdrop-blur-xl";
+  return <div className={`relative overflow-hidden ${styles} ${className}`}>{children}</div>;
 }
 
 function SectionHead({
@@ -118,6 +117,23 @@ function SectionHead({
   );
 }
 
+function Ghost({ text, light }: { text: string; light: boolean }) {
+  return (
+    <Parallax speed={0.14} className="pointer-events-none absolute -top-14 right-0 select-none">
+      <span
+        aria-hidden
+        className={`whitespace-nowrap text-[16vw] font-black uppercase leading-none tracking-tighter text-transparent sm:text-[9rem] ${
+          light
+            ? "[-webkit-text-stroke:1.5px_rgba(255,255,255,0.15)]"
+            : "[-webkit-text-stroke:1.5px_rgba(24,24,27,0.15)]"
+        }`}
+      >
+        {text}
+      </span>
+    </Parallax>
+  );
+}
+
 function SmallAvatar({ speaker, dark }: { speaker: PublicSpeaker; dark: boolean }) {
   return speaker.photoUrl ? (
     // eslint-disable-next-line @next/next/no-img-element
@@ -130,6 +146,98 @@ function SmallAvatar({ speaker, dark }: { speaker: PublicSpeaker; dark: boolean 
     >
       {speaker.name.charAt(0)}
     </span>
+  );
+}
+
+/** テンプレート別の全画面キャンバス(固定・低速パララックス) */
+function BackdropCanvas({ event, t }: { event: PublicEvent; t: LpTheme }) {
+  const color = event.themeColor;
+  const year = yearFmt.format(event.startsAt).replace("年", "");
+  return (
+    <FixedBackdrop speed={0.16}>
+      {event.coverImageUrl ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={event.coverImageUrl}
+            alt=""
+            className={`h-full w-full object-cover ${t.mode === "dark" ? "opacity-45" : ""}`}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                t.mode === "dark"
+                  ? "linear-gradient(160deg, #09090bcc 0%, #09090b88 50%, #09090bcc 100%)"
+                  : `linear-gradient(160deg, ${t.paper}f2 0%, ${t.paper}b8 45%, ${t.paper}66 100%)`,
+            }}
+          />
+        </>
+      ) : t.id === "kodak" ? (
+        <div
+          className="h-full w-full"
+          style={{
+            background: `linear-gradient(155deg, ${t.paper} 0%, ${t.paper} 22%, ${color} 70%, #1a1a1a 130%)`,
+          }}
+        />
+      ) : t.id === "noir" ? (
+        <div
+          className="h-full w-full"
+          style={{
+            background: `radial-gradient(ellipse 70% 45% at 75% 8%, ${color}99, transparent 65%), radial-gradient(ellipse 55% 40% at 5% 55%, ${color}55, transparent 70%), radial-gradient(ellipse 60% 40% at 60% 100%, ${color}44, transparent 70%), #09090b`,
+          }}
+        />
+      ) : (
+        <div className="h-full w-full" style={{ backgroundColor: t.paper }}>
+          <div
+            className="absolute left-[-10%] top-[-6%] h-[42rem] w-[42rem] rounded-full opacity-50"
+            style={{ backgroundColor: color, filter: "blur(120px)" }}
+          />
+          <div
+            className="absolute right-[-8%] top-[22%] h-[34rem] w-[34rem] rounded-full opacity-35"
+            style={{ background: `color-mix(in oklch, ${color} 55%, #22d3ee)`, filter: "blur(120px)" }}
+          />
+          <div
+            className="absolute bottom-[4%] left-[24%] h-[36rem] w-[36rem] rounded-full opacity-30"
+            style={{ background: `color-mix(in oklch, ${color} 45%, #34d399)`, filter: "blur(130px)" }}
+          />
+        </div>
+      )}
+      {t.id !== "aurora" && <Grain opacity={t.mode === "dark" ? 0.28 : 0.32} />}
+      {/* 巨大アウトライン年号もキャンバス側でゆっくり流す */}
+      <span
+        aria-hidden
+        className={`absolute right-[2%] top-[52vh] select-none text-[26vw] font-black leading-none tracking-tighter text-transparent sm:text-[20rem] ${
+          t.mode === "dark"
+            ? "[-webkit-text-stroke:2px_rgba(255,255,255,0.14)]"
+            : "[-webkit-text-stroke:2px_rgba(24,24,27,0.15)]"
+        }`}
+      >
+        {year}
+      </span>
+    </FixedBackdrop>
+  );
+}
+
+/** イベント名のマーキー帯(セクションの繋ぎ目を消す) */
+function Marquee({ event, t }: { event: PublicEvent; t: LpTheme }) {
+  const item = `${event.title} — ${yearFmt.format(event.startsAt)} `;
+  const row = item.repeat(6);
+  return (
+    <div aria-hidden className="overflow-hidden py-10 sm:py-14">
+      <div className="lp-marquee">
+        {[0, 1].map((i) => (
+          <span
+            key={i}
+            className={`pr-8 text-5xl font-black uppercase leading-none tracking-tighter sm:text-7xl ${
+              t.mode === "dark" ? "text-white/12" : "text-zinc-950/10"
+            }`}
+          >
+            {row}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -155,7 +263,6 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
   const dateValue = sameDay
     ? dayFmt.format(event.startsAt)
     : `${dayFmt.format(event.startsAt)} – ${dayFmt.format(event.endsAt)}`;
-  const year = yearFmt.format(event.startsAt).replace("年", "");
 
   const stats: [string, string][] = [
     ["Days", String(Math.max(days.length, 1))],
@@ -165,457 +272,394 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
   ];
 
   return (
-    <main className={`flex-1 ${t.page}`}>
-      {/* ─── 固定ナビ ─── */}
-      <header className={`sticky top-0 z-50 backdrop-blur ${t.nav}`}>
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-          <span className="truncate pr-4 text-sm font-black uppercase tracking-tight">
-            {event.title}
-          </span>
-          <nav className="flex items-center gap-5 text-sm">
-            <div className={`hidden items-center gap-5 font-bold sm:flex ${t.navLink}`}>
-              {event.description && <a href="#about" className="hover:opacity-100">概要</a>}
-              {sessions.length > 0 && <a href="#sessions">タイムテーブル</a>}
-              {speakers.length > 0 && <a href="#speakers">登壇者</a>}
-            </div>
-            {hasTickets && (
-              <Link
-                href={registerHref}
-                className={`px-5 py-1.5 text-sm font-black text-white hover:opacity-85 ${
-                  event.template === "aurora" ? "rounded-full" : "rounded-full"
-                }`}
-                style={{ backgroundColor: dark || event.template === "aurora" ? color : "#09090b" }}
-              >
-                参加登録
-              </Link>
-            )}
-          </nav>
-        </div>
-      </header>
+    <main className={`relative flex-1 ${t.page}`} style={{ backgroundColor: t.paper }}>
+      {/* 開場カーテン(テーマカラー → 上に抜ける) */}
+      <div
+        aria-hidden
+        className="lp-curtain fixed inset-0 z-[90]"
+        style={{ backgroundColor: color }}
+      />
 
-      {/* ─── ヒーロー(テンプレート別背景) ─── */}
-      <section className={`relative overflow-hidden ${event.template !== "aurora" ? `border-b ${event.template === "kodak" ? "border-b-2 border-zinc-950" : "border-white/15"}` : ""}`}>
-        {/* 背景 */}
-        {event.coverImageUrl ? (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={event.coverImageUrl}
-              alt=""
-              className={`absolute inset-0 h-full w-full object-cover ${dark ? "opacity-40" : ""}`}
-            />
-            <div
-              className="absolute inset-0"
-              style={{
-                background: dark
-                  ? `linear-gradient(150deg, #09090bee 0%, #09090bcc 40%, #09090b55 100%)`
-                  : `linear-gradient(150deg, ${t.paper}ee 0%, ${t.paper}cc 38%, transparent 100%)`,
-              }}
-            />
-          </>
-        ) : event.template === "kodak" ? (
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `linear-gradient(150deg, ${t.paper} 0%, ${t.paper} 32%, ${color} 88%)`,
-            }}
-          />
-        ) : event.template === "noir" ? (
-          <>
-            <div
-              className="absolute inset-0"
-              style={{
-                background: `radial-gradient(ellipse 75% 65% at 72% 12%, ${color}88, transparent 65%), radial-gradient(ellipse 50% 45% at 8% 100%, ${color}44, transparent 70%), #09090b`,
-              }}
-            />
-            <div
-              className="absolute inset-0 opacity-[0.12]"
-              style={{
-                backgroundImage: `linear-gradient(to right, ${color} 1px, transparent 1px), linear-gradient(to bottom, ${color} 1px, transparent 1px)`,
-                backgroundSize: "64px 64px",
-                maskImage: "radial-gradient(ellipse 70% 70% at 60% 20%, black, transparent)",
-              }}
-            />
-          </>
-        ) : (
-          // aurora: メッシュグラデーション(ぼかした色玉)
-          <div className="absolute inset-0" style={{ backgroundColor: t.paper }}>
-            <div
-              className="absolute -left-24 -top-24 h-[34rem] w-[34rem] rounded-full opacity-50"
-              style={{ backgroundColor: color, filter: "blur(110px)" }}
-            />
-            <div
-              className="absolute -right-16 top-8 h-[26rem] w-[26rem] rounded-full opacity-35"
-              style={{
-                background: `color-mix(in oklch, ${color} 55%, #22d3ee)`,
-                filter: "blur(110px)",
-              }}
-            />
-            <div
-              className="absolute bottom-[-8rem] left-1/3 h-[28rem] w-[28rem] rounded-full opacity-30"
-              style={{
-                background: `color-mix(in oklch, ${color} 45%, #34d399)`,
-                filter: "blur(120px)",
-              }}
-            />
-          </div>
-        )}
-        {event.template !== "aurora" && <Grain opacity={dark ? 0.28 : 0.35} />}
+      {/* ─── 全画面キャンバス(固定・低速スクロール) ─── */}
+      <BackdropCanvas event={event} t={t} />
 
-        {/* 巨大アウトライン年号(パララックス) */}
-        <div className="pointer-events-none absolute -bottom-8 right-4">
-          <Parallax speed={-0.14}>
-            <span
-              aria-hidden
-              className={`select-none text-[22vw] font-black leading-none tracking-tighter text-transparent sm:text-[14rem] ${
-                dark
-                  ? "[-webkit-text-stroke:2px_rgba(255,255,255,0.16)]"
-                  : "[-webkit-text-stroke:2px_rgba(24,24,27,0.18)]"
-              }`}
-            >
-              {year}
+      {/* ─── 前景コンテンツ ─── */}
+      <div className="relative z-10">
+        {/* 固定ナビ */}
+        <header className={`sticky top-0 z-50 backdrop-blur ${t.nav}`}>
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
+            <span className="truncate pr-4 text-sm font-black uppercase tracking-tight">
+              {event.title}
             </span>
-          </Parallax>
-        </div>
-
-        <div className="relative mx-auto max-w-6xl px-6 pb-24 pt-14 sm:pb-32 sm:pt-20">
-          <div className="lp-fade-up flex flex-wrap gap-x-12 gap-y-4">
-            <Spec label="Date" value={dateValue} />
-            <Spec label="Year" value={yearFmt.format(event.startsAt)} />
-            <Spec label="Venue" value={event.venueName || "Online"} />
-            <Spec
-              label="Doors"
-              value={`${timeFmt.format(event.startsAt)} – ${timeFmt.format(event.endsAt)}`}
-            />
-          </div>
-
-          {event.tagline && (
-            <p
-              className="lp-fade-up mt-14 text-lg font-black tracking-tight sm:mt-16 sm:text-2xl"
-              style={{ animationDelay: "250ms", color: dark ? "#fff" : color }}
-            >
-              {event.tagline}
-            </p>
-          )}
-
-          <h1
-            className={`${event.tagline ? "mt-4" : "mt-14 sm:mt-20"} max-w-5xl break-words text-6xl font-black leading-[0.98] tracking-tighter sm:text-8xl lg:text-9xl`}
-          >
-            <AnimatedTitle text={event.title} baseDelayMs={350} />
-          </h1>
-
-          <p
-            className="lp-fade-up mt-6 font-mono text-xs font-bold tracking-[0.15em] opacity-70 sm:text-sm"
-            style={{ animationDelay: "700ms" }}
-          >
-            [ {dateValue} — {event.venueName || "Online"}
-            {event.venueAddress ? `, ${event.venueAddress}` : ""} ]
-          </p>
-
-          {hasTickets && (
-            <div
-              className="lp-fade-up mt-12 flex flex-wrap items-center gap-4"
-              style={{ animationDelay: "850ms" }}
-            >
-              <Link
-                href={registerHref}
-                className="rounded-full px-9 py-4 text-base font-black text-white transition-transform hover:scale-[1.02]"
-                style={{
-                  backgroundColor: dark || event.template === "aurora" ? color : "#09090b",
-                  boxShadow: dark ? `0 8px 40px ${color}66` : undefined,
-                }}
-              >
-                参加登録はこちら →
-              </Link>
-              {sessions.length > 0 && (
-                <a
-                  href="#sessions"
-                  className={`rounded-full px-7 py-3.5 text-sm font-black ${
-                    dark
-                      ? "border border-white/30 text-white hover:bg-white/10"
-                      : "border-2 border-zinc-950 hover:bg-zinc-950 hover:text-white"
-                  }`}
-                >
-                  タイムテーブル
-                </a>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* ─── 統計ストリップ ─── */}
-      {sessions.length > 0 && (
-        <section className={`border-b ${event.template === "kodak" ? "border-b-2 border-zinc-950" : dark ? "border-white/15" : "border-zinc-200"}`}>
-          <div className="mx-auto grid max-w-6xl grid-cols-2 sm:grid-cols-4">
-            {stats.map(([label, value], i) => (
-              <Reveal key={label} delayMs={i * 90}>
-                <div
-                  className={`flex flex-col items-center py-8 ${
-                    event.template === "kodak" ? "border-zinc-950" : dark ? "border-white/15" : "border-zinc-200"
-                  } ${i > 0 ? (event.template === "kodak" ? "sm:border-l-2" : "sm:border-l") : ""}`}
-                >
-                  <span className="text-5xl font-black tabular-nums tracking-tighter">{value}</span>
-                  <span className={`mt-2 font-mono text-[11px] font-bold uppercase tracking-[0.3em] ${t.muted}`}>
-                    [{label}]
-                  </span>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ─── カウントダウン(開催後は自動で消える) ─── */}
-      <CountdownBand targetIso={event.startsAt.toISOString()} />
-
-      {/* ─── 概要 ─── */}
-      {event.description && (
-        <section id="about" className="relative mx-auto max-w-3xl scroll-mt-20 overflow-hidden px-6 py-20 sm:py-28">
-          <Ghost text="About" light={t.ghostLight} />
-          <SectionHead label="About" title="開催概要" light={dark} />
-          <Reveal delayMs={120}>
-            <div className={`relative mt-8 whitespace-pre-wrap text-lg font-medium leading-relaxed ${dark ? "text-zinc-300" : "text-zinc-800"}`}>
-              {event.description}
-            </div>
-          </Reveal>
-        </section>
-      )}
-
-      {/* ─── タイムテーブル ─── */}
-      {sessions.length > 0 && (
-        <section
-          id="sessions"
-          className={`relative scroll-mt-20 overflow-hidden py-20 sm:py-28 ${t.timetableBg} ${
-            event.template === "kodak" ? "border-y-2 border-zinc-950" : `border-y ${dark ? "border-white/15" : "border-zinc-200"}`
-          }`}
-        >
-          <div className="relative mx-auto max-w-4xl px-6">
-            <Ghost text="Schedule" light={t.ghostLight} />
-            <SectionHead label="Timetable" title="タイムテーブル" light={dark} />
-
-            {days.map(([day, daySessions], di) => (
-              <div key={day} className="mt-14">
-                {days.length > 1 && (
-                  <h3 className="flex items-baseline gap-4">
-                    <span className="text-3xl font-black tracking-tighter" style={{ color }}>
-                      DAY {di + 1}
-                    </span>
-                    <span className={`text-sm font-bold ${t.muted}`}>{day}</span>
-                  </h3>
-                )}
-                <ol
-                  className={`mt-6 ${
-                    event.template === "kodak"
-                      ? "divide-y-2 divide-zinc-950 border-y-2 border-zinc-950"
-                      : `divide-y border-y ${t.divide}`
-                  }`}
-                >
-                  {daySessions.map((s) => {
-                    const sessionSpeakers = s.speakerIds
-                      .map((sid) => speakerById.get(sid))
-                      .filter((sp): sp is PublicSpeaker => !!sp);
-                    return (
-                      <li key={s.id} className="py-7 sm:flex sm:gap-10">
-                        <div className="w-36 shrink-0">
-                          <p className="font-mono text-lg font-black tabular-nums leading-none">
-                            {timeFmt.format(s.startsAt)}
-                          </p>
-                          <p className={`mt-1 font-mono text-xs font-bold tabular-nums ${t.muted}`}>
-                            – {timeFmt.format(s.endsAt)}
-                          </p>
-                          {s.track && (
-                            <span
-                              className="mt-3 inline-block rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white"
-                              style={{ backgroundColor: color }}
-                            >
-                              {s.track}
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-4 flex-1 sm:mt-0">
-                          <h4 className="text-2xl font-black leading-tight tracking-tight">
-                            {s.title}
-                          </h4>
-                          {s.description && (
-                            <p className={`mt-3 text-sm leading-relaxed ${t.muted}`}>
-                              {s.description}
-                            </p>
-                          )}
-                          {sessionSpeakers.length > 0 && (
-                            <div className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
-                              {sessionSpeakers.map((sp) => (
-                                <Link
-                                  key={sp.id}
-                                  href={`/e/${event.slug}/speakers/${sp.id}`}
-                                  className="group flex items-center gap-2.5"
-                                >
-                                  <SmallAvatar speaker={sp} dark={dark} />
-                                  <span className="leading-tight">
-                                    <span className="block text-sm font-black group-hover:underline">
-                                      {sp.name}
-                                    </span>
-                                    <span className={`block text-[11px] font-bold uppercase tracking-wider ${t.muted}`}>
-                                      {[sp.company, sp.title].filter(Boolean).join(" / ")}
-                                    </span>
-                                  </span>
-                                </Link>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ol>
+            <nav className="flex items-center gap-5 text-sm">
+              <div className={`hidden items-center gap-5 font-bold sm:flex ${t.navLink}`}>
+                {event.description && <a href="#about">概要</a>}
+                {sessions.length > 0 && <a href="#sessions">タイムテーブル</a>}
+                {speakers.length > 0 && <a href="#speakers">登壇者</a>}
               </div>
-            ))}
+              {hasTickets && (
+                <Link
+                  href={registerHref}
+                  className="rounded-full px-5 py-1.5 text-sm font-black text-white hover:opacity-85"
+                  style={{ backgroundColor: dark || t.id === "aurora" ? color : "#09090b" }}
+                >
+                  参加登録
+                </Link>
+              )}
+            </nav>
           </div>
-        </section>
-      )}
+        </header>
 
-      {/* ─── 登壇者 ─── */}
-      {speakers.length > 0 && (
-        <section
-          id="speakers"
-          className={`relative scroll-mt-20 overflow-hidden py-20 sm:py-28 ${
-            event.template === "aurora" ? "" : "bg-zinc-950 text-white"
-          }`}
-        >
-          {event.template !== "aurora" && <Grain opacity={0.25} />}
-          <div className="relative mx-auto max-w-6xl px-6">
-            <Ghost text="Speakers" light={event.template !== "aurora"} />
-            <SectionHead label="Speakers" title="登壇者" light={event.template !== "aurora"} />
-            <div className="mt-14 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-4">
-              {speakers.map((sp, i) => (
-                <Reveal key={sp.id} delayMs={(i % 4) * 90}>
-                  <Link href={`/e/${event.slug}/speakers/${sp.id}`} className="group block">
-                    <div
-                      className={`relative aspect-square overflow-hidden ${event.template === "aurora" ? "rounded-3xl" : ""}`}
-                      style={{ backgroundColor: color }}
-                    >
-                      {sp.photoUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={sp.photoUrl}
-                          alt={sp.name}
-                          className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04] ${
-                            event.template === "aurora" ? "" : "grayscale mix-blend-luminosity"
-                          }`}
-                        />
-                      ) : (
-                        <span className="flex h-full w-full items-center justify-center text-7xl font-black text-zinc-950/70">
-                          {sp.name.charAt(0)}
-                        </span>
-                      )}
-                      {event.template !== "aurora" && <Grain opacity={0.3} blend="soft-light" />}
-                    </div>
-                    <p
-                      className="mt-4 border-l-2 pl-3 text-lg font-black leading-tight tracking-tight group-hover:underline"
-                      style={{ borderColor: color }}
-                    >
-                      {sp.name}
-                    </p>
-                    <p
-                      className={`mt-1 pl-3 text-[11px] font-bold uppercase leading-relaxed tracking-[0.15em] ${
-                        event.template === "aurora" ? "text-zinc-500" : "text-zinc-400"
-                      }`}
-                    >
-                      {[sp.company, sp.title].filter(Boolean).join(" / ")}
-                    </p>
-                  </Link>
-                </Reveal>
-              ))}
+        {/* ─── ファーストビュー(100svh) ─── */}
+        <section className="relative flex min-h-[100svh] flex-col justify-center">
+          <div className="mx-auto w-full max-w-6xl px-6 pb-24 pt-10">
+            <div className="lp-fade-up flex flex-wrap gap-x-12 gap-y-4" style={{ animationDelay: "1.15s" }}>
+              <Spec label="Date" value={dateValue} />
+              <Spec label="Venue" value={event.venueName || "Online"} />
+              <Spec
+                label="Doors"
+                value={`${timeFmt.format(event.startsAt)} – ${timeFmt.format(event.endsAt)}`}
+              />
             </div>
-          </div>
-        </section>
-      )}
 
-      {/* ─── チケット ─── */}
-      <section
-        id="tickets"
-        className={`relative scroll-mt-20 overflow-hidden py-20 sm:py-28 ${
-          event.template === "kodak" ? "border-t-2 border-zinc-950" : `border-t ${dark ? "border-white/15" : "border-zinc-200"}`
-        }`}
-      >
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              event.template === "noir"
-                ? `radial-gradient(ellipse 90% 90% at 50% 0%, ${color}55, #09090b 70%)`
-                : `linear-gradient(165deg, ${color} 0%, ${color} 55%, ${t.paper} 160%)`,
-          }}
-        />
-        {event.template !== "aurora" && <Grain opacity={0.3} />}
-        <div className="relative mx-auto max-w-4xl px-6">
-          <SectionHead
-            label="Tickets"
-            title="チケット"
-            light={event.template === "noir"}
-          />
-          {!hasTickets ? (
-            <p className={`mt-6 font-bold ${event.template === "noir" ? "text-white/70" : "text-zinc-950/70"}`}>
-              チケットは準備中です。公開までお待ちください。
-            </p>
-          ) : (
-            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {tickets.map((tk, i) => (
-                <Reveal key={tk.id} delayMs={i * 100}>
-                  <div
-                    className={`flex h-full flex-col p-7 ${t.radius} ${
-                      event.template === "noir"
-                        ? "border border-white/20 bg-zinc-950/70 text-white"
-                        : event.template === "aurora"
-                          ? "bg-white/90 shadow-lg shadow-black/5 backdrop-blur"
-                          : "border-2 border-zinc-950 bg-[#f6f5f2] text-zinc-950"
+            {event.tagline && (
+              <p
+                className="lp-fade-up mt-12 text-xl font-black tracking-tight sm:text-3xl"
+                style={{ animationDelay: "0.95s", color: dark ? "#fff" : "#18181b" }}
+              >
+                {event.tagline}
+              </p>
+            )}
+
+            {/* タイトルは「バーン」と出す */}
+            <h1
+              className={`lp-burst ${event.tagline ? "mt-4" : "mt-12"} max-w-6xl break-words text-6xl font-black leading-[0.95] tracking-tighter sm:text-8xl lg:text-[9.5rem]`}
+              style={{ animationDelay: "0.45s" }}
+            >
+              {event.title}
+            </h1>
+
+            {hasTickets && (
+              <div
+                className="lp-fade-up mt-12 flex flex-wrap items-center gap-4"
+                style={{ animationDelay: "1.3s" }}
+              >
+                <Link
+                  href={registerHref}
+                  className="rounded-full px-9 py-4 text-base font-black text-white transition-transform hover:scale-[1.02]"
+                  style={{
+                    backgroundColor: dark || t.id === "aurora" ? color : "#09090b",
+                    boxShadow: dark ? `0 8px 40px ${color}66` : undefined,
+                  }}
+                >
+                  参加登録はこちら →
+                </Link>
+                {sessions.length > 0 && (
+                  <a
+                    href="#sessions"
+                    className={`rounded-full px-7 py-3.5 text-sm font-black ${
+                      dark
+                        ? "border border-white/30 text-white hover:bg-white/10"
+                        : "border-2 border-zinc-950 hover:bg-zinc-950 hover:text-white"
                     }`}
                   >
-                    <p className={`text-[10px] font-black uppercase tracking-[0.3em] ${t.muted}`}>
-                      1 ticket
-                    </p>
-                    <p className="mt-1 text-xl font-black tracking-tight">{tk.name}</p>
-                    {tk.description && (
-                      <p className={`mt-1 text-sm font-medium ${t.muted}`}>{tk.description}</p>
-                    )}
-                    <p className="mt-8 text-5xl font-black tabular-nums tracking-tighter">
-                      {formatJpy(tk.priceJpy)}
-                    </p>
-                    <div className="mt-8 flex-1" />
-                    {tk.soldOut ? (
-                      <span className={`py-3 text-center text-sm font-black ${t.radius} ${
-                        event.template === "noir" ? "border border-white/20 text-white/40" : "border-2 border-zinc-300 text-zinc-400"
-                      }`}>
-                        SOLD OUT
-                      </span>
-                    ) : (
-                      <Link
-                        href={`${registerHref}?ticket=${tk.id}`}
-                        className={`py-3.5 text-center text-sm font-black text-white hover:opacity-85 ${t.radius}`}
-                        style={{
-                          backgroundColor: event.template === "kodak" ? "#09090b" : color,
-                        }}
-                      >
-                        このチケットで申し込む →
-                      </Link>
-                    )}
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+                    タイムテーブル
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
 
-      {/* ─── 締めのCTA ─── */}
-      {hasTickets && (
-        <section className={`relative overflow-hidden py-24 text-center ${
-          event.template === "aurora" ? "bg-white" : "border-t-2 border-zinc-950 bg-zinc-950 text-white"
-        }`}>
-          {event.template !== "aurora" && <Grain opacity={0.25} />}
-          <div className="relative mx-auto max-w-4xl px-6">
+          {/* スクロールキュー */}
+          <div
+            className="lp-fade-up absolute bottom-8 left-6 flex flex-col items-center gap-3 sm:left-10"
+            style={{ animationDelay: "1.6s" }}
+          >
+            <span className="text-[10px] font-black uppercase tracking-[0.35em] opacity-60 [writing-mode:vertical-rl]">
+              Scroll
+            </span>
+            <span className={`lp-scroll-line block h-14 w-px ${dark ? "bg-white/60" : "bg-zinc-950/60"}`} />
+          </div>
+        </section>
+
+        <Marquee event={event} t={t} />
+
+        {/* ─── 統計 ─── */}
+        {sessions.length > 0 && (
+          <div className="mx-auto max-w-6xl px-6">
+            <Panel t={t}>
+              <div className="grid grid-cols-2 sm:grid-cols-4">
+                {stats.map(([label, value], i) => (
+                  <Reveal key={label} delayMs={i * 90}>
+                    <div
+                      className={`flex flex-col items-center py-8 ${
+                        t.id === "kodak" ? "border-zinc-950" : dark ? "border-white/15" : "border-zinc-200"
+                      } ${i > 0 ? (t.id === "kodak" ? "sm:border-l-2" : "sm:border-l") : ""}`}
+                    >
+                      <span className="text-5xl font-black tabular-nums tracking-tighter">
+                        {value}
+                      </span>
+                      <span className={`mt-2 font-mono text-[11px] font-bold uppercase tracking-[0.3em] ${t.muted}`}>
+                        [{label}]
+                      </span>
+                    </div>
+                  </Reveal>
+                ))}
+              </div>
+            </Panel>
+          </div>
+        )}
+
+        {/* ─── カウントダウン ─── */}
+        <div className="mx-auto mt-16 max-w-6xl px-6 sm:mt-24">
+          <CountdownBand
+            targetIso={event.startsAt.toISOString()}
+            className={`relative overflow-hidden py-14 text-white ${
+              t.id === "aurora"
+                ? "rounded-3xl bg-zinc-950/90 backdrop-blur"
+                : t.id === "noir"
+                  ? "border border-white/15 bg-zinc-950/80 backdrop-blur"
+                  : "border-2 border-zinc-950 bg-zinc-950/90 backdrop-blur"
+            }`}
+          />
+        </div>
+
+        {/* ─── 概要 ─── */}
+        {event.description && (
+          <section id="about" className="relative mx-auto max-w-4xl scroll-mt-24 px-6 pt-24 sm:pt-32">
+            <Ghost text="About" light={t.ghostLight} />
+            <Panel t={t} className="p-8 sm:p-12">
+              <SectionHead label="About" title="開催概要" light={dark} />
+              <Reveal delayMs={120}>
+                <div className={`mt-8 whitespace-pre-wrap text-lg font-medium leading-relaxed ${dark ? "text-zinc-300" : "text-zinc-800"}`}>
+                  {event.description}
+                </div>
+              </Reveal>
+            </Panel>
+          </section>
+        )}
+
+        {/* ─── タイムテーブル ─── */}
+        {sessions.length > 0 && (
+          <section id="sessions" className="relative mx-auto max-w-4xl scroll-mt-24 px-6 pt-24 sm:pt-32">
+            <Ghost text="Schedule" light={t.ghostLight} />
+            <Panel t={t} className="p-8 sm:p-12">
+              <SectionHead label="Timetable" title="タイムテーブル" light={dark} />
+              {days.map(([day, daySessions], di) => (
+                <div key={day} className="mt-12">
+                  {days.length > 1 && (
+                    <h3 className="flex items-baseline gap-4">
+                      <span className="text-3xl font-black tracking-tighter" style={{ color }}>
+                        DAY {di + 1}
+                      </span>
+                      <span className={`text-sm font-bold ${t.muted}`}>{day}</span>
+                    </h3>
+                  )}
+                  <ol
+                    className={`mt-6 ${
+                      t.id === "kodak"
+                        ? "divide-y-2 divide-zinc-950 border-y-2 border-zinc-950"
+                        : `divide-y border-y ${t.divide}`
+                    }`}
+                  >
+                    {daySessions.map((s) => {
+                      const sessionSpeakers = s.speakerIds
+                        .map((sid) => speakerById.get(sid))
+                        .filter((sp): sp is PublicSpeaker => !!sp);
+                      return (
+                        <li key={s.id} className="py-7 sm:flex sm:gap-10">
+                          <div className="w-36 shrink-0">
+                            <p className="font-mono text-lg font-black tabular-nums leading-none">
+                              {timeFmt.format(s.startsAt)}
+                            </p>
+                            <p className={`mt-1 font-mono text-xs font-bold tabular-nums ${t.muted}`}>
+                              – {timeFmt.format(s.endsAt)}
+                            </p>
+                            {s.track && (
+                              <span
+                                className="mt-3 inline-block rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white"
+                                style={{ backgroundColor: color }}
+                              >
+                                {s.track}
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-4 flex-1 sm:mt-0">
+                            <h4 className="text-2xl font-black leading-tight tracking-tight">
+                              {s.title}
+                            </h4>
+                            {s.description && (
+                              <p className={`mt-3 text-sm leading-relaxed ${t.muted}`}>
+                                {s.description}
+                              </p>
+                            )}
+                            {sessionSpeakers.length > 0 && (
+                              <div className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
+                                {sessionSpeakers.map((sp) => (
+                                  <Link
+                                    key={sp.id}
+                                    href={`/e/${event.slug}/speakers/${sp.id}`}
+                                    className="group flex items-center gap-2.5"
+                                  >
+                                    <SmallAvatar speaker={sp} dark={dark} />
+                                    <span className="leading-tight">
+                                      <span className="block text-sm font-black group-hover:underline">
+                                        {sp.name}
+                                      </span>
+                                      <span className={`block text-[11px] font-bold uppercase tracking-wider ${t.muted}`}>
+                                        {[sp.company, sp.title].filter(Boolean).join(" / ")}
+                                      </span>
+                                    </span>
+                                  </Link>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </div>
+              ))}
+            </Panel>
+          </section>
+        )}
+
+        {/* ─── 登壇者 ─── */}
+        {speakers.length > 0 && (
+          <section id="speakers" className="relative mx-auto max-w-6xl scroll-mt-24 px-6 pt-24 sm:pt-32">
+            <Ghost text="Speakers" light={t.ghostLight} />
+            <Panel
+              t={t}
+              className={`p-8 sm:p-12 ${t.id === "aurora" ? "" : "!bg-zinc-950/85 text-white"}`}
+            >
+              {t.id !== "aurora" && <Grain opacity={0.2} />}
+              <div className="relative">
+                <SectionHead label="Speakers" title="登壇者" light={t.id !== "aurora"} />
+                <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-4">
+                  {speakers.map((sp, i) => (
+                    <Reveal key={sp.id} delayMs={(i % 4) * 90}>
+                      <Link href={`/e/${event.slug}/speakers/${sp.id}`} className="group block">
+                        <div
+                          className={`relative aspect-square overflow-hidden ${t.id === "aurora" ? "rounded-3xl" : ""}`}
+                          style={{ backgroundColor: color }}
+                        >
+                          {sp.photoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={sp.photoUrl}
+                              alt={sp.name}
+                              className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04] ${
+                                t.id === "aurora" ? "" : "grayscale mix-blend-luminosity"
+                              }`}
+                            />
+                          ) : (
+                            <span className="flex h-full w-full items-center justify-center text-7xl font-black text-zinc-950/70">
+                              {sp.name.charAt(0)}
+                            </span>
+                          )}
+                          {t.id !== "aurora" && <Grain opacity={0.3} blend="soft-light" />}
+                        </div>
+                        <p
+                          className="mt-4 border-l-2 pl-3 text-lg font-black leading-tight tracking-tight group-hover:underline"
+                          style={{ borderColor: color }}
+                        >
+                          {sp.name}
+                        </p>
+                        <p
+                          className={`mt-1 pl-3 text-[11px] font-bold uppercase leading-relaxed tracking-[0.15em] ${
+                            t.id === "aurora" ? "text-zinc-500" : "text-zinc-400"
+                          }`}
+                        >
+                          {[sp.company, sp.title].filter(Boolean).join(" / ")}
+                        </p>
+                      </Link>
+                    </Reveal>
+                  ))}
+                </div>
+              </div>
+            </Panel>
+          </section>
+        )}
+
+        {/* ─── チケット ─── */}
+        <section id="tickets" className="relative mx-auto max-w-6xl scroll-mt-24 px-6 pt-24 sm:pt-32">
+          <Ghost text="Tickets" light={t.ghostLight} />
+          <Panel t={t} className="p-8 sm:p-12">
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  t.id === "noir"
+                    ? `radial-gradient(ellipse 90% 100% at 50% 0%, ${color}44, transparent 70%)`
+                    : `linear-gradient(165deg, ${color}22 0%, transparent 60%)`,
+              }}
+            />
+            <div className="relative">
+              <SectionHead label="Tickets" title="チケット" light={dark} />
+              {!hasTickets ? (
+                <p className={`mt-6 font-bold ${t.muted}`}>
+                  チケットは準備中です。公開までお待ちください。
+                </p>
+              ) : (
+                <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {tickets.map((tk, i) => (
+                    <Reveal key={tk.id} delayMs={i * 100}>
+                      <div
+                        className={`flex h-full flex-col p-7 ${t.radius} ${
+                          t.id === "noir"
+                            ? "border border-white/20 bg-zinc-950/70"
+                            : t.id === "aurora"
+                              ? "bg-white shadow-lg shadow-black/5"
+                              : "border-2 border-zinc-950 bg-[#f6f5f2]"
+                        }`}
+                      >
+                        <p className={`text-[10px] font-black uppercase tracking-[0.3em] ${t.muted}`}>
+                          1 ticket
+                        </p>
+                        <p className="mt-1 text-xl font-black tracking-tight">{tk.name}</p>
+                        {tk.description && (
+                          <p className={`mt-1 text-sm font-medium ${t.muted}`}>{tk.description}</p>
+                        )}
+                        <p className="mt-8 text-5xl font-black tabular-nums tracking-tighter">
+                          {formatJpy(tk.priceJpy)}
+                        </p>
+                        <div className="mt-8 flex-1" />
+                        {tk.soldOut ? (
+                          <span
+                            className={`py-3 text-center text-sm font-black ${t.radius} ${
+                              t.id === "noir"
+                                ? "border border-white/20 text-white/40"
+                                : "border-2 border-zinc-300 text-zinc-400"
+                            }`}
+                          >
+                            SOLD OUT
+                          </span>
+                        ) : (
+                          <Link
+                            href={`${registerHref}?ticket=${tk.id}`}
+                            className={`py-3.5 text-center text-sm font-black text-white hover:opacity-85 ${t.radius}`}
+                            style={{ backgroundColor: t.id === "kodak" ? "#09090b" : color }}
+                          >
+                            このチケットで申し込む →
+                          </Link>
+                        )}
+                      </div>
+                    </Reveal>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Panel>
+        </section>
+
+        <Marquee event={event} t={t} />
+
+        {/* ─── 締めのCTA ─── */}
+        {hasTickets && (
+          <section className="relative mx-auto max-w-4xl px-6 pb-32 text-center">
             <Reveal>
-              <p className={`text-[11px] font-black uppercase tracking-[0.4em] ${event.template === "aurora" ? "text-zinc-400" : "text-white/50"}`}>
+              <p className={`text-[11px] font-black uppercase tracking-[0.4em] ${dark ? "text-white/50" : "text-zinc-950/50"}`}>
                 Join us
               </p>
               <p className="mt-4 text-4xl font-black tracking-tighter sm:text-6xl">
@@ -623,27 +667,24 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
               </p>
               <Link
                 href={registerHref}
-                className="mt-10 inline-block rounded-full px-10 py-4 text-base font-black transition-transform hover:scale-[1.02]"
-                style={
-                  event.template === "aurora"
-                    ? { backgroundColor: color, color: "#fff" }
-                    : { backgroundColor: "#f6f5f2", color: "#09090b" }
-                }
+                className="mt-10 inline-block rounded-full px-10 py-4 text-base font-black text-white transition-transform hover:scale-[1.02]"
+                style={{
+                  backgroundColor: dark || t.id === "aurora" ? color : "#09090b",
+                  boxShadow: dark ? `0 8px 40px ${color}66` : undefined,
+                }}
               >
                 参加登録はこちら →
               </Link>
             </Reveal>
-          </div>
-        </section>
-      )}
+          </section>
+        )}
 
-      <footer className={`py-8 text-center ${
-        event.template === "aurora" ? "border-t border-zinc-200 bg-white" : "border-t-2 border-zinc-950 bg-zinc-950"
-      }`}>
-        <p className={`text-[11px] font-black uppercase tracking-[0.35em] ${event.template === "aurora" ? "text-zinc-400" : "text-zinc-500"}`}>
-          Powered by <span className={event.template === "aurora" ? "text-zinc-900" : "text-white"}>GAO HUB</span>
-        </p>
-      </footer>
+        <footer className={`py-8 text-center backdrop-blur ${dark ? "bg-zinc-950/70" : "bg-zinc-950/90"}`}>
+          <p className="text-[11px] font-black uppercase tracking-[0.35em] text-zinc-500">
+            Powered by <span className="text-white">GAO HUB</span>
+          </p>
+        </footer>
+      </div>
     </main>
   );
 }

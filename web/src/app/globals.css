@@ -68,9 +68,90 @@ body {
   transform: translateY(0);
 }
 
+/* ファーストビュー: カーテンが上に抜けて開場する */
+@keyframes lp-curtain {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-101%);
+    visibility: hidden;
+  }
+}
+.lp-curtain {
+  animation: lp-curtain 0.9s cubic-bezier(0.77, 0, 0.18, 1) 0.2s forwards;
+}
+
+/* タイトルが「バーン」と出る(拡大+ブラーから収束) */
+@keyframes lp-burst {
+  0% {
+    opacity: 0;
+    transform: scale(1.55);
+    filter: blur(22px);
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+.lp-burst {
+  animation: lp-burst 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* マーキー(流れる帯)。中身を2回並べて -50% ループ */
+@keyframes lp-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.lp-marquee {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: lp-marquee 22s linear infinite;
+}
+
+/* スクロールキュー(下端の伸びる縦線) */
+@keyframes lp-scroll-line {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  45% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  55% {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+.lp-scroll-line {
+  animation: lp-scroll-line 1.8s cubic-bezier(0.77, 0, 0.18, 1) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lp-rise,
-  .lp-fade-up {
+  .lp-fade-up,
+  .lp-burst,
+  .lp-scroll-line {
+    animation: none;
+  }
+  .lp-curtain {
+    animation: none;
+    visibility: hidden;
+  }
+  .lp-marquee {
     animation: none;
   }
   .lp-reveal {
