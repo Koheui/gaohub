@@ -7,6 +7,7 @@ import {
   getPublishedEventBySlug,
 } from "@/lib/server/events";
 import { Grain } from "@/components/Grain";
+import { spectrumAccent, spectrumStops } from "@/lib/color";
 import { LP_THEMES } from "@/components/lp/theme";
 import { AnimatedTitle } from "@/components/lp/AnimatedTitle";
 
@@ -50,8 +51,9 @@ export default async function SpeakerDetailPage(props: {
   if (!speaker) notFound();
 
   const speakerSessions = sessions.filter((s) => s.speakerIds.includes(speakerId));
-  const color = event.themeColor;
   const t = LP_THEMES[event.template];
+  // spectrum はアクセントも背景と同じ生成パレットの第一色に揃える
+  const color = t.id === "spectrum" ? spectrumAccent(event.themeColor) : event.themeColor;
   const dark = t.mode === "dark";
 
   return (
@@ -86,7 +88,11 @@ export default async function SpeakerDetailPage(props: {
             background: dark
               ? `radial-gradient(ellipse 70% 80% at 80% 0%, ${color}66, #09090b 70%)`
               : t.id === "spectrum"
-                ? `radial-gradient(ellipse 60% 70% at 85% 0%, #ff3d00a8, transparent 60%), radial-gradient(ellipse 55% 60% at 45% 60%, #ff910088, transparent 62%), radial-gradient(ellipse 60% 55% at 0% 110%, #ffd60070, transparent 65%), ${t.paper}`
+                ? // 公開LPの背景キャンバスと同じテーマカラー由来のスペクトラムを使う
+                  (() => {
+                    const [c1, c2, c3] = spectrumStops(event.themeColor);
+                    return `radial-gradient(ellipse 60% 70% at 85% 0%, hsl(${c1} / 0.66), transparent 60%), radial-gradient(ellipse 55% 60% at 45% 60%, hsl(${c2} / 0.53), transparent 62%), radial-gradient(ellipse 60% 55% at 0% 110%, hsl(${c3} / 0.44), transparent 65%), ${t.paper}`;
+                  })()
                 : `linear-gradient(150deg, ${t.paper} 0%, ${t.paper} 45%, ${color} 130%)`,
           }}
         />

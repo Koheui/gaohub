@@ -11,6 +11,7 @@ import {
   type PublicSpeaker,
 } from "@/lib/server/events";
 import { formatJpy } from "@/lib/format";
+import { spectrumAccent, spectrumStops } from "@/lib/color";
 import { Grain } from "@/components/Grain";
 import { CountdownBand } from "@/components/Countdown";
 import { FixedBackdrop, Parallax, Reveal } from "@/components/motion";
@@ -181,18 +182,24 @@ function BackdropCanvas({ event, t }: { event: PublicEvent; t: LpTheme }) {
           }}
         />
       ) : t.id === "spectrum" ? (
-        // グレーのコンクリート地に赤→橙→黄→緑のスペクトラムを重ねる
-        <div
-          className="h-full w-full"
-          style={{
-            background: `
-              radial-gradient(ellipse 55% 38% at 88% 6%, #ff3d00b8, transparent 62%),
-              radial-gradient(ellipse 52% 36% at 58% 34%, #ff9100a6, transparent 62%),
-              radial-gradient(ellipse 55% 38% at 26% 62%, #ffd60096, transparent 62%),
-              radial-gradient(ellipse 62% 42% at -4% 96%, #00c85388, transparent 66%),
-              ${t.paper}`,
-          }}
-        />
+        // グレーのコンクリート地に、テーマカラーから生成した類縁色のスペクトラムを重ねる
+        // (アクセントカラーと背景を同じ色族に統一)
+        (() => {
+          const [c1, c2, c3, c4] = spectrumStops(color);
+          return (
+            <div
+              className="h-full w-full"
+              style={{
+                background: `
+                  radial-gradient(ellipse 55% 38% at 88% 6%, hsl(${c1} / 0.72), transparent 62%),
+                  radial-gradient(ellipse 52% 36% at 58% 34%, hsl(${c2} / 0.65), transparent 62%),
+                  radial-gradient(ellipse 55% 38% at 26% 62%, hsl(${c3} / 0.59), transparent 62%),
+                  radial-gradient(ellipse 62% 42% at -4% 96%, hsl(${c4} / 0.53), transparent 66%),
+                  ${t.paper}`,
+              }}
+            />
+          );
+        })()
       ) : (
         <div className="h-full w-full" style={{ backgroundColor: t.paper }}>
           <div
@@ -264,8 +271,10 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
   const speakerById = new Map(speakers.map((s) => [s.id, s]));
   const days = groupSessionsByDay(sessions);
   const tracks = [...new Set(sessions.map((s) => s.track).filter(Boolean))];
-  const color = event.themeColor;
   const t = LP_THEMES[event.template];
+  // spectrum はアクセントも背景と同じ生成パレットの第一色に揃える
+  // (テーマカラーの生値のままだと背景グラデーションと色味がズレるため)
+  const color = t.id === "spectrum" ? spectrumAccent(event.themeColor) : event.themeColor;
   const dark = t.mode === "dark";
   const registerHref = `/e/${event.slug}/register`;
   const hasTickets = tickets.length > 0;
