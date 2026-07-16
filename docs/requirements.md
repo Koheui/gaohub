@@ -29,7 +29,9 @@
 2. **クリエイティブ**: カバー画像・登壇者写真をアップロード可能(Firebase Storage)。
    画像が無くてもテーマカラーからジェネレーティブな背景を自動生成し、素のまま公開しても様になる
 3. **テンプレート**: LPは複数テンプレートから選択可能(kodak=紙×グラデ×グレイン /
-   noir=ダーク×ネオン / aurora=メッシュグラデーション)。テーマカラーは全テンプレートに追従
+   spectrum=グレー地×テーマカラー由来のスペクトラムグラデーション(白も色として使う) /
+   aurora=メッシュグラデーション)。テーマカラーは全テンプレートに追従。spectrumは
+   アクセントカラーも背景と同じ生成パレット(`spectrumStops`)から取り、色味を統一する
 4. **モーション/没入感**: セクションが明確に分かれたレイアウトは採用しない(古く見える)。
    ページ全体を1枚の固定背景キャンバス(低速パララックス)とし、コンテンツは
    半透明パネルとして浮かべる。ファーストビューは100svh+開場カーテン+タイトルの
@@ -43,6 +45,26 @@
 - テナント = Organization(主催者組織)。1 Organization が複数イベントを持つ
 - 課金: Stripe Connect(Express)で主催者に売上を直接入金し、
   プラットフォーム手数料(application fee)を徴収するモデル
+
+### マスター管理者(Future Studio / プラットフォーム運営者)
+
+主催者へのデータフィードバック(コンサルティング的な価値提供)のため、全テナントを
+横断するアナリティクスが必要。`/admin` に専用のマスター管理画面を持つ。
+
+- **権限付与**: `src/lib/platformAdmin.ts` の `PLATFORM_ADMIN_EMAILS` にメールアドレスを
+  固定登録する方式(2026-07-17時点: kohei_oka@futurestudio.co.jp のみ)。Firestoreに
+  自己申告フラグを置く経路は作らない — 全テナントの個人情報・売上に及ぶ強い権限のため
+- **認可の仕組み**: クライアント側(`/admin/layout.tsx`)は表示制御のみ。実データは
+  必ず `/api/admin/*` 経由で取得し、サーバー側で ID トークンの署名済み `email` /
+  `email_verified` クレームを検証してから返す(`verifyPlatformAdmin`)。
+  クライアントから Firestore を直接横断クエリすることはできない
+- **見える指標**: プラットフォーム全体サマリー(組織数・イベント数・確定申込数・
+  プラットフォーム手数料/流通総額・イベントステータス内訳)、組織一覧(売上/申込数/
+  イベント数でソート・検索、ドリルダウン可)、組織別の詳細(イベントごとの申込・
+  チェックイン・売上)
+- **デザイン**: 主催者ダッシュボードとは反転したダーク基調(zinc-950)にして
+  「特別な管理者エリア」であることを視覚的に示す。統計カード・ステータス内訳バーの
+  配色は dataviz スキルの検証済みパレットを使用
 
 ## 3. MVP スコープ(フェーズ1: 集客〜決済〜受付)
 
@@ -148,6 +170,9 @@ registrations/{registrationId}          … コレクショングループで横
 /dashboard/events/[id]/attendees … 申込者一覧・CSV
 /dashboard/events/[id]/checkin  … PWA QRスキャナー
 /dashboard/settings/payments    … Stripe Connect オンボーディング
+/admin                          … マスター管理: プラットフォーム全体サマリー
+/admin/organizations            … マスター管理: 全組織一覧(検索・ソート)
+/admin/organizations/[orgId]    … マスター管理: 組織詳細(イベント別の申込・売上)
 /e/[slug]               … 公開イベントページ(LP)
 /e/[slug]/register      … 申込フォーム → Stripe Checkout
 /t/[ticketId]           … QRチケット表示(メールのリンク先)
@@ -156,6 +181,8 @@ registrations/{registrationId}          … コレクショングループで横
 /api/checkin            … qrToken 検証 + チェックイン記録
 /api/banner/[eventId]   … 告知バナー生成(?size=wide|square|story, ?download=1)
 /api/registrations/[id]/verification-image … 確認書類の画像を返す(org メンバーのみ)
+/api/admin/summary              … 全体サマリー+組織一覧(マスター管理者のみ)
+/api/admin/organizations/[orgId] … 組織詳細(マスター管理者のみ)
 ```
 
 告知バナーは公開LPと同じレンダラー(`src/lib/server/bannerImage.tsx`)を使い、

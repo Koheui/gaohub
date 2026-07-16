@@ -9,40 +9,50 @@ import { useAuth } from "@/components/AuthProvider";
 import { isPlatformAdminEmail } from "@/lib/platformAdmin";
 import { Grain } from "@/components/Grain";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const isAdmin = isPlatformAdminEmail(user?.email);
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/login");
-  }, [loading, user, router]);
+    if (loading) return;
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+    if (!isAdmin) {
+      router.replace("/dashboard");
+    }
+  }, [loading, user, isAdmin, router]);
 
-  if (loading || !user) {
+  if (loading || !user || !isAdmin) {
     return (
-      <div className="flex flex-1 items-center justify-center bg-[#f6f5f2] font-mono text-xs font-bold uppercase tracking-[0.3em] text-zinc-400">
+      <div className="flex flex-1 items-center justify-center bg-zinc-950 font-mono text-xs font-bold uppercase tracking-[0.3em] text-zinc-500">
         Loading…
       </div>
     );
   }
 
   const navItems = [
-    { href: "/dashboard", label: "イベント", active: !pathname.startsWith("/dashboard/settings") },
-    { href: "/dashboard/settings/payments", label: "決済設定", active: pathname.startsWith("/dashboard/settings") },
+    { href: "/admin", label: "サマリー", active: pathname === "/admin" },
+    { href: "/admin/organizations", label: "組織一覧", active: pathname.startsWith("/admin/organizations") },
   ];
 
   return (
-    <div className="relative flex flex-1 flex-col bg-[#f6f5f2] text-zinc-950">
-      {/* ごく薄いフィルムグレイン */}
+    <div className="relative flex flex-1 flex-col bg-zinc-950 text-white">
       <div className="pointer-events-none fixed inset-0 z-0">
-        <Grain opacity={0.14} />
+        <Grain opacity={0.18} />
       </div>
 
-      <header className="relative z-20 border-b-2 border-zinc-950 bg-[#f6f5f2]/90 backdrop-blur">
+      <header className="relative z-20 border-b border-white/15 bg-zinc-950/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
           <div className="flex items-center gap-8">
-            <Link href="/dashboard" className="text-lg font-black tracking-tighter">
-              GAO<span className="text-zinc-400"> </span>HUB
+            <Link href="/admin" className="flex items-center gap-2 text-lg font-black tracking-tighter">
+              GAO<span className="text-zinc-500"> </span>HUB
+              <span className="rounded-full bg-white px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-950">
+                Master
+              </span>
             </Link>
             <nav className="flex items-center gap-6">
               {navItems.map((item) => (
@@ -50,7 +60,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   key={item.href}
                   href={item.href}
                   className={`text-[11px] font-black uppercase tracking-[0.2em] transition-colors ${
-                    item.active ? "text-zinc-950" : "text-zinc-400 hover:text-zinc-950"
+                    item.active ? "text-white" : "text-zinc-500 hover:text-white"
                   }`}
                 >
                   {item.label}
@@ -59,23 +69,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </nav>
           </div>
           <div className="flex items-center gap-4">
-            {isPlatformAdminEmail(user.email) && (
-              <Link
-                href="/admin"
-                className="rounded-full bg-zinc-950 px-3 py-1 text-[11px] font-black uppercase tracking-[0.15em] text-white hover:bg-zinc-700"
-              >
-                Master
-              </Link>
-            )}
-            <span className="hidden font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 sm:block">
-              {user.email}
-            </span>
+            <Link
+              href="/dashboard"
+              className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white"
+            >
+              主催者ダッシュボードへ
+            </Link>
             <button
               onClick={async () => {
                 await signOut(auth);
                 router.push("/");
               }}
-              className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-zinc-950"
+              className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white"
             >
               Logout
             </button>
