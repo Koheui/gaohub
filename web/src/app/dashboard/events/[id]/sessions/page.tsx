@@ -288,7 +288,11 @@ export default function SessionsPage({ params }: { params: Promise<{ id: string 
         <div>
           <h1 className={ui.h1}>コンテンツ(セッション)</h1>
           <p className="mt-1 text-sm text-zinc-500">
-            登録したセッションは公開LPのタイムテーブルに自動で反映されます
+            登録したセッションは公開LPのタイムテーブルに自動で反映されます。
+            <Link href={`/dashboard/events/${id}/banner`} className="underline">
+              告知バナーも自動生成
+            </Link>
+            できます。
           </p>
         </div>
         {!adding && (

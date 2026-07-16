@@ -43,3 +43,24 @@ export function spectrumStops(themeColor: string): [string, string, string, stri
 export function spectrumAccent(themeColor: string): string {
   return `hsl(${spectrumStops(themeColor)[0]})`;
 }
+
+function hslToRgb(h: number, s: number, l: number): [number, number, number] {
+  const sN = s / 100;
+  const lN = l / 100;
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = sN * Math.min(lN, 1 - lN);
+  const f = (n: number) => lN - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
+}
+
+/**
+ * Satori(next/og の画像生成エンジン)は `hsl()` の対応が不安定なため、
+ * バナー/OG画像生成では spectrumStops の各ストップを rgba() 文字列に変換して使う。
+ */
+export function spectrumStopsRgba(themeColor: string, alpha: number): [string, string, string, string] {
+  return spectrumStops(themeColor).map((triplet) => {
+    const [h, s, l] = triplet.split(" ").map((v) => parseFloat(v));
+    const [r, g, b] = hslToRgb(h, s, l);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }) as [string, string, string, string];
+}

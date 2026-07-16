@@ -66,7 +66,7 @@
 - 出展者ブース・リアルタイムリードレポート
 - 交流/面談マッチング、メッセージ
 - セッション単位のチェックイン・満席管理
-- LPテンプレート複数化、OG画像の自動生成、簡易クリエイティブエディタ
+- 簡易クリエイティブエディタ
 - アンケート、アーカイブ配信、MA/CRM連携
 - カスタムドメイン(Cloudflare for SaaS)、多言語
 
@@ -134,6 +134,7 @@ registrations/{registrationId}          … コレクショングループで横
 /dashboard/events/new
 /dashboard/events/[id]          … 概要・申込状況(リアルタイム)・カバー画像
 /dashboard/events/[id]/sessions … セッション・登壇者管理(写真アップロード)
+/dashboard/events/[id]/banner   … 告知バナー自動生成(Wide/Square/Story・ダウンロード)
 /dashboard/events/[id]/tickets  … チケット種別管理
 /dashboard/events/[id]/attendees … 申込者一覧・CSV
 /dashboard/events/[id]/checkin  … PWA QRスキャナー
@@ -144,7 +145,13 @@ registrations/{registrationId}          … コレクショングループで横
 /api/checkout           … Checkout Session 作成
 /api/webhooks/stripe    … 決済確定 → registration confirm + メール送信
 /api/checkin            … qrToken 検証 + チェックイン記録
+/api/banner/[eventId]   … 告知バナー生成(?size=wide|square|story, ?download=1)
 ```
+
+告知バナーは公開LPと同じレンダラー(`src/lib/server/bannerImage.tsx`)を使い、
+`opengraph-image.tsx`(SNSシェア時の自動プレビュー)とダッシュボードの
+バナーダウンロード機能の両方から呼び出す。テンプレート・テーマカラー・
+登壇者の顔写真はイベントの設定からそのまま反映され、手動でのデザイン作業は不要。
 
 ## 7. 非機能要件
 

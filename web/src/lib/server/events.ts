@@ -46,18 +46,9 @@ export interface PublicSession {
   speakerIds: string[];
 }
 
-export async function getPublishedEventBySlug(slug: string): Promise<PublicEvent | null> {
-  const snap = await adminDb()
-    .collection("events")
-    .where("slug", "==", slug)
-    .where("status", "==", "published")
-    .limit(1)
-    .get();
-  if (snap.empty) return null;
-  const doc = snap.docs[0];
-  const d = doc.data();
+function toPublicEvent(id: string, d: FirebaseFirestore.DocumentData): PublicEvent {
   return {
-    id: doc.id,
+    id,
     slug: d.slug,
     title: d.title,
     tagline: d.tagline ?? "",
@@ -70,6 +61,25 @@ export async function getPublishedEventBySlug(slug: string): Promise<PublicEvent
     startsAt: d.startsAt.toDate(),
     endsAt: d.endsAt.toDate(),
   };
+}
+
+export async function getPublishedEventBySlug(slug: string): Promise<PublicEvent | null> {
+  const snap = await adminDb()
+    .collection("events")
+    .where("slug", "==", slug)
+    .where("status", "==", "published")
+    .limit(1)
+    .get();
+  if (snap.empty) return null;
+  const doc = snap.docs[0];
+  return toPublicEvent(doc.id, doc.data());
+}
+
+/** ダッシュボード(バナー生成など)向け: 公開状態を問わず取得する */
+export async function getEventById(eventId: string): Promise<PublicEvent | null> {
+  const snap = await adminDb().doc(`events/${eventId}`).get();
+  if (!snap.exists) return null;
+  return toPublicEvent(snap.id, snap.data()!);
 }
 
 export async function getPublicTicketTypes(eventId: string): Promise<PublicTicketType[]> {
