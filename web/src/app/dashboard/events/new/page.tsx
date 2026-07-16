@@ -12,6 +12,7 @@ import {
 import { db } from "@/lib/firebase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { EventForm, eventToFormValues, type EventFormValues } from "@/components/EventForm";
+import { ui } from "@/lib/ui";
 
 export default function NewEventPage() {
   const { profile } = useAuth();
@@ -50,7 +51,7 @@ export default function NewEventPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">新規イベント</h1>
+      <h1 className={ui.h1}>新規イベント</h1>
       <div className="mt-6">
         <EventForm
           initial={eventToFormValues()}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { EventDoc, EventTemplate } from "@/lib/types";
+import { ui } from "@/lib/ui";
 
 export interface EventFormValues {
   title: string;
@@ -61,8 +62,8 @@ export function eventToFormValues(ev?: EventDoc): EventFormValues {
   };
 }
 
-const label = "block text-sm font-medium text-zinc-700";
-const input = "mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm";
+const label = ui.label;
+const input = ui.input;
 
 export function EventForm({
   initial,
@@ -227,7 +228,7 @@ export function EventForm({
       <button
         type="submit"
         disabled={busy}
-        className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
+        className={ui.btn}
       >
         {submitLabel}
       </button>

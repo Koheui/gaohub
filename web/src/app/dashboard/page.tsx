@@ -16,11 +16,12 @@ import { db } from "@/lib/firebase/client";
 import { useAuth } from "@/components/AuthProvider";
 import type { EventDoc } from "@/lib/types";
 import { formatDateTime } from "@/lib/format";
+import { ui, chip } from "@/lib/ui";
 
-const statusLabel: Record<EventDoc["status"], string> = {
-  draft: "下書き",
-  published: "公開中",
-  ended: "終了",
+const statusLabel: Record<EventDoc["status"], { text: string; tone: "ok" | "warn" | "mute" }> = {
+  draft: { text: "Draft", tone: "mute" },
+  published: { text: "Live", tone: "ok" },
+  ended: { text: "Ended", tone: "warn" },
 };
 
 function CreateOrgForm({ uid }: { uid: string }) {
@@ -56,25 +57,25 @@ function CreateOrgForm({ uid }: { uid: string }) {
 
   return (
     <div className="max-w-md">
-      <h1 className="text-2xl font-bold">主催者情報の登録</h1>
-      <p className="mt-2 text-sm text-zinc-600">
+      <p className={ui.label}>Setup</p>
+      <h1 className={`mt-2 ${ui.h1}`}>主催者情報の登録</h1>
+      <p className="mt-3 text-sm font-medium text-zinc-600">
         イベントを開催する組織(会社・チーム)の名前を登録してください。
       </p>
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        <input
-          required
-          placeholder="組織名(例: Future Studio)"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm"
-        />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={busy}
-          className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
-        >
-          登録してはじめる
+      <form onSubmit={handleSubmit} className={`mt-8 space-y-5 p-6 ${ui.card}`}>
+        <div>
+          <label className={ui.label}>組織名</label>
+          <input
+            required
+            placeholder="例: Future Studio"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={ui.input}
+          />
+        </div>
+        {error && <p className="text-sm font-bold text-red-600">{error}</p>}
+        <button type="submit" disabled={busy} className={ui.btn}>
+          登録してはじめる →
         </button>
       </form>
     </div>
@@ -97,53 +98,44 @@ function EventList({ orgId }: { orgId: string }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">イベント</h1>
-        <Link
-          href="/dashboard/events/new"
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
-        >
+      <div className="flex items-end justify-between">
+        <div>
+          <p className={ui.label}>Events</p>
+          <h1 className={`mt-2 ${ui.h1}`}>イベント</h1>
+        </div>
+        <Link href="/dashboard/events/new" className={ui.btn}>
           + 新規イベント
         </Link>
       </div>
 
       {events === null ? (
-        <p className="mt-8 text-sm text-zinc-400">読み込み中…</p>
+        <p className="mt-10 font-mono text-xs font-bold uppercase tracking-[0.3em] text-zinc-400">
+          Loading…
+        </p>
       ) : events.length === 0 ? (
-        <div className="mt-8 rounded-2xl border border-dashed border-zinc-300 p-12 text-center">
-          <p className="text-zinc-500">まだイベントがありません。</p>
-          <Link
-            href="/dashboard/events/new"
-            className="mt-4 inline-block rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-700"
-          >
-            最初のイベントを作る
+        <div className={`mt-10 ${ui.empty}`}>
+          <p className="font-medium text-zinc-500">まだイベントがありません。</p>
+          <Link href="/dashboard/events/new" className={`mt-6 ${ui.btn}`}>
+            最初のイベントを作る →
           </Link>
         </div>
       ) : (
-        <ul className="mt-6 divide-y divide-zinc-100 rounded-2xl border border-zinc-200">
+        <ul className={`mt-8 divide-y-2 divide-zinc-950 ${ui.card}`}>
           {events.map((ev) => (
             <li key={ev.id}>
               <Link
                 href={`/dashboard/events/${ev.id}`}
-                className="flex items-center justify-between px-5 py-4 hover:bg-zinc-50"
+                className="group flex items-center justify-between px-6 py-5 transition-colors hover:bg-zinc-950 hover:text-white"
               >
                 <div>
-                  <p className="font-medium">{ev.title}</p>
-                  <p className="mt-0.5 text-sm text-zinc-500">
+                  <p className="text-lg font-black tracking-tight">{ev.title}</p>
+                  <p className="mt-1 font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500 group-hover:text-zinc-400">
                     {ev.startsAt ? formatDateTime(ev.startsAt.toDate()) : "日時未定"} ・{" "}
-                    {ev.venueName || "会場未定"}
+                    {ev.venueName || "会場未定"} ・ /e/{ev.slug}
                   </p>
                 </div>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${
-                    ev.status === "published"
-                      ? "bg-emerald-50 text-emerald-700"
-                      : ev.status === "draft"
-                        ? "bg-zinc-100 text-zinc-600"
-                        : "bg-amber-50 text-amber-700"
-                  }`}
-                >
-                  {statusLabel[ev.status]}
+                <span className={chip(statusLabel[ev.status].tone)}>
+                  [{statusLabel[ev.status].text}]
                 </span>
               </Link>
             </li>
@@ -157,7 +149,12 @@ function EventList({ orgId }: { orgId: string }) {
 export default function DashboardPage() {
   const { user, profile } = useAuth();
   if (!user) return null;
-  if (!profile) return <p className="text-sm text-zinc-400">読み込み中…</p>;
+  if (!profile)
+    return (
+      <p className="font-mono text-xs font-bold uppercase tracking-[0.3em] text-zinc-400">
+        Loading…
+      </p>
+    );
   if (!profile.orgId) return <CreateOrgForm uid={user.uid} />;
   return <EventList orgId={profile.orgId} />;
 }

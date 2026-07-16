@@ -15,9 +15,10 @@ import {
 import { db } from "@/lib/firebase/client";
 import type { TicketType } from "@/lib/types";
 import { formatJpy } from "@/lib/format";
+import { ui } from "@/lib/ui";
 
-const label = "block text-sm font-medium text-zinc-700";
-const input = "mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm";
+const label = ui.label;
+const input = ui.input;
 
 export default function TicketsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -74,21 +75,21 @@ export default function TicketsPage({ params }: { params: Promise<{ id: string }
 
   return (
     <div>
-      <Link href={`/dashboard/events/${id}`} className="text-sm text-zinc-500 hover:text-zinc-900">
+      <Link href={`/dashboard/events/${id}`} className={ui.back}>
         ← イベント概要
       </Link>
       <div className="mt-2 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">チケット</h1>
+        <h1 className={ui.h1}>チケット</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
+          className={ui.btn}
         >
           {showForm ? "閉じる" : "+ チケット種別を追加"}
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleCreate} className="mt-6 max-w-xl space-y-4 rounded-2xl border border-zinc-200 p-6">
+        <form onSubmit={handleCreate} className="mt-6 max-w-xl space-y-4 border-2 border-zinc-950 bg-white p-6">
           <div>
             <label className={label}>チケット名 *</label>
             <input required value={name} onChange={(e) => setName(e.target.value)} className={input} placeholder="例: 一般 / 早割 / VIP" />
@@ -111,7 +112,7 @@ export default function TicketsPage({ params }: { params: Promise<{ id: string }
           <button
             type="submit"
             disabled={busy}
-            className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
+            className={ui.btn}
           >
             追加する
           </button>
@@ -125,7 +126,7 @@ export default function TicketsPage({ params }: { params: Promise<{ id: string }
           チケット種別がまだありません。有料・無料どちらも作成できます。
         </p>
       ) : (
-        <ul className="mt-6 divide-y divide-zinc-100 rounded-2xl border border-zinc-200">
+        <ul className="mt-6 divide-y divide-zinc-100 border-2 border-zinc-950 bg-white">
           {tickets.map((t) => (
             <li key={t.id} className="flex items-center justify-between px-5 py-4">
               <div>

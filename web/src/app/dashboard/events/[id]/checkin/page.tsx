@@ -6,6 +6,7 @@ import { Html5Qrcode } from "html5-qrcode";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { ui } from "@/lib/ui";
 
 type ScanResult = {
   result: "ok" | "already" | "invalid";
@@ -112,13 +113,13 @@ export default function CheckinPage({ params }: { params: Promise<{ id: string }
 
   return (
     <div className="mx-auto max-w-md">
-      <Link href={`/dashboard/events/${id}`} className="text-sm text-zinc-500 hover:text-zinc-900">
+      <Link href={`/dashboard/events/${id}`} className={ui.back}>
         ← イベント概要
       </Link>
-      <h1 className="mt-2 text-2xl font-bold">受付(QRスキャン)</h1>
+      <h1 className={`mt-2 ${ui.h1}`}>受付(QRスキャン)</h1>
 
       <div className="mt-4 flex gap-4">
-        <div className="flex-1 rounded-2xl border border-zinc-200 p-4 text-center">
+        <div className="flex-1 border-2 border-zinc-950 bg-white p-4 text-center">
           <p className="text-xs text-zinc-500">チェックイン</p>
           <p className="text-2xl font-bold tabular-nums">
             {stats.checkedIn}
@@ -138,7 +139,7 @@ export default function CheckinPage({ params }: { params: Promise<{ id: string }
       </div>
 
       {scanning && (
-        <div className="mt-4 overflow-hidden rounded-2xl border border-zinc-200">
+        <div className="mt-4 overflow-hidden border-2 border-zinc-950 bg-white">
           <div id={READER_ID} />
         </div>
       )}

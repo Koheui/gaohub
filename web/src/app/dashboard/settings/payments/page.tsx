@@ -5,6 +5,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/client";
 import { useAuth } from "@/components/AuthProvider";
 import type { Organization } from "@/lib/types";
+import { ui } from "@/lib/ui";
 
 export default function PaymentsSettingsPage() {
   const { profile } = useAuth();
@@ -41,13 +42,13 @@ export default function PaymentsSettingsPage() {
 
   return (
     <div className="max-w-xl">
-      <h1 className="text-2xl font-bold">決済設定</h1>
+      <h1 className={ui.h1}>決済設定</h1>
       <p className="mt-2 text-sm text-zinc-600">
         有料チケットを販売するには、Stripe アカウントの接続が必要です。売上は Stripe
         から主催者様の銀行口座へ直接入金されます。
       </p>
 
-      <div className="mt-8 rounded-2xl border border-zinc-200 p-6">
+      <div className="mt-8 border-2 border-zinc-950 bg-white p-6">
         {org?.stripeOnboarded ? (
           <div>
             <p className="font-medium text-emerald-700">✓ Stripe 接続済み</p>

@@ -16,9 +16,10 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import type { SessionDoc, SpeakerDoc } from "@/lib/types";
+import { ui } from "@/lib/ui";
 
-const label = "block text-sm font-medium text-zinc-700";
-const input = "mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm";
+const label = ui.label;
+const input = ui.input;
 
 interface SessionDraft {
   title: string;
@@ -135,7 +136,7 @@ function SessionForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 p-6"
+      className="space-y-4 border-2 border-zinc-950 bg-white p-6"
     >
       <div>
         <label className={label}>セッションタイトル *</label>
@@ -234,14 +235,14 @@ function SessionForm({
         <button
           type="submit"
           disabled={busy}
-          className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
+          className={ui.btn}
         >
           {sessionId ? "保存" : "追加する"}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-zinc-300 px-5 py-2.5 text-sm hover:bg-zinc-50"
+          className={ui.btnGhost}
         >
           キャンセル
         </button>
@@ -280,12 +281,12 @@ export default function SessionsPage({ params }: { params: Promise<{ id: string 
 
   return (
     <div>
-      <Link href={`/dashboard/events/${id}`} className="text-sm text-zinc-500 hover:text-zinc-900">
+      <Link href={`/dashboard/events/${id}`} className={ui.back}>
         ← イベント概要
       </Link>
       <div className="mt-2 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">コンテンツ(セッション)</h1>
+          <h1 className={ui.h1}>コンテンツ(セッション)</h1>
           <p className="mt-1 text-sm text-zinc-500">
             登録したセッションは公開LPのタイムテーブルに自動で反映されます
           </p>
@@ -293,7 +294,7 @@ export default function SessionsPage({ params }: { params: Promise<{ id: string 
         {!adding && (
           <button
             onClick={() => setAdding(true)}
-            className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
+            className={ui.btn}
           >
             + セッションを追加
           </button>
@@ -315,7 +316,7 @@ export default function SessionsPage({ params }: { params: Promise<{ id: string 
       {sessions === null ? (
         <p className="mt-8 text-sm text-zinc-400">読み込み中…</p>
       ) : sessions.length === 0 && !adding ? (
-        <div className="mt-8 rounded-2xl border border-dashed border-zinc-300 p-12 text-center">
+        <div className="mt-8 border-2 border-dashed border-zinc-300 bg-white/50 p-12 text-center">
           <p className="text-zinc-500">
             まだセッションがありません。トークセッションや基調講演を登録しましょう。
           </p>
@@ -344,7 +345,7 @@ export default function SessionsPage({ params }: { params: Promise<{ id: string 
             ) : (
               <li
                 key={s.id}
-                className="flex items-start justify-between rounded-2xl border border-zinc-200 p-5"
+                className="flex items-start justify-between border-2 border-zinc-950 bg-white p-5"
               >
                 <div className="flex gap-4">
                   <div className="w-28 shrink-0 text-sm tabular-nums text-zinc-500">

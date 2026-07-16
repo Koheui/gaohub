@@ -17,12 +17,15 @@ import type { EventDoc, Registration } from "@/lib/types";
 import { EventForm, eventToFormValues, type EventFormValues } from "@/components/EventForm";
 import { CoverImageUploader } from "@/components/CoverImageUploader";
 import { formatDateRange } from "@/lib/format";
+import { ui } from "@/lib/ui";
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl border border-zinc-200 p-5">
-      <p className="text-sm text-zinc-500">{label}</p>
-      <p className="mt-1 text-3xl font-bold tabular-nums">{value}</p>
+    <div className={`flex flex-col items-center py-7 ${ui.card}`}>
+      <span className="text-4xl font-black tabular-nums tracking-tighter">{value}</span>
+      <span className="mt-2 font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500">
+        [{label}]
+      </span>
     </div>
   );
 }
@@ -83,72 +86,65 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div>
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">{event.title}</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className={ui.label}>
             {formatDateRange(event.startsAt.toDate(), event.endsAt.toDate())}
           </p>
+          <h1 className={`mt-2 ${ui.h1}`}>{event.title}</h1>
           {event.status === "published" && (
             <a
               href={`/e/${event.slug}`}
               target="_blank"
-              className="mt-1 inline-block text-sm text-blue-600 underline"
+              className="mt-2 inline-block font-mono text-[11px] font-bold uppercase tracking-[0.15em] underline underline-offset-4 hover:opacity-60"
             >
-              公開ページを見る → /e/{event.slug}
+              公開ページ → /e/{event.slug} ↗
             </a>
           )}
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={togglePublish}
-            className={`rounded-lg px-4 py-2 text-sm font-medium ${
-              event.status === "published"
-                ? "border border-zinc-300 text-zinc-700 hover:bg-zinc-50"
-                : "bg-emerald-600 text-white hover:bg-emerald-500"
-            }`}
-          >
-            {event.status === "published" ? "非公開にする" : "公開する"}
-          </button>
-        </div>
+        <button
+          onClick={togglePublish}
+          className={event.status === "published" ? ui.btnGhost : ui.btn}
+        >
+          {event.status === "published" ? "非公開にする" : "公開する →"}
+        </button>
       </div>
 
-      <nav className="mt-6 flex gap-4 border-b border-zinc-200 text-sm">
-        <span className="border-b-2 border-zinc-900 pb-2 font-medium">概要</span>
-        <Link href={`/dashboard/events/${id}/sessions`} className="pb-2 text-zinc-500 hover:text-zinc-900">
-          コンテンツ
-        </Link>
-        <Link href={`/dashboard/events/${id}/speakers`} className="pb-2 text-zinc-500 hover:text-zinc-900">
-          登壇者
-        </Link>
-        <Link href={`/dashboard/events/${id}/tickets`} className="pb-2 text-zinc-500 hover:text-zinc-900">
-          チケット
-        </Link>
-        <Link href={`/dashboard/events/${id}/attendees`} className="pb-2 text-zinc-500 hover:text-zinc-900">
-          申込者
-        </Link>
-        <Link href={`/dashboard/events/${id}/checkin`} className="pb-2 text-zinc-500 hover:text-zinc-900">
-          受付(QRスキャン)
-        </Link>
+      <nav className="mt-8 flex flex-wrap gap-x-6 gap-y-2 border-b-2 border-zinc-950">
+        <span className="-mb-0.5 border-b-4 border-zinc-950 pb-2 text-[11px] font-black uppercase tracking-[0.2em]">
+          概要
+        </span>
+        {[
+          ["sessions", "コンテンツ"],
+          ["speakers", "登壇者"],
+          ["tickets", "チケット"],
+          ["attendees", "申込者"],
+          ["checkin", "受付 QR"],
+        ].map(([path, label]) => (
+          <Link
+            key={path}
+            href={`/dashboard/events/${id}/${path}`}
+            className="pb-2 text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-zinc-950"
+          >
+            {label}
+          </Link>
+        ))}
       </nav>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <Stat label="申込数(確定)" value={confirmed.length} />
-        <Stat label="チェックイン" value={checkedIn.length} />
-        <Stat label="売上" value={`¥${revenue.toLocaleString("ja-JP")}`} />
+      <div className="mt-8 grid gap-4 sm:grid-cols-3">
+        <Stat label="Confirmed" value={confirmed.length} />
+        <Stat label="Checked in" value={checkedIn.length} />
+        <Stat label="Revenue" value={`¥${revenue.toLocaleString("ja-JP")}`} />
       </div>
 
-      <div className="mt-10 rounded-2xl border border-zinc-200 p-6">
+      <div className={`mt-10 p-6 ${ui.card}`}>
         <CoverImageUploader eventId={id} coverImageUrl={event.coverImageUrl} />
       </div>
 
       <div className="mt-10">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">イベント情報</h2>
-          <button
-            onClick={() => setEditing((v) => !v)}
-            className="text-sm text-zinc-600 underline hover:text-zinc-900"
-          >
+          <h2 className={ui.h2}>イベント情報</h2>
+          <button onClick={() => setEditing((v) => !v)} className={ui.btnText}>
             {editing ? "閉じる" : "編集する"}
           </button>
         </div>

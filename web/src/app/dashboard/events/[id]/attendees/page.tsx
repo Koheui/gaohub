@@ -7,6 +7,7 @@ import { db } from "@/lib/firebase/client";
 import { useAuth } from "@/components/AuthProvider";
 import type { Registration } from "@/lib/types";
 import { formatJpy } from "@/lib/format";
+import { ui } from "@/lib/ui";
 
 const statusLabel: Record<Registration["status"], string> = {
   confirmed: "確定",
@@ -76,18 +77,18 @@ export default function AttendeesPage({ params }: { params: Promise<{ id: string
 
   return (
     <div>
-      <Link href={`/dashboard/events/${id}`} className="text-sm text-zinc-500 hover:text-zinc-900">
+      <Link href={`/dashboard/events/${id}`} className={ui.back}>
         ← イベント概要
       </Link>
       <div className="mt-2 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">
+        <h1 className={ui.h1}>
           申込者
           {regs && <span className="ml-2 text-base font-normal text-zinc-500">{regs.length}件</span>}
         </h1>
         <button
           onClick={downloadCsv}
           disabled={!regs?.length}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50 disabled:opacity-40"
+          className={ui.btnGhost}
         >
           CSVダウンロード
         </button>
@@ -98,7 +99,7 @@ export default function AttendeesPage({ params }: { params: Promise<{ id: string
       ) : regs.length === 0 ? (
         <p className="mt-8 text-sm text-zinc-500">まだ申込がありません。</p>
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-zinc-200">
+        <div className="mt-6 overflow-x-auto border-2 border-zinc-950 bg-white">
           <table className="w-full text-sm">
             <thead className="bg-zinc-50 text-left text-zinc-500">
               <tr>

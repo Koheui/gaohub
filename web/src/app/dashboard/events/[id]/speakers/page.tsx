@@ -16,9 +16,10 @@ import {
 import { db } from "@/lib/firebase/client";
 import { uploadEventImage } from "@/lib/upload";
 import type { SpeakerDoc } from "@/lib/types";
+import { ui } from "@/lib/ui";
 
-const label = "block text-sm font-medium text-zinc-700";
-const input = "mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm";
+const label = ui.label;
+const input = ui.input;
 
 interface SpeakerDraft {
   name: string;
@@ -98,7 +99,7 @@ function SpeakerForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 p-6"
+      className="space-y-4 border-2 border-zinc-950 bg-white p-6"
     >
       <div className="flex items-start gap-5">
         <label className="relative block h-24 w-24 shrink-0 cursor-pointer overflow-hidden rounded-full bg-zinc-100 hover:ring-2 hover:ring-zinc-400">
@@ -157,14 +158,14 @@ function SpeakerForm({
         <button
           type="submit"
           disabled={busy || uploading}
-          className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
+          className={ui.btn}
         >
           {speakerId ? "保存" : "追加する"}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-zinc-300 px-5 py-2.5 text-sm hover:bg-zinc-50"
+          className={ui.btnGhost}
         >
           キャンセル
         </button>
@@ -193,12 +194,12 @@ export default function SpeakersPage({ params }: { params: Promise<{ id: string 
 
   return (
     <div>
-      <Link href={`/dashboard/events/${id}`} className="text-sm text-zinc-500 hover:text-zinc-900">
+      <Link href={`/dashboard/events/${id}`} className={ui.back}>
         ← イベント概要
       </Link>
       <div className="mt-2 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">登壇者</h1>
+          <h1 className={ui.h1}>登壇者</h1>
           <p className="mt-1 text-sm text-zinc-500">
             登録した登壇者はLPに自動反映され、それぞれの詳細ページが生成されます
           </p>
@@ -206,7 +207,7 @@ export default function SpeakersPage({ params }: { params: Promise<{ id: string 
         {!adding && (
           <button
             onClick={() => setAdding(true)}
-            className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
+            className={ui.btn}
           >
             + 登壇者を追加
           </button>
@@ -227,7 +228,7 @@ export default function SpeakersPage({ params }: { params: Promise<{ id: string 
       {speakers === null ? (
         <p className="mt-8 text-sm text-zinc-400">読み込み中…</p>
       ) : speakers.length === 0 && !adding ? (
-        <div className="mt-8 rounded-2xl border border-dashed border-zinc-300 p-12 text-center">
+        <div className="mt-8 border-2 border-dashed border-zinc-300 bg-white/50 p-12 text-center">
           <p className="text-zinc-500">
             まだ登壇者がいません。登壇者を登録すると、セッション作成時に選択できるようになります。
           </p>
@@ -256,7 +257,7 @@ export default function SpeakersPage({ params }: { params: Promise<{ id: string 
             ) : (
               <li
                 key={sp.id}
-                className="flex items-center justify-between rounded-2xl border border-zinc-200 p-4"
+                className="flex items-center justify-between border-2 border-zinc-950 bg-white p-4"
               >
                 <div className="flex items-center gap-4">
                   {sp.photoUrl ? (
