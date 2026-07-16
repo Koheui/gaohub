@@ -21,14 +21,20 @@ export interface UserProfile {
 
 export type EventStatus = "draft" | "published" | "ended";
 
+/** 公開LPのテンプレート */
+export type EventTemplate = "kodak" | "noir" | "aurora";
+
 export interface EventDoc {
   id: string;
   orgId: string;
   slug: string;
   title: string;
+  /** キャッチコピー(ヒーローでアニメーション表示) */
+  tagline: string;
   description: string;
   coverImageUrl: string | null;
   themeColor: string;
+  template: EventTemplate;
   venueName: string;
   venueAddress: string;
   startsAt: Timestamp;
@@ -49,11 +55,17 @@ export interface TicketType {
   createdAt: Timestamp;
 }
 
-export interface Speaker {
+/** 登壇者(イベント配下の独立コレクション。詳細ページを持つ) */
+export interface SpeakerDoc {
+  id: string;
   name: string;
   title: string;
   company: string;
   photoUrl: string | null;
+  bio: string;
+  websiteUrl: string;
+  xUrl: string;
+  createdAt: Timestamp;
 }
 
 export interface SessionDoc {
@@ -63,7 +75,8 @@ export interface SessionDoc {
   track: string;
   startsAt: Timestamp;
   endsAt: Timestamp;
-  speakers: Speaker[];
+  /** events/{id}/speakers への参照 */
+  speakerIds: string[];
   createdAt: Timestamp;
 }
 

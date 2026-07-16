@@ -56,6 +56,12 @@ service cloud.firestore {
           get(/databases/$(database)/documents/events/$(eventId)).data.orgId
         );
       }
+
+      match /speakers/{speakerId} {
+        allow read, write: if isOrgMember(
+          get(/databases/$(database)/documents/events/$(eventId)).data.orgId
+        );
+      }
     }
 
     match /registrations/{registrationId} {

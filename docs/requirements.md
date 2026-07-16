@@ -23,11 +23,17 @@
 
 大きな金額が動くカンファレンスで恥ずかしくない見た目を、制作会社なしで実現する。
 
-1. **LPファースト**: セッション・登壇者・チケットを登録するだけで、公開LPに
-   ヒーロー/タイムテーブル/登壇者グリッド/チケットセクションとして自動反映される
+1. **LPファースト(ヘッドレスCMS)**: セッション・登壇者・チケットを登録するだけで、公開LPに
+   ヒーロー/タイムテーブル/登壇者グリッド/チケットセクションとして自動反映される。
+   登壇者は独立コンテンツで、それぞれ詳細ページ(`/e/{slug}/speakers/{id}`)を持つ
 2. **クリエイティブ**: カバー画像・登壇者写真をアップロード可能(Firebase Storage)。
    画像が無くてもテーマカラーからジェネレーティブな背景を自動生成し、素のまま公開しても様になる
-3. **導線の自明さ**: どの機能も「次に何をすべきか」が画面上で分かる。マニュアル前提のUIは作らない
+3. **テンプレート**: LPは複数テンプレートから選択可能(kodak=紙×グラデ×グレイン /
+   noir=ダーク×ネオン / aurora=メッシュグラデーション)。テーマカラーは全テンプレートに追従
+4. **モーション**: ヒーローのタイトル/キャッチコピーはスタッガーアニメーション、
+   ゴーストタイポはパララックス、各セクションはスクロールリビール。
+   `prefers-reduced-motion` を尊重する
+5. **導線の自明さ**: どの機能も「次に何をすべきか」が画面上で分かる。マニュアル前提のUIは作らない
 
 ## 2. 提供形態
 
@@ -83,7 +89,8 @@ organizations/{orgId}
   members/{uid}: { role: "owner" | "admin" | "staff" }
 
 events/{eventId}
-  orgId, slug, title, description, coverImageUrl, themeColor
+  orgId, slug, title, tagline, description, coverImageUrl
+  themeColor, template ("kodak" | "noir" | "aurora")
   venue: { name, address }, startsAt, endsAt
   status: "draft" | "published" | "ended"
   publishedAt, createdAt
@@ -92,9 +99,12 @@ events/{eventId}/ticketTypes/{ticketTypeId}
   name, description, priceJpy (0=無料), capacity, soldCount
   salesStartsAt, salesEndsAt, isActive
 
+events/{eventId}/speakers/{speakerId}
+  name, title, company, photoUrl, bio, websiteUrl, xUrl, createdAt
+
 events/{eventId}/sessions/{sessionId}
   title, description, track, startsAt, endsAt
-  speakers: [{ name, title, company, photoUrl }]
+  speakerIds: [speakerId]     … speakers への参照
   createdAt
 
 registrations/{registrationId}          … コレクショングループで横断検索

@@ -1,18 +1,42 @@
 "use client";
 
 import { useState } from "react";
-import type { EventDoc } from "@/lib/types";
+import type { EventDoc, EventTemplate } from "@/lib/types";
 
 export interface EventFormValues {
   title: string;
   slug: string;
+  tagline: string;
   description: string;
   themeColor: string;
+  template: EventTemplate;
   venueName: string;
   venueAddress: string;
   startsAtLocal: string; // datetime-local value
   endsAtLocal: string;
 }
+
+const TEMPLATES: { id: EventTemplate; name: string; desc: string; swatch: string }[] = [
+  {
+    id: "kodak",
+    name: "Kodak",
+    desc: "紙 × グラデーション × グレイン",
+    swatch: "linear-gradient(150deg, #f6f5f2 25%, #fb4f14 100%)",
+  },
+  {
+    id: "noir",
+    name: "Noir",
+    desc: "ダーク × ネオン発光",
+    swatch: "radial-gradient(circle at 70% 20%, #7c3aed 0%, #09090b 70%)",
+  },
+  {
+    id: "aurora",
+    name: "Aurora",
+    desc: "メッシュグラデーション × ソフト",
+    swatch:
+      "radial-gradient(circle at 20% 30%, #22d3ee 0%, transparent 55%), radial-gradient(circle at 80% 20%, #6366f1 0%, transparent 55%), radial-gradient(circle at 60% 90%, #34d399 0%, transparent 55%), #eef2ff",
+  },
+];
 
 function toLocalInput(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -25,8 +49,10 @@ export function eventToFormValues(ev?: EventDoc): EventFormValues {
   return {
     title: ev?.title ?? "",
     slug: ev?.slug ?? "",
+    tagline: ev?.tagline ?? "",
     description: ev?.description ?? "",
     themeColor: ev?.themeColor ?? "#18181b",
+    template: ev?.template ?? "kodak",
     venueName: ev?.venueName ?? "",
     venueAddress: ev?.venueAddress ?? "",
     startsAtLocal: ev?.startsAt ? toLocalInput(ev.startsAt.toDate()) : "",
@@ -101,6 +127,16 @@ export function EventForm({
         </div>
       </div>
       <div>
+        <label className={label}>キャッチコピー</label>
+        <input
+          value={values.tagline}
+          onChange={(e) => set("tagline", e.target.value)}
+          className={input}
+          placeholder="例: テクノロジーとクリエイティブの最前線へ。"
+        />
+        <p className="mt-1 text-xs text-zinc-400">LPのヒーローでタイトルとともにアニメーション表示されます</p>
+      </div>
+      <div>
         <label className={label}>説明</label>
         <textarea
           rows={6}
@@ -159,6 +195,32 @@ export function EventForm({
           onChange={(e) => set("themeColor", e.target.value)}
           className="mt-1 h-10 w-20 cursor-pointer rounded border border-zinc-300"
         />
+      </div>
+      <div>
+        <label className={label}>LPテンプレート</label>
+        <div className="mt-2 grid grid-cols-3 gap-3">
+          {TEMPLATES.map((t) => (
+            <button
+              type="button"
+              key={t.id}
+              onClick={() => set("template", t.id)}
+              className={`overflow-hidden rounded-xl border-2 text-left transition-colors ${
+                values.template === t.id
+                  ? "border-zinc-900"
+                  : "border-zinc-200 hover:border-zinc-400"
+              }`}
+            >
+              <div className="h-16 w-full" style={{ background: t.swatch }} />
+              <div className="px-3 py-2">
+                <p className="text-sm font-semibold">
+                  {t.name}
+                  {values.template === t.id && " ✓"}
+                </p>
+                <p className="text-xs text-zinc-500">{t.desc}</p>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button

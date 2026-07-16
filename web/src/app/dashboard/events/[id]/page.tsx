@@ -69,8 +69,10 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   async function handleUpdate(values: EventFormValues) {
     await updateDoc(doc(db, "events", id), {
       title: values.title,
+      tagline: values.tagline,
       description: values.description,
       themeColor: values.themeColor,
+      template: values.template,
       venueName: values.venueName,
       venueAddress: values.venueAddress,
       startsAt: Timestamp.fromDate(new Date(values.startsAtLocal)),
@@ -115,6 +117,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         <span className="border-b-2 border-zinc-900 pb-2 font-medium">概要</span>
         <Link href={`/dashboard/events/${id}/sessions`} className="pb-2 text-zinc-500 hover:text-zinc-900">
           コンテンツ
+        </Link>
+        <Link href={`/dashboard/events/${id}/speakers`} className="pb-2 text-zinc-500 hover:text-zinc-900">
+          登壇者
         </Link>
         <Link href={`/dashboard/events/${id}/tickets`} className="pb-2 text-zinc-500 hover:text-zinc-900">
           チケット
