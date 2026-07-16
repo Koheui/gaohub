@@ -13,5 +13,13 @@ service firebase.storage {
           /databases/(default)/documents/organizations/$(firestore.get(/databases/(default)/documents/events/$(eventId)).data.orgId)/members/$(request.auth.uid)
         );
     }
+
+    // 申込時の確認書類(学生証等)。個人情報を含むため、クライアントからの
+    // 直接アクセスは一切許可しない。書き込みは /api/checkout、閲覧は
+    // /api/registrations/[id]/verification-url が、いずれもサーバー側
+    // (Admin SDK、このルールの適用外)で org メンバー確認の上おこなう。
+    match /registrations/{registrationId}/{fileName} {
+      allow read, write: if false;
+    }
   }
 }

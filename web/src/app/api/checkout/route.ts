@@ -1,63 +1,86 @@
 import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
-import { adminDb } from "@/lib/firebase/admin";
+import { adminDb, adminStorageBucket } from "@/lib/firebase/admin";
 import { applicationFeeAmount, getStripe } from "@/lib/stripe";
 import { sendTicketEmail } from "@/lib/email";
 import { appUrl, formatDateRange } from "@/lib/format";
 
-interface CheckoutBody {
-  eventId: string;
-  ticketTypeId: string;
-  attendee: { name: string; email: string; company?: string; jobTitle?: string };
-}
+const MAX_VERIFICATION_IMAGE_BYTES = 10 * 1024 * 1024;
 
 function bad(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
 
+function str(v: FormDataEntryValue | null): string {
+  return typeof v === "string" ? v.trim() : "";
+}
+
 export async function POST(req: NextRequest) {
-  let body: CheckoutBody;
+  let form: FormData;
   try {
-    body = await req.json();
+    form = await req.formData();
   } catch {
     return bad("不正なリクエストです");
   }
 
-  const name = body.attendee?.name?.trim();
-  const email = body.attendee?.email?.trim();
-  if (!body.eventId || !body.ticketTypeId || !name || !email) {
+  const eventId = str(form.get("eventId"));
+  const ticketTypeId = str(form.get("ticketTypeId"));
+  const name = str(form.get("name"));
+  const email = str(form.get("email"));
+  const company = str(form.get("company"));
+  const jobTitle = str(form.get("jobTitle"));
+  const verificationImage = form.get("verificationImage");
+
+  if (!eventId || !ticketTypeId || !name || !email) {
     return bad("必須項目が不足しています");
   }
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return bad("メールアドレスの形式が不正です");
 
   const db = adminDb();
-  const eventSnap = await db.doc(`events/${body.eventId}`).get();
+  const eventSnap = await db.doc(`events/${eventId}`).get();
   if (!eventSnap.exists || eventSnap.get("status") !== "published") {
     return bad("イベントが見つかりません", 404);
   }
-  const ticketSnap = await db
-    .doc(`events/${body.eventId}/ticketTypes/${body.ticketTypeId}`)
-    .get();
+  const ticketSnap = await db.doc(`events/${eventId}/ticketTypes/${ticketTypeId}`).get();
   if (!ticketSnap.exists || !ticketSnap.get("isActive")) {
     return bad("チケットが見つかりません", 404);
+  }
+
+  const requiresVerification: boolean = ticketSnap.get("requiresVerification") ?? false;
+  if (requiresVerification) {
+    if (!(verificationImage instanceof File) || verificationImage.size === 0) {
+      return bad("このチケットには確認書類の画像アップロードが必要です");
+    }
+    if (!verificationImage.type.startsWith("image/")) {
+      return bad("確認書類は画像ファイルでアップロードしてください");
+    }
+    if (verificationImage.size > MAX_VERIFICATION_IMAGE_BYTES) {
+      return bad("確認書類の画像は10MB以下にしてください");
+    }
   }
 
   const priceJpy: number = ticketSnap.get("priceJpy") ?? 0;
   const orgId: string = eventSnap.get("orgId");
   const qrToken = crypto.randomBytes(16).toString("hex");
 
+  const regRef = db.collection("registrations").doc();
+  let verificationImagePath: string | null = null;
+  if (requiresVerification && verificationImage instanceof File) {
+    const ext = (verificationImage.type.split("/")[1] || "jpg").replace(/[^a-z0-9]/gi, "");
+    verificationImagePath = `registrations/${regRef.id}/verification.${ext}`;
+    const buffer = Buffer.from(await verificationImage.arrayBuffer());
+    await adminStorageBucket()
+      .file(verificationImagePath)
+      .save(buffer, { contentType: verificationImage.type, resumable: false });
+  }
+
   const registration = {
-    eventId: body.eventId,
+    eventId,
     orgId,
-    ticketTypeId: body.ticketTypeId,
+    ticketTypeId,
     ticketTypeName: ticketSnap.get("name") as string,
-    attendee: {
-      name,
-      email,
-      company: body.attendee.company?.trim() ?? "",
-      jobTitle: body.attendee.jobTitle?.trim() ?? "",
-    },
+    attendee: { name, email, company, jobTitle },
     amountJpy: priceJpy,
     stripeSessionId: null as string | null,
     stripePaymentIntentId: null as string | null,
@@ -65,6 +88,8 @@ export async function POST(req: NextRequest) {
     qrToken,
     checkedInAt: null,
     checkedInBy: null,
+    verificationImagePath,
+    verificationStatus: requiresVerification ? ("pending" as const) : null,
     createdAt: FieldValue.serverTimestamp(),
   };
 
@@ -77,7 +102,6 @@ export async function POST(req: NextRequest) {
 
   // ---- 無料チケット: 即時確定 ----
   if (priceJpy === 0) {
-    const regRef = db.collection("registrations").doc();
     try {
       await db.runTransaction(async (tx) => {
         const t = await tx.get(ticketSnap.ref);
@@ -119,7 +143,6 @@ export async function POST(req: NextRequest) {
     return bad("主催者の決済設定が完了していないため、有料チケットを購入できません");
   }
 
-  const regRef = db.collection("registrations").doc();
   await regRef.set({ ...registration, status: "pending_payment" });
 
   const stripe = getStripe();

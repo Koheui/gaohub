@@ -2,17 +2,23 @@
 
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
-import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
-import { db } from "@/lib/firebase/client";
+import { collection, doc, onSnapshot, orderBy, query, updateDoc, where } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase/client";
 import { useAuth } from "@/components/AuthProvider";
 import type { Registration } from "@/lib/types";
 import { formatJpy } from "@/lib/format";
-import { ui } from "@/lib/ui";
+import { ui, chip } from "@/lib/ui";
 
 const statusLabel: Record<Registration["status"], string> = {
   confirmed: "確定",
   pending_payment: "決済待ち",
   cancelled: "キャンセル",
+};
+
+const verificationLabel: Record<NonNullable<Registration["verificationStatus"]>, string> = {
+  pending: "未確認",
+  approved: "承認済み",
+  rejected: "却下",
 };
 
 function toCsv(regs: Registration[]): string {
@@ -24,6 +30,7 @@ function toCsv(regs: Registration[]): string {
     "チケット",
     "金額",
     "ステータス",
+    "確認書類",
     "チェックイン",
     "申込日時",
   ];
@@ -35,12 +42,72 @@ function toCsv(regs: Registration[]): string {
     r.ticketTypeName,
     String(r.amountJpy),
     statusLabel[r.status],
+    r.verificationStatus ? verificationLabel[r.verificationStatus] : "",
     r.checkedInAt ? r.checkedInAt.toDate().toISOString() : "",
     r.createdAt ? r.createdAt.toDate().toISOString() : "",
   ]);
   return [header, ...rows]
     .map((row) => row.map((c) => `"${(c ?? "").replaceAll('"', '""')}"`).join(","))
     .join("\r\n");
+}
+
+function VerificationCell({ id, status }: { id: string; status: Registration["verificationStatus"] }) {
+  const [loading, setLoading] = useState(false);
+
+  async function viewDocument() {
+    setLoading(true);
+    try {
+      const idToken = await auth.currentUser?.getIdToken();
+      const res = await fetch(`/api/registrations/${id}/verification-image`, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "取得に失敗しました");
+      }
+      const blob = await res.blob();
+      window.open(URL.createObjectURL(blob), "_blank", "noopener,noreferrer");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "確認書類の取得に失敗しました");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function setStatus(next: "approved" | "rejected") {
+    await updateDoc(doc(db, "registrations", id), { verificationStatus: next });
+  }
+
+  if (!status) return <span className="text-zinc-300">—</span>;
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span
+        className={chip(status === "approved" ? "ok" : status === "rejected" ? "warn" : "mute")}
+      >
+        [{verificationLabel[status]}]
+      </span>
+      <button onClick={viewDocument} disabled={loading} className={ui.btnText}>
+        {loading ? "…" : "書類を見る"}
+      </button>
+      {status === "pending" && (
+        <>
+          <button
+            onClick={() => setStatus("approved")}
+            className="text-xs font-bold text-emerald-700 underline underline-offset-4 hover:opacity-60"
+          >
+            承認
+          </button>
+          <button
+            onClick={() => setStatus("rejected")}
+            className="text-xs font-bold text-red-700 underline underline-offset-4 hover:opacity-60"
+          >
+            却下
+          </button>
+        </>
+      )}
+    </div>
+  );
 }
 
 export default function AttendeesPage({ params }: { params: Promise<{ id: string }> }) {
@@ -75,6 +142,8 @@ export default function AttendeesPage({ params }: { params: Promise<{ id: string
     URL.revokeObjectURL(url);
   }
 
+  const pendingCount = regs?.filter((r) => r.verificationStatus === "pending").length ?? 0;
+
   return (
     <div>
       <Link href={`/dashboard/events/${id}`} className={ui.back}>
@@ -84,6 +153,7 @@ export default function AttendeesPage({ params }: { params: Promise<{ id: string
         <h1 className={ui.h1}>
           申込者
           {regs && <span className="ml-2 text-base font-normal text-zinc-500">{regs.length}件</span>}
+          {pendingCount > 0 && <span className={`ml-2 ${chip("warn")}`}>[要確認 {pendingCount}件]</span>}
         </h1>
         <button
           onClick={downloadCsv}
@@ -108,6 +178,7 @@ export default function AttendeesPage({ params }: { params: Promise<{ id: string
                 <th className="px-4 py-3 font-medium">チケット</th>
                 <th className="px-4 py-3 font-medium">金額</th>
                 <th className="px-4 py-3 font-medium">ステータス</th>
+                <th className="px-4 py-3 font-medium">確認書類</th>
                 <th className="px-4 py-3 font-medium">チェックイン</th>
               </tr>
             </thead>
@@ -133,6 +204,9 @@ export default function AttendeesPage({ params }: { params: Promise<{ id: string
                     >
                       {statusLabel[r.status]}
                     </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <VerificationCell id={r.id} status={r.verificationStatus} />
                   </td>
                   <td className="px-4 py-3 text-xs text-zinc-500">
                     {r.checkedInAt

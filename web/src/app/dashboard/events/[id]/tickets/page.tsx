@@ -15,7 +15,7 @@ import {
 import { db } from "@/lib/firebase/client";
 import type { TicketType } from "@/lib/types";
 import { formatJpy } from "@/lib/format";
-import { ui } from "@/lib/ui";
+import { ui, chip } from "@/lib/ui";
 
 const label = ui.label;
 const input = ui.input;
@@ -28,6 +28,7 @@ export default function TicketsPage({ params }: { params: Promise<{ id: string }
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("0");
   const [capacity, setCapacity] = useState("100");
+  const [requiresVerification, setRequiresVerification] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -53,12 +54,14 @@ export default function TicketsPage({ params }: { params: Promise<{ id: string }
         capacity: Math.max(1, Math.floor(Number(capacity))),
         soldCount: 0,
         isActive: true,
+        requiresVerification,
         createdAt: serverTimestamp(),
       });
       setName("");
       setDescription("");
       setPrice("0");
       setCapacity("100");
+      setRequiresVerification(false);
       setShowForm(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "作成に失敗しました");
@@ -92,7 +95,7 @@ export default function TicketsPage({ params }: { params: Promise<{ id: string }
         <form onSubmit={handleCreate} className="mt-6 max-w-xl space-y-4 border-2 border-zinc-950 bg-white p-6">
           <div>
             <label className={label}>チケット名 *</label>
-            <input required value={name} onChange={(e) => setName(e.target.value)} className={input} placeholder="例: 一般 / 早割 / VIP" />
+            <input required value={name} onChange={(e) => setName(e.target.value)} className={input} placeholder="例: 一般 / 学生 / VIP" />
           </div>
           <div>
             <label className={label}>説明</label>
@@ -108,6 +111,20 @@ export default function TicketsPage({ params }: { params: Promise<{ id: string }
               <input required type="number" min={1} step={1} value={capacity} onChange={(e) => setCapacity(e.target.value)} className={input} />
             </div>
           </div>
+          <label className="flex items-start gap-3 border-2 border-zinc-200 p-4">
+            <input
+              type="checkbox"
+              checked={requiresVerification}
+              onChange={(e) => setRequiresVerification(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0"
+            />
+            <span>
+              <span className="block text-sm font-bold">確認書類のアップロードを必須にする</span>
+              <span className="mt-0.5 block text-xs font-medium text-zinc-500">
+                学生証・在学証明書など。申込時に画像アップロードを求め、主催者が申込者一覧で内容を確認・承認/却下できます。
+              </span>
+            </span>
+          </label>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <button
             type="submit"
@@ -130,13 +147,14 @@ export default function TicketsPage({ params }: { params: Promise<{ id: string }
           {tickets.map((t) => (
             <li key={t.id} className="flex items-center justify-between px-5 py-4">
               <div>
-                <p className="font-medium">
+                <p className="flex items-center gap-2 font-medium">
                   {t.name}
                   {!t.isActive && (
-                    <span className="ml-2 rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500">
+                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500">
                       停止中
                     </span>
                   )}
+                  {t.requiresVerification && <span className={chip("warn")}>[要確認書類]</span>}
                 </p>
                 <p className="mt-0.5 text-sm text-zinc-500">
                   {formatJpy(t.priceJpy)} ・ {t.soldCount}/{t.capacity} 枚

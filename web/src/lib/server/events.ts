@@ -8,6 +8,7 @@ export interface PublicTicketType {
   description: string;
   priceJpy: number;
   soldOut: boolean;
+  requiresVerification: boolean;
 }
 
 export interface PublicEvent {
@@ -98,6 +99,7 @@ export async function getPublicTicketTypes(eventId: string): Promise<PublicTicke
       description: d.description ?? "",
       priceJpy: d.priceJpy ?? 0,
       soldOut: (d.soldCount ?? 0) >= (d.capacity ?? 0),
+      requiresVerification: d.requiresVerification ?? false,
     };
   });
 }

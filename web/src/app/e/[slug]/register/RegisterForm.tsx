@@ -24,6 +24,7 @@ export function RegisterForm({
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
   const [jobTitle, setJobTitle] = useState("");
+  const [verificationFile, setVerificationFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,18 +32,23 @@ export function RegisterForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (selected.requiresVerification && !verificationFile) {
+      setError("このチケットには確認書類の画像アップロードが必要です");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          eventId,
-          ticketTypeId,
-          attendee: { name, email, company, jobTitle },
-        }),
-      });
+      const formData = new FormData();
+      formData.set("eventId", eventId);
+      formData.set("ticketTypeId", ticketTypeId);
+      formData.set("name", name);
+      formData.set("email", email);
+      formData.set("company", company);
+      formData.set("jobTitle", jobTitle);
+      if (verificationFile) formData.set("verificationImage", verificationFile);
+
+      const res = await fetch("/api/checkout", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "申し込みに失敗しました");
       // 有料 → Stripe Checkout へ / 無料 → チケットページへ
@@ -70,9 +76,20 @@ export function RegisterForm({
                   type="radio"
                   name="ticket"
                   checked={t.id === ticketTypeId}
-                  onChange={() => setTicketTypeId(t.id)}
+                  onChange={() => {
+                    setTicketTypeId(t.id);
+                    setVerificationFile(null);
+                    setError(null);
+                  }}
                 />
-                <span className="text-sm font-medium">{t.name}</span>
+                <span className="text-sm font-medium">
+                  {t.name}
+                  {t.requiresVerification && (
+                    <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+                      要確認書類
+                    </span>
+                  )}
+                </span>
               </span>
               <span className="text-sm font-bold tabular-nums">{formatJpy(t.priceJpy)}</span>
             </label>
@@ -106,6 +123,25 @@ export function RegisterForm({
         </div>
       </div>
 
+      {selected.requiresVerification && (
+        <div>
+          <label className={label}>確認書類の画像 *</label>
+          <p className="mt-1 text-xs text-zinc-500">
+            学生証・在学証明書など、このチケットの条件を満たすことが分かる画像をアップロードしてください。主催者が内容を確認します。
+          </p>
+          <input
+            required
+            type="file"
+            accept="image/*"
+            onChange={(e) => setVerificationFile(e.target.files?.[0] ?? null)}
+            className="mt-2 w-full text-sm"
+          />
+          {verificationFile && (
+            <p className="mt-1 text-xs text-emerald-700">選択済み: {verificationFile.name}</p>
+          )}
+        </div>
+      )}
+
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <button
@@ -123,6 +159,11 @@ export function RegisterForm({
       {selected.priceJpy > 0 && (
         <p className="text-center text-xs text-zinc-400">
           決済は Stripe の安全なページで行われます
+        </p>
+      )}
+      {selected.requiresVerification && (
+        <p className="text-center text-xs text-zinc-400">
+          アップロードいただいた確認書類は主催者が内容を確認します
         </p>
       )}
     </form>

@@ -52,6 +52,8 @@ export interface TicketType {
   capacity: number;
   soldCount: number;
   isActive: boolean;
+  /** true の場合、申込時に確認書類(学生証など)の画像アップロードを必須にする */
+  requiresVerification: boolean;
   createdAt: Timestamp;
 }
 
@@ -82,6 +84,9 @@ export interface SessionDoc {
 
 export type RegistrationStatus = "pending_payment" | "confirmed" | "cancelled";
 
+/** 確認書類(学生証等)の審査ステータス。書類提出が不要なチケットでは null のまま */
+export type VerificationStatus = "pending" | "approved" | "rejected";
+
 export interface Attendee {
   name: string;
   email: string;
@@ -104,5 +109,8 @@ export interface Registration {
   qrToken: string;
   checkedInAt: Timestamp | null;
   checkedInBy: string | null;
+  /** Storage 内パス(gs:// を含まない相対パス)。個人情報のため生URLはどこにも保存しない */
+  verificationImagePath: string | null;
+  verificationStatus: VerificationStatus | null;
   createdAt: Timestamp;
 }

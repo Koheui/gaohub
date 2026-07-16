@@ -68,9 +68,10 @@ service cloud.firestore {
       // 作成・確定はサーバー(Admin SDK)のみ。閲覧とチェックインは org メンバー
       allow read: if isOrgMember(resource.data.orgId);
       allow create: if false;
+      // チェックインと、確認書類(学生証等)の審査ステータス変更のみクライアントから許可
       allow update: if isOrgMember(resource.data.orgId)
         && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['checkedInAt', 'checkedInBy']);
+            .hasOnly(['checkedInAt', 'checkedInBy', 'verificationStatus']);
       allow delete: if false;
     }
   }

@@ -1,6 +1,7 @@
 import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
+import { getStorage } from "firebase-admin/storage";
 
 let app: App | null = null;
 
@@ -11,9 +12,10 @@ function getAdminApp(): App {
     app = existing;
     return app;
   }
+  const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
   // エミュレータ利用時(FIRESTORE_EMULATOR_HOST 設定時)は認証情報不要
   if (process.env.FIRESTORE_EMULATOR_HOST) {
-    app = initializeApp({ projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID });
+    app = initializeApp({ projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID, storageBucket });
     return app;
   }
   // FIREBASE_SERVICE_ACCOUNT: サービスアカウントJSONをbase64エンコードした値
@@ -24,7 +26,7 @@ function getAdminApp(): App {
     );
   }
   const serviceAccount = JSON.parse(Buffer.from(raw, "base64").toString("utf8"));
-  app = initializeApp({ credential: cert(serviceAccount) });
+  app = initializeApp({ credential: cert(serviceAccount), storageBucket });
   return app;
 }
 
@@ -34,6 +36,10 @@ export function adminDb() {
 
 export function adminAuth() {
   return getAuth(getAdminApp());
+}
+
+export function adminStorageBucket() {
+  return getStorage(getAdminApp()).bucket();
 }
 
 /** Authorization: Bearer <idToken> を検証して uid を返す */

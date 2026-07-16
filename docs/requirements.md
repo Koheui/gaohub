@@ -50,15 +50,16 @@
 1. メール/Google でサインアップ、Organization 作成
 2. イベント作成・編集(タイトル、日時、会場、説明、カバー画像、テーマカラー)
 3. セッション(トークコンテンツ)と登壇者の登録 → LPタイムテーブル/登壇者欄に自動反映
-4. チケット種別の作成(無料/有料、価格、販売枠、販売期間)
+4. チケット種別の作成(無料/有料、価格、販売枠、販売期間、確認書類アップロードの要否)
 4. Stripe Connect オンボーディング(有料チケット販売の前提)
 5. 公開イベントページ(LP)の自動生成 — `/e/{slug}`
-6. 申込者一覧のリアルタイム閲覧・CSVエクスポート
+6. 申込者一覧のリアルタイム閲覧・CSVエクスポート・確認書類の審査(承認/却下)
 7. 当日受付: PWA QRスキャナー(スタッフ権限)、チェックイン状況のリアルタイム集計
 
 ### 参加者(Attendee)
 1. イベントページ閲覧(ログイン不要)
-2. チケット選択 → 申込フォーム → (有料なら)Stripe Checkout 決済
+2. チケット選択 → 申込フォーム → (確認書類が必要なチケットは画像アップロード必須)
+   → (有料なら)Stripe Checkout 決済
 3. 申込完了メール(Resend)+ QRコード付きチケット表示ページ `/t/{ticketId}`
 4. 当日は QR を提示してチェックイン
 
@@ -92,7 +93,7 @@ organizations/{orgId}
 
 events/{eventId}
   orgId, slug, title, tagline, description, coverImageUrl
-  themeColor, template ("kodak" | "noir" | "aurora")
+  themeColor, template ("kodak" | "spectrum" | "aurora")
   venue: { name, address }, startsAt, endsAt
   status: "draft" | "published" | "ended"
   publishedAt, createdAt
@@ -100,6 +101,7 @@ events/{eventId}
 events/{eventId}/ticketTypes/{ticketTypeId}
   name, description, priceJpy (0=無料), capacity, soldCount
   salesStartsAt, salesEndsAt, isActive
+  requiresVerification (学生無料等: 申込時に確認書類の画像アップロードを必須にする)
 
 events/{eventId}/speakers/{speakerId}
   name, title, company, photoUrl, bio, websiteUrl, xUrl, createdAt
@@ -116,6 +118,8 @@ registrations/{registrationId}          … コレクショングループで横
   payment: { stripeSessionId, stripePaymentIntentId, amountJpy, paidAt } | null
   qrToken (ランダム128bit, チケットQRの中身)
   checkedInAt: Timestamp | null, checkedInBy: uid | null
+  verificationImagePath: string | null   … Storage内パス(生URLは保存しない)
+  verificationStatus: "pending" | "approved" | "rejected" | null
   createdAt
 ```
 
@@ -124,6 +128,11 @@ registrations/{registrationId}          … コレクショングループで横
 - 決済確定は **Stripe Webhook (`checkout.session.completed`) のみを信頼**。
   クライアントの成功リダイレクトでは確定しない
 - 在庫(capacity)は Firestore トランザクションで `soldCount` を増分し超過販売を防ぐ
+- 確認書類(学生証等)は個人情報のため、Storage には非公開で保存し
+  (`storage.rules` で読み書きとも `false`)、`/api/checkout` が Admin SDK で書き込み、
+  `/api/registrations/[id]/verification-image` が org メンバー確認の上でバイナリを
+  直接返す。Signed URL は使わない(Storage エミュレータでの署名生成が環境依存で
+  失敗するため、本番・エミュレータ双方で同じコードパスにしている)
 
 ## 6. 画面構成
 
@@ -142,10 +151,11 @@ registrations/{registrationId}          … コレクショングループで横
 /e/[slug]               … 公開イベントページ(LP)
 /e/[slug]/register      … 申込フォーム → Stripe Checkout
 /t/[ticketId]           … QRチケット表示(メールのリンク先)
-/api/checkout           … Checkout Session 作成
+/api/checkout           … Checkout Session 作成(確認書類の画像アップロードも受付)
 /api/webhooks/stripe    … 決済確定 → registration confirm + メール送信
 /api/checkin            … qrToken 検証 + チェックイン記録
 /api/banner/[eventId]   … 告知バナー生成(?size=wide|square|story, ?download=1)
+/api/registrations/[id]/verification-image … 確認書類の画像を返す(org メンバーのみ)
 ```
 
 告知バナーは公開LPと同じレンダラー(`src/lib/server/bannerImage.tsx`)を使い、
