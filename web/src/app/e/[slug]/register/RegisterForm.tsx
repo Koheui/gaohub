@@ -127,7 +127,8 @@ export function RegisterForm({
         <div>
           <label className={label}>確認書類の画像 *</label>
           <p className="mt-1 text-xs text-zinc-500">
-            学生証・在学証明書など、このチケットの条件を満たすことが分かる画像をアップロードしてください。主催者が内容を確認します。
+            学生証・在学証明書など、このチケットの条件を満たすことが分かる画像をアップロードしてください。
+            主催者が内容を確認し、<span className="font-bold">確認が済み次第、画像は自動的に破棄されます</span>(保存され続けることはありません)。
           </p>
           <input
             required
@@ -163,7 +164,7 @@ export function RegisterForm({
       )}
       {selected.requiresVerification && (
         <p className="text-center text-xs text-zinc-400">
-          アップロードいただいた確認書類は主催者が内容を確認します
+          アップロードいただいた確認書類は主催者の確認後、自動的に破棄されます
         </p>
       )}
     </form>

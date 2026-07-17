@@ -44,6 +44,12 @@ export default function TicketsPage({ params }: { params: Promise<{ id: string }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
+    const priceNum = Math.floor(Number(price));
+    // Stripe の JPY 最低決済金額は ¥50。無料(¥0)は Stripe を経由しないので制限なし
+    if (priceNum > 0 && priceNum < 50) {
+      setError("1〜49円は設定できません(Stripeの最低決済金額のため)。無料にする場合は0円にしてください");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -105,6 +111,9 @@ export default function TicketsPage({ params }: { params: Promise<{ id: string }
             <div>
               <label className={label}>価格(円・0で無料) *</label>
               <input required type="number" min={0} step={1} value={price} onChange={(e) => setPrice(e.target.value)} className={input} />
+              <p className="mt-1 text-xs text-zinc-400">
+                0円=無料(Stripe不要・決済なしで即確定)。有料は50円以上
+              </p>
             </div>
             <div>
               <label className={label}>販売枠 *</label>

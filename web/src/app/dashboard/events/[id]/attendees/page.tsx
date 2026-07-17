@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
-import { collection, doc, onSnapshot, orderBy, query, updateDoc, where } from "firebase/firestore";
+import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/client";
 import { useAuth } from "@/components/AuthProvider";
 import type { Registration } from "@/lib/types";
@@ -51,8 +51,17 @@ function toCsv(regs: Registration[]): string {
     .join("\r\n");
 }
 
-function VerificationCell({ id, status }: { id: string; status: Registration["verificationStatus"] }) {
+function VerificationCell({
+  id,
+  status,
+  hasImage,
+}: {
+  id: string;
+  status: Registration["verificationStatus"];
+  hasImage: boolean;
+}) {
   const [loading, setLoading] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
 
   async function viewDocument() {
     setLoading(true);
@@ -74,8 +83,36 @@ function VerificationCell({ id, status }: { id: string; status: Registration["ve
     }
   }
 
-  async function setStatus(next: "approved" | "rejected") {
-    await updateDoc(doc(db, "registrations", id), { verificationStatus: next });
+  async function review(decision: "approved" | "rejected") {
+    if (
+      !confirm(
+        decision === "approved"
+          ? "承認しますか?(確認書類はプライバシー保護のため直ちに破棄されます)"
+          : "却下しますか?(確認書類はプライバシー保護のため直ちに破棄されます)"
+      )
+    ) {
+      return;
+    }
+    setReviewing(true);
+    try {
+      const idToken = await auth.currentUser?.getIdToken();
+      const res = await fetch(`/api/registrations/${id}/verification-review`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ decision }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "審査に失敗しました");
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "審査に失敗しました");
+    } finally {
+      setReviewing(false);
+    }
   }
 
   if (!status) return <span className="text-zinc-300">—</span>;
@@ -87,20 +124,30 @@ function VerificationCell({ id, status }: { id: string; status: Registration["ve
       >
         [{verificationLabel[status]}]
       </span>
-      <button onClick={viewDocument} disabled={loading} className={ui.btnText}>
-        {loading ? "…" : "書類を見る"}
-      </button>
+      {hasImage ? (
+        <button onClick={viewDocument} disabled={loading} className={ui.btnText}>
+          {loading ? "…" : "書類を見る"}
+        </button>
+      ) : (
+        status !== "pending" && (
+          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-zinc-400">
+            書類は破棄済み
+          </span>
+        )
+      )}
       {status === "pending" && (
         <>
           <button
-            onClick={() => setStatus("approved")}
-            className="text-xs font-bold text-emerald-700 underline underline-offset-4 hover:opacity-60"
+            onClick={() => review("approved")}
+            disabled={reviewing}
+            className="text-xs font-bold text-emerald-700 underline underline-offset-4 hover:opacity-60 disabled:opacity-40"
           >
             承認
           </button>
           <button
-            onClick={() => setStatus("rejected")}
-            className="text-xs font-bold text-red-700 underline underline-offset-4 hover:opacity-60"
+            onClick={() => review("rejected")}
+            disabled={reviewing}
+            className="text-xs font-bold text-red-700 underline underline-offset-4 hover:opacity-60 disabled:opacity-40"
           >
             却下
           </button>
@@ -150,11 +197,16 @@ export default function AttendeesPage({ params }: { params: Promise<{ id: string
         ← イベント概要
       </Link>
       <div className="mt-2 flex items-center justify-between">
-        <h1 className={ui.h1}>
-          申込者
-          {regs && <span className="ml-2 text-base font-normal text-zinc-500">{regs.length}件</span>}
-          {pendingCount > 0 && <span className={`ml-2 ${chip("warn")}`}>[要確認 {pendingCount}件]</span>}
-        </h1>
+        <div>
+          <h1 className={ui.h1}>
+            申込者
+            {regs && <span className="ml-2 text-base font-normal text-zinc-500">{regs.length}件</span>}
+            {pendingCount > 0 && <span className={`ml-2 ${chip("warn")}`}>[要確認 {pendingCount}件]</span>}
+          </h1>
+          <p className="mt-1 text-sm text-zinc-500">
+            確認書類はプライバシー保護のため、承認/却下の確定と同時に自動で破棄されます(現地での目視確認に切り替える場合は、審査せず当日に本人確認してください)
+          </p>
+        </div>
         <button
           onClick={downloadCsv}
           disabled={!regs?.length}
@@ -206,7 +258,11 @@ export default function AttendeesPage({ params }: { params: Promise<{ id: string
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <VerificationCell id={r.id} status={r.verificationStatus} />
+                    <VerificationCell
+                      id={r.id}
+                      status={r.verificationStatus}
+                      hasImage={!!r.verificationImagePath}
+                    />
                   </td>
                   <td className="px-4 py-3 text-xs text-zinc-500">
                     {r.checkedInAt

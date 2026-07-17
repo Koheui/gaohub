@@ -155,6 +155,16 @@ registrations/{registrationId}          … コレクショングループで横
   `/api/registrations/[id]/verification-image` が org メンバー確認の上でバイナリを
   直接返す。Signed URL は使わない(Storage エミュレータでの署名生成が環境依存で
   失敗するため、本番・エミュレータ双方で同じコードパスにしている)
+- **確認書類は審査後に自動破棄する**: 承認/却下の確定
+  (`/api/registrations/[id]/verification-review`)と同時に Storage から画像を削除し、
+  `verificationImagePath` を null にする。個人情報を保持し続けないための設計で、
+  審査は取り消せない一回きりの操作(UI で confirm を挟む)。申込フォーム・申込者一覧の
+  両方に「確認後に破棄される」旨を明記する。なお運用としては、事前アップロードを
+  使わず**現地で学生証を目視確認する**選択も可能(その場合は審査せずに当日確認する)
+- **無料チケット(¥0)は Stripe を一切経由しない**: `/api/checkout` は ¥0 なら
+  Stripe 接続チェックの前に即時確定するため、主催者が Stripe 未接続でも
+  無料イベント・無料枠(学生無料等)は開催できる。有料チケットは Stripe の
+  JPY 最低決済金額の制約で ¥50 以上のみ(¥1〜49 はフォームとAPIの両方で拒否)
 
 ## 6. 画面構成
 

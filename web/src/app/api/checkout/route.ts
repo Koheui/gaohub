@@ -61,6 +61,10 @@ export async function POST(req: NextRequest) {
   }
 
   const priceJpy: number = ticketSnap.get("priceJpy") ?? 0;
+  // Stripe の JPY 最低決済金額(¥50)未満の有料価格は決済できない(¥0 は Stripe を経由しない)
+  if (priceJpy > 0 && priceJpy < 50) {
+    return bad("このチケットの価格設定に問題があります。主催者にお問い合わせください");
+  }
   const orgId: string = eventSnap.get("orgId");
   const qrToken = crypto.randomBytes(16).toString("hex");
 
