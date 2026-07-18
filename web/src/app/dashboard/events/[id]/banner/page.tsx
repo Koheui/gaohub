@@ -1,10 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { db } from "@/lib/firebase/client";
+import type { SessionDoc } from "@/lib/types";
 import { ui } from "@/lib/ui";
 
 type BannerSize = "wide" | "square" | "story";
+/** "event" = イベント全体のバナー。それ以外はセッションID */
+type Target = "event" | string;
 
 const SIZE_OPTIONS: { id: BannerSize; label: string; use: string; width: number; height: number }[] = [
   { id: "wide", label: "Wide", use: "X / OGP / note", width: 1200, height: 630 },
@@ -14,24 +19,37 @@ const SIZE_OPTIONS: { id: BannerSize; label: string; use: string; width: number;
 
 export default function BannerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const [sessions, setSessions] = useState<SessionDoc[]>([]);
+  const [target, setTarget] = useState<Target>("event");
   const [selected, setSelected] = useState<BannerSize>("wide");
   const [downloading, setDownloading] = useState(false);
   // プレビューを強制更新するためのキャッシュバスター(コンテンツ変更後の再取得用)
   const [refreshKey, setRefreshKey] = useState(0);
 
+  useEffect(() => {
+    const q = query(collection(db, "events", id, "sessions"), orderBy("startsAt", "asc"));
+    return onSnapshot(q, (snap) => {
+      setSessions(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as SessionDoc));
+    });
+  }, [id]);
+
   const option = SIZE_OPTIONS.find((o) => o.id === selected)!;
-  const previewUrl = `/api/banner/${id}?size=${selected}&v=${refreshKey}`;
+  const basePath = target === "event" ? `/api/banner/${id}` : `/api/banner/${id}/sessions/${target}`;
+  const previewUrl = `${basePath}?size=${selected}&v=${refreshKey}`;
+  const activeSession = target === "event" ? null : sessions.find((s) => s.id === target);
+  const fileLabel =
+    target === "event" ? "event" : (activeSession?.title ?? "session").replace(/[^\p{L}\p{N}\-_]+/gu, "-");
 
   async function handleDownload() {
     setDownloading(true);
     try {
-      const res = await fetch(`/api/banner/${id}?size=${selected}&download=1`);
+      const res = await fetch(`${basePath}?size=${selected}&download=1`);
       if (!res.ok) throw new Error("生成に失敗しました");
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `banner-${selected}.png`;
+      a.download = `banner-${fileLabel}-${selected}.png`;
       a.click();
       URL.revokeObjectURL(url);
     } catch {
@@ -51,7 +69,8 @@ export default function BannerPage({ params }: { params: Promise<{ id: string }>
           <p className={ui.label}>Banner Generator</p>
           <h1 className={`mt-2 ${ui.h1}`}>バナー</h1>
           <p className="mt-2 max-w-xl text-sm font-medium text-zinc-600">
-            タイトル・日時・会場・登壇者の顔写真から、告知用バナーを自動生成します。コンテンツ(セッション・登壇者)を更新すると内容も自動で更新されます。
+            イベント全体だけでなく、セッション(コンテンツ)ごとにも告知バナーを自動生成できます。
+            登壇者の顔写真は登壇者ページでアップロードすると、そのままバナーに反映されます。
           </p>
         </div>
         <button
@@ -63,7 +82,37 @@ export default function BannerPage({ params }: { params: Promise<{ id: string }>
         </button>
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-3">
+      <div className="mt-8">
+        <label className={ui.label}>対象</label>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            onClick={() => setTarget("event")}
+            className={`px-4 py-2 text-sm font-bold transition-colors ${
+              target === "event" ? "bg-zinc-950 text-white" : `${ui.card} hover:bg-zinc-100`
+            }`}
+          >
+            イベント全体
+          </button>
+          {sessions.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => setTarget(s.id)}
+              className={`px-4 py-2 text-sm font-bold transition-colors ${
+                target === s.id ? "bg-zinc-950 text-white" : `${ui.card} hover:bg-zinc-100`
+              }`}
+            >
+              {s.title}
+            </button>
+          ))}
+        </div>
+        {sessions.length === 0 && (
+          <p className="mt-2 text-xs text-zinc-500">
+            セッションを登録すると、コンテンツごとのバナーもここから作れます。
+          </p>
+        )}
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-3">
         {SIZE_OPTIONS.map((o) => (
           <button
             key={o.id}

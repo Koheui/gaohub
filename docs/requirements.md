@@ -189,7 +189,8 @@ registrations/{registrationId}          … コレクショングループで横
 /api/checkout           … Checkout Session 作成(確認書類の画像アップロードも受付)
 /api/webhooks/stripe    … 決済確定 → registration confirm + メール送信
 /api/checkin            … qrToken 検証 + チェックイン記録
-/api/banner/[eventId]   … 告知バナー生成(?size=wide|square|story, ?download=1)
+/api/banner/[eventId]   … イベント全体の告知バナー生成(?size=wide|square|story, ?download=1)
+/api/banner/[eventId]/sessions/[sessionId] … セッション単位の告知バナー生成(登壇者の顔写真が主役)
 /api/registrations/[id]/verification-image … 確認書類の画像を返す(org メンバーのみ)
 /api/admin/summary              … 全体サマリー+組織一覧(マスター管理者のみ)
 /api/admin/organizations/[orgId] … 組織詳細(マスター管理者のみ)
@@ -199,6 +200,18 @@ registrations/{registrationId}          … コレクショングループで横
 `opengraph-image.tsx`(SNSシェア時の自動プレビュー)とダッシュボードの
 バナーダウンロード機能の両方から呼び出す。テンプレート・テーマカラー・
 登壇者の顔写真はイベントの設定からそのまま反映され、手動でのデザイン作業は不要。
+
+**カンファレンスは複数のセッション(コンテンツ)が集まって完成するため、
+バナーはイベント全体だけでなくセッション単位でも生成できる**。ダッシュボードの
+バナー画面で「対象」をイベント全体/各セッションから選べる。セッションバナーは
+登壇者(複数名)の顔写真・氏名・肩書を主役として大きく配置する
+(`renderSessionBannerImage` / `SpeakerShowcase`)。登壇者の顔写真は
+登壇者管理画面(`/dashboard/events/[id]/speakers`)でアップロードすればそのまま反映される。
+
+Satori(`next/og` のレンダラー)は `text-overflow: ellipsis` の挙動が不安定なため、
+バナー内の短いラベル(登壇者名・会社・肩書・イベント名)は表示前に文字数で
+切り詰める(`truncate`ヘルパー)。また Wide(1200×630、縦が狭い)サイズでは
+登壇者カードを `compact` 表示にして確実に収める。
 
 ## 7. 非機能要件
 

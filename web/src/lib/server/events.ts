@@ -126,6 +126,18 @@ export async function getPublicSpeakers(eventId: string): Promise<PublicSpeaker[
   });
 }
 
+function toPublicSession(id: string, d: FirebaseFirestore.DocumentData): PublicSession {
+  return {
+    id,
+    title: d.title,
+    description: d.description ?? "",
+    track: d.track ?? "",
+    startsAt: d.startsAt.toDate(),
+    endsAt: d.endsAt.toDate(),
+    speakerIds: d.speakerIds ?? [],
+  };
+}
+
 export async function getPublicSessions(eventId: string): Promise<PublicSession[]> {
   const snap = await adminDb()
     .collection("events")
@@ -133,16 +145,21 @@ export async function getPublicSessions(eventId: string): Promise<PublicSession[
     .collection("sessions")
     .orderBy("startsAt", "asc")
     .get();
-  return snap.docs.map((doc) => {
-    const d = doc.data();
-    return {
-      id: doc.id,
-      title: d.title,
-      description: d.description ?? "",
-      track: d.track ?? "",
-      startsAt: d.startsAt.toDate(),
-      endsAt: d.endsAt.toDate(),
-      speakerIds: d.speakerIds ?? [],
-    };
-  });
+  return snap.docs.map((doc) => toPublicSession(doc.id, doc.data()));
+}
+
+/** バナー生成など、単一セッションだけが必要な場面向け */
+export async function getSessionById(
+  eventId: string,
+  sessionId: string
+): Promise<PublicSession | null> {
+  const snap = await adminDb().doc(`events/${eventId}/sessions/${sessionId}`).get();
+  if (!snap.exists) return null;
+  return toPublicSession(snap.id, snap.data()!);
+}
+
+/** speakerIds に対応する登壇者を、セッションでの登場順で返す */
+export function pickSpeakers(all: PublicSpeaker[], speakerIds: string[]): PublicSpeaker[] {
+  const byId = new Map(all.map((s) => [s.id, s]));
+  return speakerIds.map((id) => byId.get(id)).filter((s): s is PublicSpeaker => !!s);
 }
