@@ -17,6 +17,7 @@ import { db } from "@/lib/firebase/client";
 import { uploadEventImage } from "@/lib/upload";
 import type { SpeakerDoc } from "@/lib/types";
 import { ui } from "@/lib/ui";
+import { ViewPublicPageButton } from "@/components/ViewPublicPageButton";
 
 const label = ui.label;
 const input = ui.input;
@@ -29,6 +30,9 @@ interface SpeakerDraft {
   bio: string;
   websiteUrl: string;
   xUrl: string;
+  instagramUrl: string;
+  linkedinUrl: string;
+  facebookUrl: string;
 }
 
 const emptyDraft: SpeakerDraft = {
@@ -39,6 +43,9 @@ const emptyDraft: SpeakerDraft = {
   bio: "",
   websiteUrl: "",
   xUrl: "",
+  instagramUrl: "",
+  linkedinUrl: "",
+  facebookUrl: "",
 };
 
 function SpeakerForm({
@@ -152,6 +159,18 @@ function SpeakerForm({
           <label className={label}>X (Twitter)</label>
           <input type="url" value={draft.xUrl} onChange={(e) => set("xUrl", e.target.value)} className={input} placeholder="https://x.com/..." />
         </div>
+        <div>
+          <label className={label}>Instagram</label>
+          <input type="url" value={draft.instagramUrl} onChange={(e) => set("instagramUrl", e.target.value)} className={input} placeholder="https://instagram.com/..." />
+        </div>
+        <div>
+          <label className={label}>LinkedIn</label>
+          <input type="url" value={draft.linkedinUrl} onChange={(e) => set("linkedinUrl", e.target.value)} className={input} placeholder="https://linkedin.com/in/..." />
+        </div>
+        <div>
+          <label className={label}>Facebook</label>
+          <input type="url" value={draft.facebookUrl} onChange={(e) => set("facebookUrl", e.target.value)} className={input} placeholder="https://facebook.com/..." />
+        </div>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-3">
@@ -205,12 +224,15 @@ export default function SpeakersPage({ params }: { params: Promise<{ id: string 
           </p>
         </div>
         {!adding && (
-          <button
-            onClick={() => setAdding(true)}
-            className={ui.btn}
-          >
-            + 登壇者を追加
-          </button>
+          <div className="flex items-center gap-3">
+            <ViewPublicPageButton eventId={id} />
+            <button
+              onClick={() => setAdding(true)}
+              className={ui.btn}
+            >
+              + 登壇者を追加
+            </button>
+          </div>
         )}
       </div>
 
@@ -249,6 +271,9 @@ export default function SpeakersPage({ params }: { params: Promise<{ id: string 
                     bio: sp.bio ?? "",
                     websiteUrl: sp.websiteUrl ?? "",
                     xUrl: sp.xUrl ?? "",
+                    instagramUrl: sp.instagramUrl ?? "",
+                    linkedinUrl: sp.linkedinUrl ?? "",
+                    facebookUrl: sp.facebookUrl ?? "",
                   }}
                   onDone={() => setEditingId(null)}
                   onCancel={() => setEditingId(null)}

@@ -17,6 +17,7 @@ import {
 import { db } from "@/lib/firebase/client";
 import type { SessionDoc, SpeakerDoc } from "@/lib/types";
 import { ui } from "@/lib/ui";
+import { ViewPublicPageButton } from "@/components/ViewPublicPageButton";
 
 const label = ui.label;
 const input = ui.input;
@@ -296,12 +297,15 @@ export default function SessionsPage({ params }: { params: Promise<{ id: string 
           </p>
         </div>
         {!adding && (
-          <button
-            onClick={() => setAdding(true)}
-            className={ui.btn}
-          >
-            + セッションを追加
-          </button>
+          <div className="flex items-center gap-3">
+            <ViewPublicPageButton eventId={id} />
+            <button
+              onClick={() => setAdding(true)}
+              className={ui.btn}
+            >
+              + セッションを追加
+            </button>
+          </div>
         )}
       </div>
 

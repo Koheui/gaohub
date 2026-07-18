@@ -11,6 +11,9 @@ export interface EventFormValues {
   description: string;
   themeColor: string;
   template: EventTemplate;
+  ghostText: string;
+  showGhostText: boolean;
+  showMarquee: boolean;
   venueName: string;
   venueAddress: string;
   startsAtLocal: string; // datetime-local value
@@ -55,6 +58,9 @@ export function eventToFormValues(ev?: EventDoc): EventFormValues {
     description: ev?.description ?? "",
     themeColor: ev?.themeColor ?? "#18181b",
     template: ev?.template ?? "kodak",
+    ghostText: ev?.ghostText ?? "",
+    showGhostText: ev?.showGhostText ?? true,
+    showMarquee: ev?.showMarquee ?? true,
     venueName: ev?.venueName ?? "",
     venueAddress: ev?.venueAddress ?? "",
     startsAtLocal: ev?.startsAt ? toLocalInput(ev.startsAt.toDate()) : "",
@@ -197,6 +203,40 @@ export function EventForm({
           onChange={(e) => set("themeColor", e.target.value)}
           className="mt-1 h-10 w-20 cursor-pointer rounded border border-zinc-300"
         />
+      </div>
+      <div className="space-y-4 border-2 border-zinc-200 p-4">
+        <p className={label}>LP表示設定</p>
+        <div>
+          <label className={label}>背景の飾り文字</label>
+          <input
+            value={values.ghostText}
+            onChange={(e) => set("ghostText", e.target.value)}
+            className={input}
+            placeholder={`未入力なら開催年(例: ${values.startsAtLocal ? new Date(values.startsAtLocal).getFullYear() : new Date().getFullYear()})を表示`}
+            maxLength={12}
+          />
+          <p className="mt-1 text-xs text-zinc-400">
+            ヒーロー背景に大きく表示されるアウトライン文字です(最大12文字)
+          </p>
+        </div>
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={values.showGhostText}
+            onChange={(e) => set("showGhostText", e.target.checked)}
+            className="h-4 w-4"
+          />
+          <span className="text-sm font-bold">背景の飾り文字を表示する</span>
+        </label>
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={values.showMarquee}
+            onChange={(e) => set("showMarquee", e.target.checked)}
+            className="h-4 w-4"
+          />
+          <span className="text-sm font-bold">イベント名が流れる帯(マーキー)を表示する</span>
+        </label>
       </div>
       <div>
         <label className={label}>LPテンプレート</label>

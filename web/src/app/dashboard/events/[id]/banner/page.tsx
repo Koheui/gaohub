@@ -6,8 +6,10 @@ import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import type { SessionDoc } from "@/lib/types";
 import { ui } from "@/lib/ui";
+import { ViewPublicPageButton } from "@/components/ViewPublicPageButton";
 
 type BannerSize = "wide" | "square" | "story";
+type BannerStyle = "classic" | "duotone" | "geo" | "timetable";
 /** "event" = イベント全体のバナー。それ以外はセッションID */
 type Target = "event" | string;
 
@@ -17,11 +19,24 @@ const SIZE_OPTIONS: { id: BannerSize; label: string; use: string; width: number;
   { id: "story", label: "Story", use: "Instagram / X ストーリー", width: 1080, height: 1920 },
 ];
 
+/** 対象ごとに選べるデザインパターン */
+const EVENT_STYLE_OPTIONS: { id: BannerStyle; label: string; desc: string }[] = [
+  { id: "classic", label: "クラシック", desc: "LPと同じグラデーション地" },
+  { id: "timetable", label: "タイムテーブル", desc: "プログラム表(セッション一覧と連動)" },
+];
+
+const SESSION_STYLE_OPTIONS: { id: BannerStyle; label: string; desc: string }[] = [
+  { id: "classic", label: "クラシック", desc: "LPと同じグラデーション地" },
+  { id: "duotone", label: "デュオトーン", desc: "紙地 × 写真にカラーを重ねる" },
+  { id: "geo", label: "ジオメトリック", desc: "全面写真 × 斜めのカラーブロック" },
+];
+
 export default function BannerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [sessions, setSessions] = useState<SessionDoc[]>([]);
   const [target, setTarget] = useState<Target>("event");
   const [selected, setSelected] = useState<BannerSize>("wide");
+  const [bannerStyle, setBannerStyle] = useState<BannerStyle>("classic");
   const [downloading, setDownloading] = useState(false);
   // プレビューを強制更新するためのキャッシュバスター(コンテンツ変更後の再取得用)
   const [refreshKey, setRefreshKey] = useState(0);
@@ -34,16 +49,22 @@ export default function BannerPage({ params }: { params: Promise<{ id: string }>
   }, [id]);
 
   const option = SIZE_OPTIONS.find((o) => o.id === selected)!;
-  const basePath = target === "event" ? `/api/banner/${id}` : `/api/banner/${id}/sessions/${target}`;
-  const previewUrl = `${basePath}?size=${selected}&v=${refreshKey}`;
-  const activeSession = target === "event" ? null : sessions.find((s) => s.id === target);
-  const fileLabel =
-    target === "event" ? "event" : (activeSession?.title ?? "session").replace(/[^\p{L}\p{N}\-_]+/gu, "-");
+  const isSessionTarget = target !== "event";
+  const styleOptions = isSessionTarget ? SESSION_STYLE_OPTIONS : EVENT_STYLE_OPTIONS;
+  // 対象を切り替えた際、選べないスタイルが残っていたらクラシックに戻す
+  const effectiveStyle = styleOptions.some((o) => o.id === bannerStyle) ? bannerStyle : "classic";
+  const basePath = isSessionTarget ? `/api/banner/${id}/sessions/${target}` : `/api/banner/${id}`;
+  const styleQuery = `&style=${effectiveStyle}`;
+  const previewUrl = `${basePath}?size=${selected}${styleQuery}&v=${refreshKey}`;
+  const activeSession = isSessionTarget ? sessions.find((s) => s.id === target) : null;
+  const fileLabel = !isSessionTarget
+    ? "event"
+    : (activeSession?.title ?? "session").replace(/[^\p{L}\p{N}\-_]+/gu, "-");
 
   async function handleDownload() {
     setDownloading(true);
     try {
-      const res = await fetch(`${basePath}?size=${selected}&download=1`);
+      const res = await fetch(`${basePath}?size=${selected}${styleQuery}&download=1`);
       if (!res.ok) throw new Error("生成に失敗しました");
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -73,13 +94,16 @@ export default function BannerPage({ params }: { params: Promise<{ id: string }>
             登壇者の顔写真は登壇者ページでアップロードすると、そのままバナーに反映されます。
           </p>
         </div>
-        <button
-          onClick={() => setRefreshKey((k) => k + 1)}
-          className={ui.btnText}
-          title="コンテンツを更新した後はここで再読み込みできます"
-        >
-          再読み込み
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setRefreshKey((k) => k + 1)}
+            className={ui.btnText}
+            title="コンテンツを更新した後はここで再読み込みできます"
+          >
+            再読み込み
+          </button>
+          <ViewPublicPageButton eventId={id} />
+        </div>
       </div>
 
       <div className="mt-8">
@@ -110,6 +134,30 @@ export default function BannerPage({ params }: { params: Promise<{ id: string }>
             セッションを登録すると、コンテンツごとのバナーもここから作れます。
           </p>
         )}
+      </div>
+
+      <div className="mt-6">
+        <label className={ui.label}>デザイン</label>
+        <div className="mt-2 flex flex-wrap gap-3">
+          {styleOptions.map((o) => (
+            <button
+              key={o.id}
+              onClick={() => setBannerStyle(o.id)}
+              className={`px-5 py-3 text-left transition-colors ${
+                effectiveStyle === o.id ? "bg-zinc-950 text-white" : `${ui.card} hover:bg-zinc-100`
+              }`}
+            >
+              <p className="text-sm font-black tracking-tight">{o.label}</p>
+              <p
+                className={`mt-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] ${
+                  effectiveStyle === o.id ? "text-zinc-400" : "text-zinc-500"
+                }`}
+              >
+                {o.desc}
+              </p>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">

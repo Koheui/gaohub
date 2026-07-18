@@ -153,7 +153,8 @@ function SmallAvatar({ speaker, dark }: { speaker: PublicSpeaker; dark: boolean 
 /** テンプレート別の全画面キャンバス(固定・低速パララックス) */
 function BackdropCanvas({ event, t }: { event: PublicEvent; t: LpTheme }) {
   const color = event.themeColor;
-  const year = yearFmt.format(event.startsAt).replace("年", "");
+  // 飾り文字: 主催者が指定した任意テキスト。未指定なら開催年を自動表示
+  const year = event.ghostText || yearFmt.format(event.startsAt).replace("年", "");
   return (
     <FixedBackdrop speed={0.16}>
       {event.coverImageUrl ? (
@@ -217,17 +218,19 @@ function BackdropCanvas({ event, t }: { event: PublicEvent; t: LpTheme }) {
         </div>
       )}
       {t.id !== "aurora" && <Grain opacity={t.id === "spectrum" ? 0.38 : 0.32} />}
-      {/* 巨大アウトライン年号もキャンバス側でゆっくり流す(spectrumは白ストローク=白を色として使う) */}
-      <span
-        aria-hidden
-        className={`absolute right-[2%] top-[52vh] select-none text-[26vw] font-black leading-none tracking-tighter text-transparent sm:text-[20rem] ${
-          t.ghostLight
-            ? "[-webkit-text-stroke:2px_rgba(255,255,255,0.35)]"
-            : "[-webkit-text-stroke:2px_rgba(24,24,27,0.15)]"
-        }`}
-      >
-        {year}
-      </span>
+      {/* 巨大アウトライン飾り文字(イベント設定で変更・非表示可能) */}
+      {event.showGhostText && (
+        <span
+          aria-hidden
+          className={`absolute right-[2%] top-[52vh] select-none text-[26vw] font-black leading-none tracking-tighter text-transparent sm:text-[20rem] ${
+            t.ghostLight
+              ? "[-webkit-text-stroke:2px_rgba(255,255,255,0.35)]"
+              : "[-webkit-text-stroke:2px_rgba(24,24,27,0.15)]"
+          }`}
+        >
+          {year}
+        </span>
+      )}
     </FixedBackdrop>
   );
 }
@@ -423,7 +426,7 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
           </div>
         </section>
 
-        <Marquee event={event} t={t} />
+        {event.showMarquee && <Marquee event={event} t={t} />}
 
         {/* ─── 統計 ─── */}
         {sessions.length > 0 && (
@@ -690,7 +693,7 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
           </Panel>
         </section>
 
-        <Marquee event={event} t={t} />
+        {event.showMarquee && <Marquee event={event} t={t} />}
 
         {/* ─── 締めのCTA ─── */}
         {hasTickets && (

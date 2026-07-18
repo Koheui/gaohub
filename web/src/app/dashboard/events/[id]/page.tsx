@@ -16,6 +16,7 @@ import { useAuth } from "@/components/AuthProvider";
 import type { EventDoc, Registration } from "@/lib/types";
 import { EventForm, eventToFormValues, type EventFormValues } from "@/components/EventForm";
 import { CoverImageUploader } from "@/components/CoverImageUploader";
+import { ViewPublicPageButton } from "@/components/ViewPublicPageButton";
 import { formatDateRange } from "@/lib/format";
 import { ui } from "@/lib/ui";
 
@@ -76,6 +77,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
       description: values.description,
       themeColor: values.themeColor,
       template: values.template,
+      ghostText: values.ghostText,
+      showGhostText: values.showGhostText,
+      showMarquee: values.showMarquee,
       venueName: values.venueName,
       venueAddress: values.venueAddress,
       startsAt: Timestamp.fromDate(new Date(values.startsAtLocal)),
@@ -93,21 +97,20 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
           </p>
           <h1 className={`mt-2 ${ui.h1}`}>{event.title}</h1>
           {event.status === "published" && (
-            <a
-              href={`/e/${event.slug}`}
-              target="_blank"
-              className="mt-2 inline-block font-mono text-[11px] font-bold uppercase tracking-[0.15em] underline underline-offset-4 hover:opacity-60"
-            >
-              公開ページ → /e/{event.slug} ↗
-            </a>
+            <p className="mt-2 font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500">
+              /e/{event.slug}
+            </p>
           )}
         </div>
-        <button
-          onClick={togglePublish}
-          className={event.status === "published" ? ui.btnGhost : ui.btn}
-        >
-          {event.status === "published" ? "非公開にする" : "公開する →"}
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <ViewPublicPageButton eventId={id} />
+          <button
+            onClick={togglePublish}
+            className={event.status === "published" ? ui.btnGhost : ui.btn}
+          >
+            {event.status === "published" ? "非公開にする" : "公開する →"}
+          </button>
+        </div>
       </div>
 
       <nav className="mt-8 flex flex-wrap gap-x-6 gap-y-2 border-b-2 border-zinc-950">

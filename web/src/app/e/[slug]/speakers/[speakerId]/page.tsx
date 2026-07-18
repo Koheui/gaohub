@@ -132,34 +132,34 @@ export default async function SpeakerDetailPage(props: {
               <p className={`lp-fade-up mt-4 text-sm font-bold uppercase tracking-[0.2em] ${t.muted}`} style={{ animationDelay: "500ms" }}>
                 {[speaker.company, speaker.title].filter(Boolean).join(" / ")}
               </p>
-              {(speaker.websiteUrl || speaker.xUrl) && (
-                <div className="lp-fade-up mt-5 flex gap-3" style={{ animationDelay: "650ms" }}>
-                  {speaker.xUrl && (
-                    <a
-                      href={speaker.xUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`rounded-full px-4 py-1.5 text-xs font-black ${
-                        dark ? "border border-white/30 hover:bg-white/10" : "border-2 border-zinc-950 hover:bg-zinc-950 hover:text-white"
-                      }`}
-                    >
-                      X (Twitter) ↗
-                    </a>
-                  )}
-                  {speaker.websiteUrl && (
-                    <a
-                      href={speaker.websiteUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`rounded-full px-4 py-1.5 text-xs font-black ${
-                        dark ? "border border-white/30 hover:bg-white/10" : "border-2 border-zinc-950 hover:bg-zinc-950 hover:text-white"
-                      }`}
-                    >
-                      Website ↗
-                    </a>
-                  )}
-                </div>
-              )}
+              {(() => {
+                const links: [string, string][] = [
+                  ["X (Twitter)", speaker.xUrl],
+                  ["Instagram", speaker.instagramUrl],
+                  ["LinkedIn", speaker.linkedinUrl],
+                  ["Facebook", speaker.facebookUrl],
+                  ["Website", speaker.websiteUrl],
+                ];
+                const active = links.filter(([, url]) => url);
+                if (active.length === 0) return null;
+                return (
+                  <div className="lp-fade-up mt-5 flex flex-wrap gap-3" style={{ animationDelay: "650ms" }}>
+                    {active.map(([label, url]) => (
+                      <a
+                        key={label}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`rounded-full px-4 py-1.5 text-xs font-black ${
+                          dark ? "border border-white/30 hover:bg-white/10" : "border-2 border-zinc-950 hover:bg-zinc-950 hover:text-white"
+                        }`}
+                      >
+                        {label} ↗
+                      </a>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>

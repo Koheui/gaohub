@@ -7,6 +7,12 @@ import type { PublicEvent, PublicSession, PublicSpeaker } from "@/lib/server/eve
 
 export type BannerSize = "wide" | "square" | "story";
 
+/** セッションバナーのデザインパターン */
+export type SessionBannerStyle = "classic" | "duotone" | "geo";
+
+/** イベント全体バナーのデザインパターン */
+export type EventBannerStyle = "classic" | "timetable";
+
 const SIZES: Record<BannerSize, { width: number; height: number }> = {
   wide: { width: 1200, height: 630 },
   square: { width: 1080, height: 1080 },
@@ -53,6 +59,20 @@ function Spec({
       <span style={{ marginTop: 8 * scale, fontSize: 30 * scale, color: INK }}>{value}</span>
     </div>
   );
+}
+
+/**
+ * バナーのアクセント色を rgba() で返す。Satori は hsl() の扱いが不安定なため
+ * 常に rgba 文字列にする。spectrum はLPと同じ生成パレットの第一色に揃える。
+ */
+function accentRgba(event: PublicEvent, alpha: number): string {
+  if (event.template === "spectrum") {
+    return spectrumStopsRgba(event.themeColor, alpha)[0];
+  }
+  const m = /^#?([0-9a-f]{6})$/i.exec(event.themeColor.trim());
+  if (!m) return `rgba(109, 40, 217, ${alpha})`;
+  const n = parseInt(m[1], 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
 /** テンプレート(kodak/spectrum/aurora)に応じた背景グラデーションを作る。バナー共通ロジック */
@@ -110,7 +130,10 @@ function BannerBackdrop({
           <div
             style={{
               position: "absolute",
-              inset: 0,
+              top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
               backgroundImage:
                 "linear-gradient(150deg, rgba(246,245,242,0.96) 0%, rgba(246,245,242,0.82) 45%, rgba(246,245,242,0.25) 100%)",
             }}
@@ -120,7 +143,10 @@ function BannerBackdrop({
       <div
         style={{
           position: "absolute",
-          inset: 0,
+          top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
           backgroundImage: `url(${NOISE_PNG_DATA_URI})`,
           backgroundRepeat: "repeat",
           backgroundSize: `${96 * scale}px ${96 * scale}px`,
@@ -441,7 +467,8 @@ export async function renderSessionBannerImage(
   event: PublicEvent,
   session: PublicSession,
   speakers: PublicSpeaker[],
-  size: BannerSize
+  size: BannerSize,
+  style: SessionBannerStyle = "classic"
 ): Promise<ImageResponse> {
   const dim = SIZES[size];
   const isTall = size !== "wide";
@@ -452,8 +479,15 @@ export async function renderSessionBannerImage(
 
   const fontText = `${session.title}${event.title}${dateText}${timeText}${session.track}${speakers
     .map((s) => `${s.name}${s.company}${s.title}`)
-    .join("")}DATE TIME TRACK SPEAKERS GAO HUB0123456789:– /`;
+    .join("")}DATE TIME TRACK SPEAKERS GAO HUB0123456789:– /・`;
   const fontData = await loadNotoSansJpBlack(fontText);
+  const fonts = fontData
+    ? [{ name: "NotoSansJP", data: fontData, weight: 900 as const, style: "normal" as const }]
+    : undefined;
+
+  const shared = { event, session, speakers, size, dim, isTall, scale, dateText, timeText, fonts };
+  if (style === "duotone") return renderSessionDuotone(shared);
+  if (style === "geo") return renderSessionGeo(shared);
 
   const titleLen = session.title.length;
   const baseTitleSize = titleLen <= 16 ? 72 : titleLen <= 32 ? 54 : 40;
@@ -533,6 +567,661 @@ export async function renderSessionBannerImage(
         ? [{ name: "NotoSansJP", data: fontData, weight: 900 as const, style: "normal" as const }]
         : undefined,
     }
+  );
+}
+
+interface SessionBannerArgs {
+  event: PublicEvent;
+  session: PublicSession;
+  speakers: PublicSpeaker[];
+  size: BannerSize;
+  dim: { width: number; height: number };
+  isTall: boolean;
+  scale: number;
+  dateText: string;
+  timeText: string;
+  fonts?: { name: string; data: ArrayBuffer; weight: 900; style: "normal" }[];
+}
+
+/**
+ * デュオトーン: 紙地に特大タイトル+登壇者写真の矩形カードへ
+ * アクセントカラーのグラデーションを重ねる(RIOBook風のウェビナー告知)。
+ */
+function renderSessionDuotone(args: SessionBannerArgs): ImageResponse {
+  const { event, session, speakers, dim, isTall, scale, dateText, timeText, fonts } = args;
+  const n = Math.max(1, Math.min(speakers.length, 4));
+  const shown = speakers.slice(0, 4);
+
+  const titleLen = session.title.length;
+  const titleSize = (titleLen <= 16 ? 64 : titleLen <= 32 ? 50 : 38) * (isTall ? scale : 0.9);
+  // カードは 3:4。Wide は縦が厳しいので小さめに固定
+  const cardH = (isTall ? 430 : 240) * (isTall ? scale * 0.8 : 1);
+  const cardW = Math.min(cardH * 0.76, (dim.width - 200 * scale) / n);
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          position: "relative",
+          backgroundColor: PAPER,
+          fontFamily: "NotoSansJP",
+          padding: `${40 * scale}px ${64 * scale}px`,
+        }}
+      >
+        {/* フィルムグレイン */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundImage: `url(${NOISE_PNG_DATA_URI})`,
+            backgroundRepeat: "repeat",
+            backgroundSize: `${96 * scale}px ${96 * scale}px`,
+            opacity: 0.5,
+          }}
+        />
+
+        {/* イベント名チップ */}
+        <div
+          style={{
+            display: "flex",
+            backgroundColor: accentRgba(event, 1),
+            color: "#ffffff",
+            padding: `${6 * scale}px ${18 * scale}px`,
+            fontSize: 18 * scale,
+            borderRadius: 6 * scale,
+          }}
+        >
+          {truncate(event.title, 24)}
+        </div>
+
+        {/* タイトル(中央揃え) */}
+        <div
+          style={{
+            display: "flex",
+            marginTop: 18 * scale,
+            fontSize: titleSize,
+            lineHeight: 1.06,
+            letterSpacing: "-0.02em",
+            color: INK,
+            textAlign: "center",
+            maxWidth: dim.width - 128 * scale,
+            textWrap: "balance" as never,
+          }}
+        >
+          {session.title}
+        </div>
+
+        {/* 日時スペック */}
+        <div
+          style={{
+            display: "flex",
+            marginTop: 14 * scale,
+            fontSize: 22 * scale,
+            color: "rgba(24,24,27,0.7)",
+          }}
+        >
+          {dateText} ・ {timeText}
+          {session.track ? ` ・ ${session.track}` : ""}
+        </div>
+
+        {/* 登壇者カード列 */}
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+            alignItems: "center",
+            gap: 28 * scale,
+            marginTop: 20 * scale,
+          }}
+        >
+          {shown.map((sp) => (
+            <div
+              key={sp.id}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", width: cardW }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  position: "relative",
+                  width: cardW,
+                  height: cardH,
+                  borderRadius: 10 * scale,
+                  overflow: "hidden",
+                  backgroundColor: "#e4e4e7",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {sp.photoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={sp.photoUrl}
+                    alt={sp.name}
+                    width={cardW}
+                    height={cardH}
+                    style={{ width: cardW, height: cardH, objectFit: "cover" }}
+                  />
+                ) : (
+                  <span style={{ fontSize: cardW * 0.42, fontWeight: 900, color: "#a1a1aa" }}>
+                    {sp.name.charAt(0)}
+                  </span>
+                )}
+                {/* デュオトーンの色被せ(下ほど濃く) */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+                    backgroundImage: `linear-gradient(180deg, ${accentRgba(event, 0.08)} 0%, ${accentRgba(event, 0.28)} 55%, ${accentRgba(event, 0.82)} 100%)`,
+                  }}
+                />
+                {/* カード内の名前(下部) */}
+                <div
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    bottom: 12 * scale,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
+                  <span style={{ fontSize: 22 * scale, fontWeight: 900, color: "#ffffff" }}>
+                    {truncate(sp.name, 10)}
+                  </span>
+                  {(sp.company || sp.title) && (
+                    <span style={{ fontSize: 13 * scale, color: "rgba(255,255,255,0.85)" }}>
+                      {truncate([sp.company, sp.title].filter(Boolean).join(" / "), 18)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* フッター */}
+        <div
+          style={{
+            display: "flex",
+            width: "100%",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderTop: `${3 * scale}px solid ${INK}`,
+            paddingTop: 16 * scale,
+            marginTop: 20 * scale,
+          }}
+        >
+          <span style={{ fontSize: 16 * scale, letterSpacing: "0.3em", color: "rgba(24,24,27,0.55)" }}>
+            FREE / TICKET
+          </span>
+          <span style={{ fontSize: 26 * scale, letterSpacing: "0.12em", color: INK }}>GAO HUB</span>
+        </div>
+      </div>
+    ),
+    { ...dim, fonts }
+  );
+}
+
+/**
+ * ジオメトリック: 登壇者写真を全面に敷き、斜めのカラーブロックを
+ * 重ねて文字を載せる(コーポレートフライヤー/DCPilot風)。
+ */
+function renderSessionGeo(args: SessionBannerArgs): ImageResponse {
+  const { event, session, speakers, dim, isTall, scale, dateText, timeText, fonts } = args;
+  const shown = speakers.slice(0, 3);
+
+  const titleLen = session.title.length;
+  const titleSize = (titleLen <= 16 ? 58 : titleLen <= 32 ? 46 : 36) * (isTall ? scale : 0.95);
+  const namesLine = shown
+    .map((s) => s.name)
+    .filter(Boolean)
+    .join(" / ");
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          position: "relative",
+          backgroundColor: INK,
+          fontFamily: "NotoSansJP",
+        }}
+      >
+        {/* 登壇者写真を全面のカラムとして敷く */}
+        <div style={{ display: "flex", width: "100%", height: "100%" }}>
+          {(shown.length > 0 ? shown : [null]).map((sp, i) => (
+            <div
+              key={sp?.id ?? i}
+              style={{
+                display: "flex",
+                flex: 1,
+                position: "relative",
+                backgroundColor: i % 2 === 0 ? "#26262b" : "#1c1c20",
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
+              }}
+            >
+              {sp?.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={sp.photoUrl}
+                  alt={sp.name}
+                  width={dim.width}
+                  height={dim.height}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              ) : (
+                <span style={{ fontSize: 160 * scale, fontWeight: 900, color: accentRgba(event, 0.5) }}>
+                  {sp?.name.charAt(0) ?? "G"}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* 斜めのカラーブロック(右下: アクセント帯 + ダークコーナー) */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundImage: `linear-gradient(115deg, transparent 55%, ${accentRgba(event, 0.85)} 55%, ${accentRgba(event, 0.85)} 76%, rgba(24,24,27,0.94) 76%)`,
+          }}
+        />
+        {/* 左上の薄いアクセント */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundImage: `linear-gradient(295deg, transparent 84%, ${accentRgba(event, 0.45)} 84%)`,
+          }}
+        />
+        {/* 下部スクリーム(文字の可読性) */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundImage: "linear-gradient(0deg, rgba(24,24,27,0.88) 0%, rgba(24,24,27,0.35) 32%, transparent 55%)",
+          }}
+        />
+        {/* フィルムグレイン */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundImage: `url(${NOISE_PNG_DATA_URI})`,
+            backgroundRepeat: "repeat",
+            backgroundSize: `${96 * scale}px ${96 * scale}px`,
+            opacity: 0.35,
+          }}
+        />
+
+        {/* テキストブロック(左下) */}
+        <div
+          style={{
+            position: "absolute",
+            left: 56 * scale,
+            right: 56 * scale,
+            bottom: 44 * scale,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <span
+            style={{
+              fontSize: 18 * scale,
+              letterSpacing: "0.25em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.75)",
+            }}
+          >
+            {dateText} ・ {timeText}
+            {session.track ? ` ・ ${session.track}` : ""}
+          </span>
+          <span
+            style={{
+              marginTop: 12 * scale,
+              fontSize: titleSize,
+              lineHeight: 1.08,
+              letterSpacing: "-0.02em",
+              color: "#ffffff",
+              maxWidth: dim.width - (isTall ? 112 : 260) * scale,
+              textWrap: "balance" as never,
+            }}
+          >
+            {session.title}
+          </span>
+          {namesLine && (
+            <span
+              style={{
+                marginTop: 14 * scale,
+                fontSize: 24 * scale,
+                fontWeight: 900,
+                color: accentRgba(event, 1),
+              }}
+            >
+              {truncate(namesLine, 30)}
+            </span>
+          )}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: 18 * scale,
+              borderTop: "2px solid rgba(255,255,255,0.35)",
+              paddingTop: 12 * scale,
+            }}
+          >
+            <span style={{ fontSize: 15 * scale, letterSpacing: "0.12em", color: "rgba(255,255,255,0.65)" }}>
+              {truncate(event.title, 24)}
+            </span>
+            <span style={{ fontSize: 22 * scale, letterSpacing: "0.12em", color: "#ffffff" }}>
+              GAO HUB
+            </span>
+          </div>
+        </div>
+      </div>
+    ),
+    { ...dim, fonts }
+  );
+}
+
+/**
+ * タイムテーブル型バナー(イベント全体)。参考: カンファレンスの
+ * プログラムポスター — アクセントの淡色地に、日付・時間帯の特大ヘッダーと
+ * セッション一覧(時刻/トラック/タイトル/登壇者)を罫線区切りで並べる。
+ * コンテンツ(セッション・登壇者)と完全連動し、手作業なしで最新の
+ * プログラム表になる。
+ */
+export async function renderTimetableBannerImage(
+  event: PublicEvent,
+  sessions: PublicSession[],
+  speakers: PublicSpeaker[],
+  size: BannerSize
+): Promise<ImageResponse> {
+  const dim = SIZES[size];
+  const isTall = size !== "wide";
+  const scale = size === "story" ? 1.35 : size === "square" ? 1.15 : 1;
+
+  const speakerById = new Map(speakers.map((s) => [s.id, s]));
+  const maxRows = size === "story" ? 8 : size === "square" ? 5 : 3;
+  const shown = sessions.slice(0, maxRows);
+  const remaining = sessions.length - shown.length;
+
+  const dateShort = new Intl.DateTimeFormat("ja-JP", {
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: "Asia/Tokyo",
+  }).format(event.startsAt);
+  const yearShort = new Intl.DateTimeFormat("ja-JP", {
+    year: "numeric",
+    timeZone: "Asia/Tokyo",
+  })
+    .format(event.startsAt)
+    .replace("年", "");
+  const doorsText = `${timeFmt.format(event.startsAt)} – ${timeFmt.format(event.endsAt)}`;
+
+  const rowsText = shown
+    .map((s) => {
+      const names = s.speakerIds
+        .map((id) => speakerById.get(id)?.name)
+        .filter(Boolean)
+        .join("、");
+      return `${s.title}${s.track}${names}${timeFmt.format(s.startsAt)}${timeFmt.format(s.endsAt)}`;
+    })
+    .join("");
+  const fontText = `${event.title}${event.venueName}${dateShort}${yearShort}${doorsText}${rowsText}TIMETABLE GAO HUB0123456789:–・/ 他セッション`;
+  const fontData = await loadNotoSansJpBlack(fontText);
+  const fonts = fontData
+    ? [{ name: "NotoSansJP", data: fontData, weight: 900 as const, style: "normal" as const }]
+    : undefined;
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          position: "relative",
+          backgroundColor: PAPER,
+          fontFamily: "NotoSansJP",
+        }}
+      >
+        {/* アクセントの淡色地 */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: accentRgba(event, 0.34),
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundImage: `url(${NOISE_PNG_DATA_URI})`,
+            backgroundRepeat: "repeat",
+            backgroundSize: `${96 * scale}px ${96 * scale}px`,
+            opacity: 0.45,
+          }}
+        />
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            padding: `${44 * scale}px ${60 * scale}px`,
+          }}
+        >
+          {/* ヘッダー: 日付と時間帯を特大で */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+            }}
+          >
+            <span
+              style={{
+                fontSize: (isTall ? 64 : 52) * scale,
+                letterSpacing: "-0.02em",
+                color: INK,
+              }}
+            >
+              {yearShort}.{dateShort.replace("/", ".")}
+            </span>
+            <span
+              style={{
+                fontSize: (isTall ? 64 : 52) * scale,
+                letterSpacing: "-0.02em",
+                color: INK,
+              }}
+            >
+              {doorsText}
+            </span>
+          </div>
+
+          {/* タイトル行 + 会場チップ */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 18 * scale,
+              marginTop: (isTall ? 30 : 16) * scale,
+            }}
+          >
+            <span
+              style={{
+                fontSize: (isTall ? 46 : 38) * scale,
+                letterSpacing: "-0.02em",
+                color: INK,
+              }}
+            >
+              {truncate(event.title, 16)}
+            </span>
+            <span
+              style={{
+                display: "flex",
+                backgroundColor: accentRgba(event, 1),
+                color: "#ffffff",
+                padding: `${5 * scale}px ${14 * scale}px`,
+                borderRadius: 8 * scale,
+                fontSize: 17 * scale,
+              }}
+            >
+              TIMETABLE
+            </span>
+            {event.venueName && (
+              <span
+                style={{
+                  display: "flex",
+                  border: `${2 * scale}px solid ${INK}`,
+                  color: INK,
+                  padding: `${4 * scale}px ${14 * scale}px`,
+                  borderRadius: 999,
+                  fontSize: 17 * scale,
+                }}
+              >
+                {truncate(event.venueName, 14)}
+              </span>
+            )}
+          </div>
+
+          {/* セッション一覧(罫線区切り) */}
+          <div style={{ display: "flex", flexDirection: "column", flex: 1, marginTop: 14 * scale }}>
+            {shown.map((s) => {
+              const names = s.speakerIds
+                .map((id) => speakerById.get(id)?.name)
+                .filter(Boolean)
+                .join("、");
+              return (
+                <div
+                  key={s.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 22 * scale,
+                    borderTop: `${2 * scale}px solid ${INK}`,
+                    paddingTop: 12 * scale,
+                    paddingBottom: 12 * scale,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 22 * scale,
+                      color: INK,
+                      width: 150 * scale,
+                    }}
+                  >
+                    {timeFmt.format(s.startsAt)}–{timeFmt.format(s.endsAt)}
+                  </span>
+                  <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 * scale }}>
+                      {s.track && (
+                        <span
+                          style={{
+                            display: "flex",
+                            border: `${1.5 * scale}px solid ${INK}`,
+                            padding: `${2 * scale}px ${10 * scale}px`,
+                            borderRadius: 6 * scale,
+                            fontSize: 13 * scale,
+                            color: INK,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.08em",
+                          }}
+                        >
+                          {truncate(s.track, 12)}
+                        </span>
+                      )}
+                      <span style={{ fontSize: 22 * scale, color: INK }}>
+                        {truncate(s.title, isTall ? 24 : 28)}
+                      </span>
+                    </div>
+                    {names && (
+                      <span
+                        style={{
+                          marginTop: 4 * scale,
+                          fontSize: 16 * scale,
+                          color: "rgba(24,24,27,0.65)",
+                        }}
+                      >
+                        {truncate(names, 34)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {remaining > 0 && (
+              <div
+                style={{
+                  display: "flex",
+                  borderTop: `${2 * scale}px solid ${INK}`,
+                  paddingTop: 12 * scale,
+                  fontSize: 17 * scale,
+                  color: "rgba(24,24,27,0.6)",
+                }}
+              >
+                他 {remaining} セッション
+              </div>
+            )}
+          </div>
+
+          {/* フッター */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderTop: `${3 * scale}px solid ${INK}`,
+              paddingTop: 14 * scale,
+            }}
+          >
+            <span style={{ fontSize: 15 * scale, letterSpacing: "0.12em", color: "rgba(24,24,27,0.6)" }}>
+              {truncate(event.venueAddress || event.venueName || "", 26)}
+            </span>
+            <span style={{ fontSize: 24 * scale, letterSpacing: "0.12em", color: INK }}>GAO HUB</span>
+          </div>
+        </div>
+      </div>
+    ),
+    { ...dim, fonts }
   );
 }
 

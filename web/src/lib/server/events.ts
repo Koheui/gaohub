@@ -20,6 +20,10 @@ export interface PublicEvent {
   coverImageUrl: string | null;
   themeColor: string;
   template: EventTemplate;
+  /** ヒーロー背景の巨大アウトライン文字。空なら開催年を自動表示 */
+  ghostText: string;
+  showGhostText: boolean;
+  showMarquee: boolean;
   venueName: string;
   venueAddress: string;
   startsAt: Date;
@@ -35,6 +39,9 @@ export interface PublicSpeaker {
   bio: string;
   websiteUrl: string;
   xUrl: string;
+  instagramUrl: string;
+  linkedinUrl: string;
+  facebookUrl: string;
 }
 
 export interface PublicSession {
@@ -57,6 +64,9 @@ function toPublicEvent(id: string, d: FirebaseFirestore.DocumentData): PublicEve
     coverImageUrl: d.coverImageUrl ?? null,
     themeColor: d.themeColor ?? "#18181b",
     template: (d.template as EventTemplate) ?? "kodak",
+    ghostText: d.ghostText ?? "",
+    showGhostText: d.showGhostText ?? true,
+    showMarquee: d.showMarquee ?? true,
     venueName: d.venueName ?? "",
     venueAddress: d.venueAddress ?? "",
     startsAt: d.startsAt.toDate(),
@@ -122,6 +132,9 @@ export async function getPublicSpeakers(eventId: string): Promise<PublicSpeaker[
       bio: d.bio ?? "",
       websiteUrl: d.websiteUrl ?? "",
       xUrl: d.xUrl ?? "",
+      instagramUrl: d.instagramUrl ?? "",
+      linkedinUrl: d.linkedinUrl ?? "",
+      facebookUrl: d.facebookUrl ?? "",
     };
   });
 }

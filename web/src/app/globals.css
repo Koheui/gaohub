@@ -125,7 +125,8 @@ body {
 .lp-marquee {
   display: inline-flex;
   white-space: nowrap;
-  animation: lp-marquee 22s linear infinite;
+  /* ゆっくり流す(速すぎると読めない・落ち着かないため) */
+  animation: lp-marquee 60s linear infinite;
 }
 
 /* スクロールキュー(下端の伸びる縦線) */

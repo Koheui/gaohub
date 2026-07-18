@@ -16,6 +16,7 @@ import { db } from "@/lib/firebase/client";
 import type { TicketType } from "@/lib/types";
 import { formatJpy } from "@/lib/format";
 import { ui, chip } from "@/lib/ui";
+import { ViewPublicPageButton } from "@/components/ViewPublicPageButton";
 
 const label = ui.label;
 const input = ui.input;
@@ -89,12 +90,15 @@ export default function TicketsPage({ params }: { params: Promise<{ id: string }
       </Link>
       <div className="mt-2 flex items-center justify-between">
         <h1 className={ui.h1}>チケット</h1>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className={ui.btn}
-        >
-          {showForm ? "閉じる" : "+ チケット種別を追加"}
-        </button>
+        <div className="flex items-center gap-3">
+          <ViewPublicPageButton eventId={id} />
+          <button
+            onClick={() => setShowForm((v) => !v)}
+            className={ui.btn}
+          >
+            {showForm ? "閉じる" : "+ チケット種別を追加"}
+          </button>
+        </div>
       </div>
 
       {showForm && (

@@ -35,6 +35,12 @@ export interface EventDoc {
   coverImageUrl: string | null;
   themeColor: string;
   template: EventTemplate;
+  /** ヒーロー背景の巨大アウトライン文字。空なら開催年を自動表示 */
+  ghostText: string;
+  /** ヒーロー背景の巨大アウトライン文字を表示するか */
+  showGhostText: boolean;
+  /** イベント名が流れるマーキー帯を表示するか */
+  showMarquee: boolean;
   venueName: string;
   venueAddress: string;
   startsAt: Timestamp;
@@ -67,6 +73,9 @@ export interface SpeakerDoc {
   bio: string;
   websiteUrl: string;
   xUrl: string;
+  instagramUrl: string;
+  linkedinUrl: string;
+  facebookUrl: string;
   createdAt: Timestamp;
 }
 

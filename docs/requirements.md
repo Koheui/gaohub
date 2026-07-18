@@ -189,8 +189,10 @@ registrations/{registrationId}          … コレクショングループで横
 /api/checkout           … Checkout Session 作成(確認書類の画像アップロードも受付)
 /api/webhooks/stripe    … 決済確定 → registration confirm + メール送信
 /api/checkin            … qrToken 検証 + チェックイン記録
-/api/banner/[eventId]   … イベント全体の告知バナー生成(?size=wide|square|story, ?download=1)
-/api/banner/[eventId]/sessions/[sessionId] … セッション単位の告知バナー生成(登壇者の顔写真が主役)
+/api/banner/[eventId]   … イベント全体の告知バナー生成
+                          (?size=wide|square|story, ?style=classic|timetable, ?download=1)
+/api/banner/[eventId]/sessions/[sessionId] … セッション単位の告知バナー生成
+                          (?style=classic|duotone|geo。登壇者の顔写真が主役)
 /api/registrations/[id]/verification-image … 確認書類の画像を返す(org メンバーのみ)
 /api/admin/summary              … 全体サマリー+組織一覧(マスター管理者のみ)
 /api/admin/organizations/[orgId] … 組織詳細(マスター管理者のみ)
@@ -207,6 +209,24 @@ registrations/{registrationId}          … コレクショングループで横
 登壇者(複数名)の顔写真・氏名・肩書を主役として大きく配置する
 (`renderSessionBannerImage` / `SpeakerShowcase`)。登壇者の顔写真は
 登壇者管理画面(`/dashboard/events/[id]/speakers`)でアップロードすればそのまま反映される。
+
+バナーは**複数のデザインパターンから選択**できる(バナー画面の「デザイン」)。
+- イベント全体: クラシック(LPと同じグラデーション地) /
+  **タイムテーブル**(プログラムポスター風 — 日付・時間帯の特大ヘッダー+
+  セッション一覧を罫線区切りで自動掲載。コンテンツと完全連動)
+- セッション: クラシック / **デュオトーン**(紙地×写真にアクセントカラーの
+  グラデーションを重ねる) / **ジオメトリック**(全面写真×斜めのカラーブロック)
+
+実装ノート: Satori(next/og)は `position: absolute` + `inset` ショートハンドの
+オーバーレイでグラデーション/背景色を描画しないため、オーバーレイは必ず
+`top/left/width/height` を明示する。
+
+### LP表示設定(イベント編集フォーム内)
+
+- **背景の飾り文字(ghostText)**: ヒーローの巨大アウトライン文字。未入力なら
+  開催年(startsAtの年)を自動表示。`showGhostText` で非表示にもできる
+- **マーキー(showMarquee)**: イベント名が流れる帯の表示/非表示。
+  アニメーションは60秒/周(速すぎると読めないため低速固定)
 
 Satori(`next/og` のレンダラー)は `text-overflow: ellipsis` の挙動が不安定なため、
 バナー内の短いラベル(登壇者名・会社・肩書・イベント名)は表示前に文字数で
