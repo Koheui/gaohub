@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { collection, doc, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
+import { uploadEventImage } from "@/lib/upload";
 import type { SessionDoc } from "@/lib/types";
 import { ui } from "@/lib/ui";
 import { ViewPublicPageButton } from "@/components/ViewPublicPageButton";
@@ -40,6 +41,8 @@ export default function BannerPage({ params }: { params: Promise<{ id: string }>
   const [downloading, setDownloading] = useState(false);
   // プレビューを強制更新するためのキャッシュバスター(コンテンツ変更後の再取得用)
   const [refreshKey, setRefreshKey] = useState(0);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [bannerError, setBannerError] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, "events", id, "sessions"), orderBy("startsAt", "asc"));
@@ -78,6 +81,27 @@ export default function BannerPage({ params }: { params: Promise<{ id: string }>
     } finally {
       setDownloading(false);
     }
+  }
+
+  async function handleBannerUpload(file: File | undefined) {
+    if (!file || !isSessionTarget) return;
+    setUploadingBanner(true);
+    setBannerError(null);
+    try {
+      const url = await uploadEventImage(id, file, "session-banner");
+      await updateDoc(doc(db, "events", id, "sessions", target), { customBannerUrl: url });
+      setRefreshKey((k) => k + 1);
+    } catch (err) {
+      setBannerError(err instanceof Error ? err.message : "アップロードに失敗しました");
+    } finally {
+      setUploadingBanner(false);
+    }
+  }
+
+  async function handleRemoveBanner() {
+    if (!isSessionTarget) return;
+    await updateDoc(doc(db, "events", id, "sessions", target), { customBannerUrl: null });
+    setRefreshKey((k) => k + 1);
   }
 
   return (
@@ -136,50 +160,100 @@ export default function BannerPage({ params }: { params: Promise<{ id: string }>
         )}
       </div>
 
-      <div className="mt-6">
-        <label className={ui.label}>デザイン</label>
-        <div className="mt-2 flex flex-wrap gap-3">
-          {styleOptions.map((o) => (
-            <button
-              key={o.id}
-              onClick={() => setBannerStyle(o.id)}
-              className={`px-5 py-3 text-left transition-colors ${
-                effectiveStyle === o.id ? "bg-zinc-950 text-white" : `${ui.card} hover:bg-zinc-100`
-              }`}
-            >
-              <p className="text-sm font-black tracking-tight">{o.label}</p>
-              <p
-                className={`mt-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] ${
-                  effectiveStyle === o.id ? "text-zinc-400" : "text-zinc-500"
+      {isSessionTarget && (
+        <div className="mt-6">
+          <label className={ui.label}>カスタムバナー(任意)</label>
+          <p className="mt-1 text-xs text-zinc-500">
+            自動生成の代わりに、独自にデザインしたバナー画像をアップロードして使うこともできます。
+          </p>
+          <div className="mt-3 flex items-center gap-4">
+            <label className="relative block h-24 w-44 shrink-0 cursor-pointer overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 hover:border-zinc-400">
+              {activeSession?.customBannerUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={activeSession.customBannerUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center text-xs text-zinc-400">
+                  {uploadingBanner ? "アップロード中…" : "クリックして画像を選択"}
+                </span>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={uploadingBanner}
+                onChange={(e) => handleBannerUpload(e.target.files?.[0])}
+              />
+            </label>
+            {activeSession?.customBannerUrl && (
+              <button
+                onClick={handleRemoveBanner}
+                className="text-sm text-zinc-500 underline hover:text-red-600"
+              >
+                削除して自動生成に戻す
+              </button>
+            )}
+          </div>
+          {bannerError && <p className="mt-2 text-sm text-red-600">{bannerError}</p>}
+        </div>
+      )}
+
+      {activeSession?.customBannerUrl ? (
+        <p className="mt-6 text-xs text-zinc-500">
+          カスタムバナーが設定されているため、デザイン/サイズの選択は無効です
+          (アップロードした画像がそのままダウンロードされます)。
+        </p>
+      ) : (
+        <>
+          <div className="mt-6">
+            <label className={ui.label}>デザイン</label>
+            <div className="mt-2 flex flex-wrap gap-3">
+              {styleOptions.map((o) => (
+                <button
+                  key={o.id}
+                  onClick={() => setBannerStyle(o.id)}
+                  className={`px-5 py-3 text-left transition-colors ${
+                    effectiveStyle === o.id ? "bg-zinc-950 text-white" : `${ui.card} hover:bg-zinc-100`
+                  }`}
+                >
+                  <p className="text-sm font-black tracking-tight">{o.label}</p>
+                  <p
+                    className={`mt-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] ${
+                      effectiveStyle === o.id ? "text-zinc-400" : "text-zinc-500"
+                    }`}
+                  >
+                    {o.desc}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            {SIZE_OPTIONS.map((o) => (
+              <button
+                key={o.id}
+                onClick={() => setSelected(o.id)}
+                className={`px-5 py-3 text-left transition-colors ${
+                  selected === o.id ? "bg-zinc-950 text-white" : `${ui.card} hover:bg-zinc-100`
                 }`}
               >
-                {o.desc}
-              </p>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-6 flex flex-wrap gap-3">
-        {SIZE_OPTIONS.map((o) => (
-          <button
-            key={o.id}
-            onClick={() => setSelected(o.id)}
-            className={`px-5 py-3 text-left transition-colors ${
-              selected === o.id ? "bg-zinc-950 text-white" : `${ui.card} hover:bg-zinc-100`
-            }`}
-          >
-            <p className="text-sm font-black tracking-tight">{o.label}</p>
-            <p
-              className={`mt-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] ${
-                selected === o.id ? "text-zinc-400" : "text-zinc-500"
-              }`}
-            >
-              {o.width}×{o.height} ・ {o.use}
-            </p>
-          </button>
-        ))}
-      </div>
+                <p className="text-sm font-black tracking-tight">{o.label}</p>
+                <p
+                  className={`mt-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] ${
+                    selected === o.id ? "text-zinc-400" : "text-zinc-500"
+                  }`}
+                >
+                  {o.width}×{o.height} ・ {o.use}
+                </p>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       <div className={`mt-6 flex items-center justify-center overflow-hidden bg-zinc-100 p-6 ${ui.card}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}

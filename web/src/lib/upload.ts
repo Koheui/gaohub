@@ -10,7 +10,7 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 export async function uploadEventImage(
   eventId: string,
   file: File,
-  prefix: "cover" | "speaker" | "og"
+  prefix: "cover" | "speaker" | "og" | "session-banner"
 ): Promise<string> {
   if (!file.type.startsWith("image/")) {
     throw new Error("画像ファイルを選択してください");

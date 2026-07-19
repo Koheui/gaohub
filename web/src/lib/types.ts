@@ -52,6 +52,8 @@ export interface EventDoc {
   loungeEnabled: boolean;
   /** 主催者が定義する参加者カテゴリ(例: 運営者/投資家/支援者/スタートアップ) */
   loungeCategories: string[];
+  /** セッションの「トラック/会場」欄で選択できる会場名の一覧(主催者が管理) */
+  tracks: string[];
   createdAt: Timestamp;
 }
 
@@ -100,6 +102,8 @@ export interface SessionDoc {
   capacity: number | null;
   /** 予約済み人数(capacity に対するトランザクションカウンタ) */
   reservedCount: number;
+  /** 手動アップロードされたバナー画像。設定時は自動生成の代わりにこの画像を使用する */
+  customBannerUrl: string | null;
   createdAt: Timestamp;
 }
 

@@ -58,6 +58,7 @@ export interface PublicSession {
   isComingSoon: boolean;
   capacity: number | null;
   reservedCount: number;
+  customBannerUrl: string | null;
 }
 
 function toPublicEvent(id: string, d: FirebaseFirestore.DocumentData): PublicEvent {
@@ -160,6 +161,7 @@ function toPublicSession(id: string, d: FirebaseFirestore.DocumentData): PublicS
     isComingSoon: d.isComingSoon ?? false,
     capacity: d.capacity ?? null,
     reservedCount: d.reservedCount ?? 0,
+    customBannerUrl: d.customBannerUrl ?? null,
   };
 }
 

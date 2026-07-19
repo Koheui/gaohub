@@ -5,6 +5,8 @@ import { use, useEffect, useState } from "react";
 import {
   Timestamp,
   addDoc,
+  arrayRemove,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -15,7 +17,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
-import type { SessionDoc, SpeakerDoc } from "@/lib/types";
+import type { EventDoc, SessionDoc, SpeakerDoc } from "@/lib/types";
 import { ui } from "@/lib/ui";
 import { ViewPublicPageButton } from "@/components/ViewPublicPageButton";
 
@@ -79,6 +81,7 @@ function SessionForm({
   eventId,
   initial,
   speakers,
+  tracks,
   sessionId,
   onDone,
   onCancel,
@@ -86,6 +89,7 @@ function SessionForm({
   eventId: string;
   initial: SessionDraft;
   speakers: SpeakerDoc[];
+  tracks: string[];
   sessionId?: string;
   onDone: () => void;
   onCancel: () => void;
@@ -98,6 +102,9 @@ function SessionForm({
   const [newSpeakerTitle, setNewSpeakerTitle] = useState("");
   const [newSpeakerCompany, setNewSpeakerCompany] = useState("");
   const [creatingSpeaker, setCreatingSpeaker] = useState(false);
+  const [addingTrack, setAddingTrack] = useState(false);
+  const [newTrackName, setNewTrackName] = useState("");
+  const [creatingTrack, setCreatingTrack] = useState(false);
 
   function set<K extends keyof SessionDraft>(key: K, value: SessionDraft[K]) {
     setDraft((d) => ({ ...d, [key]: value }));
@@ -137,6 +144,20 @@ function SessionForm({
       setAddingSpeaker(false);
     } finally {
       setCreatingSpeaker(false);
+    }
+  }
+
+  async function createTrack() {
+    const name = newTrackName.trim();
+    if (!name) return;
+    setCreatingTrack(true);
+    try {
+      await updateDoc(doc(db, "events", eventId), { tracks: arrayUnion(name) });
+      set("track", name);
+      setNewTrackName("");
+      setAddingTrack(false);
+    } finally {
+      setCreatingTrack(false);
     }
   }
 
@@ -249,12 +270,45 @@ function SessionForm({
         </div>
         <div>
           <label className={label}>トラック/会場</label>
-          <input
+          <select
             value={draft.track}
             onChange={(e) => set("track", e.target.value)}
             className={input}
-            placeholder="例: Main Stage"
-          />
+          >
+            <option value="">未選択</option>
+            {Array.from(new Set(draft.track ? [draft.track, ...tracks] : tracks)).map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+          {addingTrack ? (
+            <div className="mt-2 flex gap-2">
+              <input
+                autoFocus
+                value={newTrackName}
+                onChange={(e) => setNewTrackName(e.target.value)}
+                className={input}
+                placeholder="例: Room B"
+              />
+              <button
+                type="button"
+                onClick={createTrack}
+                disabled={creatingTrack || !newTrackName.trim()}
+                className={ui.btnText}
+              >
+                追加
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAddingTrack(true)}
+              className={`mt-1.5 ${ui.btnText}`}
+            >
+              + 新規会場を追加
+            </button>
+          )}
         </div>
       </div>
 
@@ -393,10 +447,18 @@ function SessionForm({
 
 export default function SessionsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const [event, setEvent] = useState<EventDoc | null>(null);
   const [sessions, setSessions] = useState<SessionDoc[] | null>(null);
   const [speakers, setSpeakers] = useState<SpeakerDoc[]>([]);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [newTrackName, setNewTrackName] = useState("");
+
+  useEffect(() => {
+    return onSnapshot(doc(db, "events", id), (snap) => {
+      setEvent(snap.exists() ? ({ id: snap.id, ...snap.data() } as EventDoc) : null);
+    });
+  }, [id]);
 
   useEffect(() => {
     const q = query(collection(db, "events", id, "sessions"), orderBy("startsAt", "asc"));
@@ -413,10 +475,22 @@ export default function SessionsPage({ params }: { params: Promise<{ id: string 
   }, [id]);
 
   const speakerById = new Map(speakers.map((s) => [s.id, s]));
+  const tracks = event?.tracks ?? [];
 
   async function handleDelete(sessionId: string) {
     if (!confirm("このセッションを削除しますか?")) return;
     await deleteDoc(doc(db, "events", id, "sessions", sessionId));
+  }
+
+  async function addTrack() {
+    const name = newTrackName.trim();
+    if (!name) return;
+    await updateDoc(doc(db, "events", id), { tracks: arrayUnion(name) });
+    setNewTrackName("");
+  }
+
+  async function removeTrack(name: string) {
+    await updateDoc(doc(db, "events", id), { tracks: arrayRemove(name) });
   }
 
   return (
@@ -448,12 +522,59 @@ export default function SessionsPage({ params }: { params: Promise<{ id: string 
         )}
       </div>
 
+      <div className={`mt-6 p-4 ${ui.card}`}>
+        <p className={ui.label}>会場・トラック管理</p>
+        <p className="mt-1 text-xs text-zinc-500">
+          ここで登録した会場は、セッション編集の「トラック/会場」欄から選択できるようになり、
+          公開LPのタイムテーブルにも表示されます。
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {tracks.length === 0 && (
+            <p className="text-xs text-zinc-400">まだ会場が登録されていません。</p>
+          )}
+          {tracks.map((t) => (
+            <span
+              key={t}
+              className="flex items-center gap-1.5 rounded-full bg-zinc-100 py-1 pl-3 pr-1.5 text-xs font-bold"
+            >
+              {t}
+              <button
+                type="button"
+                onClick={() => removeTrack(t)}
+                className="flex h-4 w-4 items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-300 hover:text-zinc-900"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+        <div className="mt-2 flex gap-2">
+          <input
+            value={newTrackName}
+            onChange={(e) => setNewTrackName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addTrack();
+              }
+            }}
+            className={`${input} mt-0 max-w-xs`}
+            placeholder="例: Main Stage"
+            maxLength={40}
+          />
+          <button type="button" onClick={addTrack} className={ui.btnGhost}>
+            追加
+          </button>
+        </div>
+      </div>
+
       {adding && (
         <div className="mt-6">
           <SessionForm
             eventId={id}
             initial={emptyDraft}
             speakers={speakers}
+            tracks={tracks}
             onDone={() => setAdding(false)}
             onCancel={() => setAdding(false)}
           />
@@ -477,6 +598,7 @@ export default function SessionsPage({ params }: { params: Promise<{ id: string 
                   eventId={id}
                   sessionId={s.id}
                   speakers={speakers}
+                  tracks={tracks}
                   initial={{
                     title: s.title,
                     description: s.description,
