@@ -93,6 +93,11 @@ function SessionForm({
   const [draft, setDraft] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [addingSpeaker, setAddingSpeaker] = useState(false);
+  const [newSpeakerName, setNewSpeakerName] = useState("");
+  const [newSpeakerTitle, setNewSpeakerTitle] = useState("");
+  const [newSpeakerCompany, setNewSpeakerCompany] = useState("");
+  const [creatingSpeaker, setCreatingSpeaker] = useState(false);
 
   function set<K extends keyof SessionDraft>(key: K, value: SessionDraft[K]) {
     setDraft((d) => ({ ...d, [key]: value }));
@@ -105,6 +110,34 @@ function SessionForm({
         ? draft.speakerIds.filter((s) => s !== id)
         : [...draft.speakerIds, id]
     );
+  }
+
+  async function createSpeaker() {
+    const name = newSpeakerName.trim();
+    if (!name) return;
+    setCreatingSpeaker(true);
+    try {
+      const ref = await addDoc(collection(db, "events", eventId, "speakers"), {
+        name,
+        title: newSpeakerTitle.trim(),
+        company: newSpeakerCompany.trim(),
+        photoUrl: null,
+        bio: "",
+        websiteUrl: "",
+        xUrl: "",
+        instagramUrl: "",
+        linkedinUrl: "",
+        facebookUrl: "",
+        createdAt: serverTimestamp(),
+      });
+      set("speakerIds", [...draft.speakerIds, ref.id]);
+      setNewSpeakerName("");
+      setNewSpeakerTitle("");
+      setNewSpeakerCompany("");
+      setAddingSpeaker(false);
+    } finally {
+      setCreatingSpeaker(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -245,15 +278,10 @@ function SessionForm({
 
       <div>
         <label className={label}>登壇者(クリックで選択)</label>
-        {speakers.length === 0 ? (
-          <p className="mt-2 text-sm text-zinc-500">
-            登壇者が未登録です。
-            <Link href={`/dashboard/events/${eventId}/speakers`} className="underline">
-              登壇者ページ
-            </Link>
-            から登録してください。
-          </p>
-        ) : (
+        {speakers.length === 0 && !addingSpeaker && (
+          <p className="mt-2 text-sm text-zinc-500">まだ登壇者が登録されていません。</p>
+        )}
+        {speakers.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
             {speakers.map((sp) => {
               const selected = draft.speakerIds.includes(sp.id);
@@ -281,6 +309,64 @@ function SessionForm({
               );
             })}
           </div>
+        )}
+
+        {addingSpeaker ? (
+          <div className="mt-3 space-y-2 border-2 border-dashed border-zinc-300 p-3">
+            <div className="grid gap-2 sm:grid-cols-3">
+              <input
+                autoFocus
+                value={newSpeakerName}
+                onChange={(e) => setNewSpeakerName(e.target.value)}
+                className={input}
+                placeholder="氏名 *"
+              />
+              <input
+                value={newSpeakerTitle}
+                onChange={(e) => setNewSpeakerTitle(e.target.value)}
+                className={input}
+                placeholder="肩書き"
+              />
+              <input
+                value={newSpeakerCompany}
+                onChange={(e) => setNewSpeakerCompany(e.target.value)}
+                className={input}
+                placeholder="会社・所属"
+              />
+            </div>
+            <p className="text-xs text-zinc-400">
+              写真やSNS等の詳細は
+              <Link href={`/dashboard/events/${eventId}/speakers`} className="underline">
+                登壇者ページ
+              </Link>
+              から追加編集できます。
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={createSpeaker}
+                disabled={creatingSpeaker || !newSpeakerName.trim()}
+                className={ui.btn}
+              >
+                作成して選択
+              </button>
+              <button
+                type="button"
+                onClick={() => setAddingSpeaker(false)}
+                className={ui.btnGhost}
+              >
+                キャンセル
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setAddingSpeaker(true)}
+            className={`mt-3 ${ui.btnText}`}
+          >
+            + 新規登壇者を作成
+          </button>
         )}
       </div>
 
@@ -431,9 +517,7 @@ export default function SessionsPage({ params }: { params: Promise<{ id: string 
                       <p className="mt-1 line-clamp-2 text-sm text-zinc-500">{s.description}</p>
                     )}
                     {!s.isComingSoon && s.capacity != null && (
-                      <p className="mt-1 text-xs text-zinc-500">
-                        予約 {s.reservedCount ?? 0} / {s.capacity} 名
-                      </p>
+                      <p className="mt-1 text-xs text-zinc-500">予約定員 {s.capacity} 名</p>
                     )}
                     {(s.speakerIds ?? []).length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
