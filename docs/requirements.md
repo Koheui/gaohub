@@ -84,11 +84,13 @@
    → (有料なら)Stripe Checkout 決済
 3. 申込完了メール(Resend)+ QRコード付きチケット表示ページ `/t/{ticketId}`
 4. 当日は QR を提示してチェックイン
+5. チケットページからセッションへのエントリー(予約)・取消(定員制限あり)
+6. コミュニティラウンジへの任意参加(プロフィール登録)・参加者一覧の閲覧・メッセージ送信
 
 ### フェーズ2以降(スコープ外・設計上考慮のみ)
 - 出展者ブース・リアルタイムリードレポート
-- 交流/面談マッチング、メッセージ
-- セッション単位のチェックイン・満席管理
+- 1on1面談マッチング・スケジューリング
+- セッション単位の入退場チェックイン(現状は予約枠の管理のみ)
 - 簡易クリエイティブエディタ
 - アンケート、アーカイブ配信、MA/CRM連携
 - カスタムドメイン(Cloudflare for SaaS)、多言語
@@ -186,10 +188,16 @@ registrations/{registrationId}          … コレクショングループで横
 /admin/organizations/[orgId]    … マスター管理: 組織詳細(イベント別の申込・売上)
 /e/[slug]               … 公開イベントページ(LP)
 /e/[slug]/register      … 申込フォーム → Stripe Checkout
-/t/[ticketId]           … QRチケット表示(メールのリンク先)
+/t/[ticketId]           … QRチケット表示(メールのリンク先)。セッション予約と
+                          コミュニティラウンジもここに統合表示
 /api/checkout           … Checkout Session 作成(確認書類の画像アップロードも受付)
 /api/webhooks/stripe    … 決済確定 → registration confirm + メール送信
 /api/checkin            … qrToken 検証 + チェックイン記録
+/api/sessions/reserve   … セッションの予約/取消(registrationId+qrTokenで本人確認)
+/api/lounge/join        … ラウンジ参加・プロフィール更新
+/api/lounge/leave       … ラウンジ退出(プロフィール削除)
+/api/lounge/directory   … 参加者一覧の取得(GET。メールアドレスは含めない)
+/api/lounge/contact     … 参加者へのメッセージ送信(Resend経由、生メールは非公開)
 /api/banner/[eventId]   … イベント全体の告知バナー生成
                           (?size=wide|square|story, ?style=classic|timetable, ?download=1)
 /api/banner/[eventId]/sessions/[sessionId] … セッション単位の告知バナー生成
@@ -235,6 +243,40 @@ registrations/{registrationId}          … コレクショングループで横
     (`CountdownInline`)。ポスター的なタイポグラフィで毎回同じ見た目になるのを
     避ける。将来パターン追加(スプリットフラップ/サークルバッジ/タイムライン等)
     を想定した union 型
+
+### セッション予約 と Coming Soon
+
+- セッションに**予約定員(capacity)**を設定できる(空欄 = 無制限)。参加者は
+  チケットページ(`/t/[registrationId]`)から予約/取消でき、満席になると
+  ボタンが無効化される。定員はチケットの`soldCount`と同じ
+  Firestoreトランザクション方式で安全に増減する(`reservedCount`)
+- 参加者側の本人確認は新しいログインを作らず、既存のチケットリンク
+  (`registrationId` + `qrToken`)をそのまま流用する。確定済み(`status:
+  confirmed`)のチケットのみ予約可能
+- **Coming Soon(isComingSoon)**: 詳細が決まっていないセッションもタイトルだけで
+  先に告知できる。公開LPでは日時付きのタイムテーブルとは別枠の
+  「Coming Soon」ブロックに表示され、予約は無効(予約APIも`isComingSoon`なら拒否)
+
+### コミュニティラウンジ
+
+チケット購入者同士が任意で自己紹介プロフィールを公開し合い、UI経由で
+メッセージを送れる機能。設計上のポイント:
+
+- **オプトイン制**: プロフィール(表示名・会社・肩書・カテゴリ・自己紹介)は
+  参加者自身がチケットページから任意で登録する。登録しなくてもチケット・
+  予約機能は問題なく使える。退出すればプロフィールは即削除される
+- **カテゴリは主催者が定義**: イベント編集フォームの「コミュニティラウンジ」欄で
+  タグを自由に追加(例: 運営者/投資家/支援者/スタートアップ)。参加者は
+  参加時にその中から選ぶ(`event.loungeCategories`)
+- **メールアドレスは公開しない**: 参加者一覧API(`/api/lounge/directory`)は
+  名前・会社・肩書・カテゴリ・自己紹介のみを返し、メールアドレスは含めない。
+  メッセージ送信(`/api/lounge/contact`)はサーバー側で受信者の登録メールを
+  解決して Resend 経由で送るのみで、クライアントには一切返さない。
+  送信者のメールは`replyTo`に設定するため、受信者が返信すれば通常の
+  メールとして会話を継続できる(一般的な問い合わせフォームと同じ設計)
+- **ローカル動作確認**: `RESEND_API_KEY` 未設定時は実送信せず
+  コンソールにログ出力するだけ(既存のチケット完了メールと同じ仕組み)。
+  本番では Resend の Pro アカウントキーを設定するだけで実送信に切り替わる
 
 Satori(`next/og` のレンダラー)は `text-overflow: ellipsis` の挙動が不安定なため、
 バナー内の短いラベル(登壇者名・会社・肩書・イベント名)は表示前に文字数で

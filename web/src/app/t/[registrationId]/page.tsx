@@ -3,6 +3,8 @@ import QRCode from "qrcode";
 import { adminDb } from "@/lib/firebase/admin";
 import { formatDateRange, formatJpy } from "@/lib/format";
 import { Grain } from "@/components/Grain";
+import { SessionReservations, type ReservableSession } from "@/components/SessionReservations";
+import { CommunityLounge, type LoungeDirectoryEntry } from "@/components/CommunityLounge";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +28,7 @@ export default async function TicketPage(props: {
   const attendee = regSnap.get("attendee") as {
     name: string;
     company: string;
+    jobTitle: string;
   };
 
   if (status === "pending_payment") {
@@ -45,10 +48,47 @@ export default async function TicketPage(props: {
 
   if (status !== "confirmed") notFound();
 
-  const qrDataUrl = await QRCode.toDataURL(regSnap.get("qrToken"), {
+  const qrToken: string = regSnap.get("qrToken");
+  const qrDataUrl = await QRCode.toDataURL(qrToken, {
     width: 320,
     margin: 1,
   });
+
+  const sessionsSnap = await db
+    .collection(`events/${regSnap.get("eventId")}/sessions`)
+    .orderBy("startsAt", "asc")
+    .get();
+  const reservableSessions: ReservableSession[] = sessionsSnap.docs
+    .filter((d) => !d.get("isComingSoon"))
+    .map((d) => ({
+      id: d.id,
+      title: d.get("title"),
+      track: d.get("track") ?? "",
+      startsAtIso: d.get("startsAt").toDate().toISOString(),
+      endsAtIso: d.get("endsAt").toDate().toISOString(),
+      capacity: d.get("capacity") ?? null,
+      reservedCount: d.get("reservedCount") ?? 0,
+    }));
+  const reservedSessionIds: string[] = regSnap.get("reservedSessionIds") ?? [];
+
+  const loungeEnabled: boolean = eventSnap.get("loungeEnabled") ?? false;
+  let loungeEntries: LoungeDirectoryEntry[] = [];
+  let loungeSelfProfile: LoungeDirectoryEntry | null = null;
+  if (loungeEnabled) {
+    const loungeSnap = await db
+      .collection(`events/${regSnap.get("eventId")}/loungeProfiles`)
+      .orderBy("createdAt", "asc")
+      .get();
+    loungeEntries = loungeSnap.docs.map((d) => ({
+      registrationId: d.id,
+      name: d.get("name") ?? "",
+      company: d.get("company") ?? "",
+      jobTitle: d.get("jobTitle") ?? "",
+      category: d.get("category") ?? "",
+      bio: d.get("bio") ?? "",
+    }));
+    loungeSelfProfile = loungeEntries.find((e) => e.registrationId === registrationId) ?? null;
+  }
 
   return (
     <main className="flex-1 flex items-center justify-center px-6 py-16 bg-[#f6f5f2]">
@@ -93,6 +133,24 @@ export default async function TicketPage(props: {
           <p className="mt-6 text-xs text-zinc-400">
             当日は受付でこのQRコードをご提示ください
           </p>
+          <SessionReservations
+            registrationId={registrationId}
+            qrToken={qrToken}
+            sessions={reservableSessions}
+            initialReservedIds={reservedSessionIds}
+          />
+          {loungeEnabled && (
+            <CommunityLounge
+              registrationId={registrationId}
+              qrToken={qrToken}
+              categories={eventSnap.get("loungeCategories") ?? []}
+              defaultName={attendee.name}
+              defaultCompany={attendee.company}
+              defaultJobTitle={attendee.jobTitle}
+              initialEntries={loungeEntries}
+              initialSelfProfile={loungeSelfProfile}
+            />
+          )}
         </div>
       </div>
     </main>

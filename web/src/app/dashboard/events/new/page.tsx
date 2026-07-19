@@ -42,6 +42,8 @@ export default function NewEventPage() {
       showGhostText: values.showGhostText,
       showMarquee: values.showMarquee,
       statsStyle: values.statsStyle,
+      loungeEnabled: values.loungeEnabled,
+      loungeCategories: values.loungeCategories,
       venueName: values.venueName,
       venueAddress: values.venueAddress,
       startsAt: Timestamp.fromDate(new Date(values.startsAtLocal)),

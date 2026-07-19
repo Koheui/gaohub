@@ -15,6 +15,8 @@ export interface EventFormValues {
   showGhostText: boolean;
   showMarquee: boolean;
   statsStyle: "classic" | "poster";
+  loungeEnabled: boolean;
+  loungeCategories: string[];
   venueName: string;
   venueAddress: string;
   startsAtLocal: string; // datetime-local value
@@ -63,6 +65,8 @@ export function eventToFormValues(ev?: EventDoc): EventFormValues {
     showGhostText: ev?.showGhostText ?? true,
     showMarquee: ev?.showMarquee ?? true,
     statsStyle: ev?.statsStyle ?? "classic",
+    loungeEnabled: ev?.loungeEnabled ?? false,
+    loungeCategories: ev?.loungeCategories ?? [],
     venueName: ev?.venueName ?? "",
     venueAddress: ev?.venueAddress ?? "",
     startsAtLocal: ev?.startsAt ? toLocalInput(ev.startsAt.toDate()) : "",
@@ -87,9 +91,24 @@ export function EventForm({
   const [values, setValues] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [newCategory, setNewCategory] = useState("");
 
   function set<K extends keyof EventFormValues>(key: K, value: EventFormValues[K]) {
     setValues((v) => ({ ...v, [key]: value }));
+  }
+
+  function addCategory() {
+    const name = newCategory.trim();
+    if (!name || values.loungeCategories.includes(name)) return;
+    set("loungeCategories", [...values.loungeCategories, name]);
+    setNewCategory("");
+  }
+
+  function removeCategory(name: string) {
+    set(
+      "loungeCategories",
+      values.loungeCategories.filter((c) => c !== name)
+    );
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -264,6 +283,69 @@ export function EventForm({
             </button>
           </div>
         </div>
+      </div>
+      <div className="space-y-4 border-2 border-zinc-200 p-4">
+        <p className={label}>コミュニティラウンジ</p>
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={values.loungeEnabled}
+            onChange={(e) => set("loungeEnabled", e.target.checked)}
+            className="h-4 w-4"
+          />
+          <span className="text-sm font-bold">
+            チケット購入者向けのコミュニティラウンジを有効にする
+          </span>
+        </label>
+        <p className="text-xs text-zinc-400">
+          有効にすると、確定済みチケットを持つ参加者がチケットページから参加者一覧を閲覧し、
+          メッセージを送れるようになります(自己申告制・任意参加)。
+        </p>
+        {values.loungeEnabled && (
+          <div>
+            <label className={label}>参加者カテゴリ</label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {values.loungeCategories.length === 0 && (
+                <p className="text-xs text-zinc-400">
+                  例: 運営者・投資家・支援者・スタートアップ など、自由に追加してください
+                </p>
+              )}
+              {values.loungeCategories.map((c) => (
+                <span
+                  key={c}
+                  className="flex items-center gap-1.5 rounded-full bg-zinc-100 py-1 pl-3 pr-1.5 text-xs font-bold"
+                >
+                  {c}
+                  <button
+                    type="button"
+                    onClick={() => removeCategory(c)}
+                    className="flex h-4 w-4 items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-300 hover:text-zinc-900"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="mt-2 flex gap-2">
+              <input
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addCategory();
+                  }
+                }}
+                className={`${input} mt-0`}
+                placeholder="例: 投資家"
+                maxLength={20}
+              />
+              <button type="button" onClick={addCategory} className={ui.btnGhost}>
+                追加
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       <div>
         <label className={label}>LPテンプレート</label>

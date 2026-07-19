@@ -48,6 +48,10 @@ export interface EventDoc {
   startsAt: Timestamp;
   endsAt: Timestamp;
   status: EventStatus;
+  /** チケット購入者向けコミュニティラウンジを有効化するか */
+  loungeEnabled: boolean;
+  /** 主催者が定義する参加者カテゴリ(例: 運営者/投資家/支援者/スタートアップ) */
+  loungeCategories: string[];
   createdAt: Timestamp;
 }
 
@@ -90,6 +94,12 @@ export interface SessionDoc {
   endsAt: Timestamp;
   /** events/{id}/speakers への参照 */
   speakerIds: string[];
+  /** true の場合「Coming Soon」として扱う(時刻非表示・予約不可)。詳細が決まる前に告知したいセッション向け */
+  isComingSoon: boolean;
+  /** 予約定員。null = 無制限 */
+  capacity: number | null;
+  /** 予約済み人数(capacity に対するトランザクションカウンタ) */
+  reservedCount: number;
   createdAt: Timestamp;
 }
 
@@ -123,5 +133,21 @@ export interface Registration {
   /** Storage 内パス(gs:// を含まない相対パス)。個人情報のため生URLはどこにも保存しない */
   verificationImagePath: string | null;
   verificationStatus: VerificationStatus | null;
+  /** 予約済みセッションID一覧(events/{eventId}/sessions への参照) */
+  reservedSessionIds: string[];
   createdAt: Timestamp;
+}
+
+/** コミュニティラウンジのカテゴリ別参加者プロフィール。events/{id}/loungeProfiles/{registrationId} */
+export interface LoungeProfileDoc {
+  id: string; // == registrationId
+  registrationId: string;
+  name: string;
+  company: string;
+  jobTitle: string;
+  /** event.loungeCategories のいずれか(主催者が定義したジャンル) */
+  category: string;
+  bio: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }

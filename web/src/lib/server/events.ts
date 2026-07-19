@@ -29,6 +29,8 @@ export interface PublicEvent {
   venueAddress: string;
   startsAt: Date;
   endsAt: Date;
+  loungeEnabled: boolean;
+  loungeCategories: string[];
 }
 
 export interface PublicSpeaker {
@@ -53,6 +55,9 @@ export interface PublicSession {
   startsAt: Date;
   endsAt: Date;
   speakerIds: string[];
+  isComingSoon: boolean;
+  capacity: number | null;
+  reservedCount: number;
 }
 
 function toPublicEvent(id: string, d: FirebaseFirestore.DocumentData): PublicEvent {
@@ -73,6 +78,8 @@ function toPublicEvent(id: string, d: FirebaseFirestore.DocumentData): PublicEve
     venueAddress: d.venueAddress ?? "",
     startsAt: d.startsAt.toDate(),
     endsAt: d.endsAt.toDate(),
+    loungeEnabled: d.loungeEnabled ?? false,
+    loungeCategories: d.loungeCategories ?? [],
   };
 }
 
@@ -150,6 +157,9 @@ function toPublicSession(id: string, d: FirebaseFirestore.DocumentData): PublicS
     startsAt: d.startsAt.toDate(),
     endsAt: d.endsAt.toDate(),
     speakerIds: d.speakerIds ?? [],
+    isComingSoon: d.isComingSoon ?? false,
+    capacity: d.capacity ?? null,
+    reservedCount: d.reservedCount ?? 0,
   };
 }
 

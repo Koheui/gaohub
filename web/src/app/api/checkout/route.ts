@@ -94,6 +94,7 @@ export async function POST(req: NextRequest) {
     checkedInBy: null,
     verificationImagePath,
     verificationStatus: requiresVerification ? ("pending" as const) : null,
+    reservedSessionIds: [] as string[],
     createdAt: FieldValue.serverTimestamp(),
   };
 

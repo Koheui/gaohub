@@ -272,7 +272,9 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
     getPublicSpeakers(event.id),
   ]);
   const speakerById = new Map(speakers.map((s) => [s.id, s]));
-  const days = groupSessionsByDay(sessions);
+  const comingSoonSessions = sessions.filter((s) => s.isComingSoon);
+  const confirmedSessions = sessions.filter((s) => !s.isComingSoon);
+  const days = groupSessionsByDay(confirmedSessions);
   const tracks = [...new Set(sessions.map((s) => s.track).filter(Boolean))];
   const t = LP_THEMES[event.template];
   // spectrum はアクセントも背景と同じ生成パレットの第一色に揃える
@@ -574,9 +576,24 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                             )}
                           </div>
                           <div className="mt-4 flex-1 sm:mt-0">
-                            <h4 className="text-2xl font-black leading-tight tracking-tight">
-                              {s.title}
-                            </h4>
+                            <div className="flex flex-wrap items-center gap-3">
+                              <h4 className="text-2xl font-black leading-tight tracking-tight">
+                                {s.title}
+                              </h4>
+                              {s.capacity != null && (
+                                <span
+                                  className={`inline-block rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.1em] ${
+                                    s.reservedCount >= s.capacity
+                                      ? "bg-red-600/90 text-white"
+                                      : `${t.muted} ${dark ? "bg-white/10" : "bg-zinc-100"}`
+                                  }`}
+                                >
+                                  {s.reservedCount >= s.capacity
+                                    ? "満席"
+                                    : `残り${s.capacity - s.reservedCount}席`}
+                                </span>
+                              )}
+                            </div>
                             {s.description && (
                               <p className={`mt-3 text-sm leading-relaxed ${t.muted}`}>
                                 {s.description}
@@ -610,6 +627,39 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                   </ol>
                 </div>
               ))}
+
+              {comingSoonSessions.length > 0 && (
+                <div className={days.length > 0 ? "mt-16" : "mt-12"}>
+                  <h3 className={`text-sm font-black uppercase tracking-[0.25em] ${t.muted}`}>
+                    Coming Soon
+                  </h3>
+                  <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+                    {comingSoonSessions.map((s) => (
+                      <li
+                        key={s.id}
+                        className={`border-2 border-dashed p-5 ${
+                          dark ? "border-white/20" : "border-zinc-300"
+                        }`}
+                      >
+                        <span
+                          className="inline-block rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white"
+                          style={{ backgroundColor: color }}
+                        >
+                          Coming Soon
+                        </span>
+                        <h4 className="mt-3 text-xl font-black leading-tight tracking-tight">
+                          {s.title}
+                        </h4>
+                        {s.description && (
+                          <p className={`mt-2 text-sm leading-relaxed ${t.muted}`}>
+                            {s.description}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </Panel>
           </section>
         )}

@@ -47,6 +47,43 @@ export async function sendTicketEmail(params: {
   });
 }
 
+export async function sendLoungeContactEmail(params: {
+  to: string;
+  replyTo: string;
+  senderName: string;
+  eventTitle: string;
+  subject: string;
+  message: string;
+}) {
+  const client = getResend();
+  if (!client) {
+    console.warn(
+      "[email] RESEND_API_KEY not set — skipping lounge contact email to",
+      params.to,
+      `(from ${params.replyTo}: "${params.subject}")`
+    );
+    return;
+  }
+  const from = process.env.EMAIL_FROM ?? "onboarding@resend.dev";
+  await client.emails.send({
+    from,
+    to: params.to,
+    replyTo: params.replyTo,
+    subject: `【${params.eventTitle} コミュニティラウンジ】${params.senderName}様からメッセージ`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
+        <p style="color:#888;font-size:12px;">${escapeHtml(params.eventTitle)} のコミュニティラウンジ経由のメッセージです</p>
+        <h2>${escapeHtml(params.subject)}</h2>
+        <p style="color:#666;">送信者: ${escapeHtml(params.senderName)} 様</p>
+        <p style="white-space:pre-wrap;line-height:1.7;">${escapeHtml(params.message)}</p>
+        <p style="margin-top:24px;color:#888;font-size:12px;">
+          このメールに返信すると、送信者に直接届きます。
+        </p>
+      </div>
+    `,
+  });
+}
+
 function escapeHtml(s: string): string {
   return s
     .replaceAll("&", "&amp;")

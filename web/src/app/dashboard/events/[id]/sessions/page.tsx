@@ -29,6 +29,9 @@ interface SessionDraft {
   startsAtLocal: string;
   endsAtLocal: string;
   speakerIds: string[];
+  isComingSoon: boolean;
+  /** 空欄 = 無制限 */
+  capacityText: string;
 }
 
 const emptyDraft: SessionDraft = {
@@ -38,6 +41,8 @@ const emptyDraft: SessionDraft = {
   startsAtLocal: "",
   endsAtLocal: "",
   speakerIds: [],
+  isComingSoon: false,
+  capacityText: "",
 };
 
 function toLocalInput(d: Date): string {
@@ -108,6 +113,15 @@ function SessionForm({
       setError("終了時刻は開始時刻より後にしてください");
       return;
     }
+    const capacityText = draft.capacityText.trim();
+    let capacity: number | null = null;
+    if (capacityText) {
+      capacity = Number(capacityText);
+      if (!Number.isInteger(capacity) || capacity < 1) {
+        setError("定員は1以上の整数で入力してください");
+        return;
+      }
+    }
     setBusy(true);
     setError(null);
     try {
@@ -118,12 +132,15 @@ function SessionForm({
         startsAt: Timestamp.fromDate(new Date(draft.startsAtLocal)),
         endsAt: Timestamp.fromDate(new Date(draft.endsAtLocal)),
         speakerIds: draft.speakerIds,
+        isComingSoon: draft.isComingSoon,
+        capacity,
       };
       if (sessionId) {
         await updateDoc(doc(db, "events", eventId, "sessions", sessionId), data);
       } else {
         await addDoc(collection(db, "events", eventId, "sessions"), {
           ...data,
+          reservedCount: 0,
           createdAt: serverTimestamp(),
         });
       }
@@ -158,6 +175,24 @@ function SessionForm({
           className={input}
         />
       </div>
+
+      <label className="flex items-center gap-3 border-2 border-zinc-200 p-3">
+        <input
+          type="checkbox"
+          checked={draft.isComingSoon}
+          onChange={(e) => set("isComingSoon", e.target.checked)}
+          className="h-4 w-4"
+        />
+        <span className="text-sm font-bold">
+          Coming Soon(詳細未定として先に告知する)
+        </span>
+      </label>
+      {draft.isComingSoon && (
+        <p className="text-xs text-zinc-400">
+          公開LPでは日時の代わりに「COMING SOON」と表示されます。日時は仮の値のままで構いません。
+        </p>
+      )}
+
       <div className="grid grid-cols-3 gap-4">
         <div>
           <label className={label}>開始 *</label>
@@ -189,6 +224,24 @@ function SessionForm({
           />
         </div>
       </div>
+
+      {!draft.isComingSoon && (
+        <div>
+          <label className={label}>予約定員(空欄 = 無制限)</label>
+          <input
+            type="number"
+            min={1}
+            step={1}
+            value={draft.capacityText}
+            onChange={(e) => set("capacityText", e.target.value)}
+            className={`${input} max-w-[10rem]`}
+            placeholder="例: 30"
+          />
+          <p className="mt-1 text-xs text-zinc-400">
+            設定すると参加者はチケットページから満席になるまで予約できます
+          </p>
+        </div>
+      )}
 
       <div>
         <label className={label}>登壇者(クリックで選択)</label>
@@ -345,6 +398,8 @@ export default function SessionsPage({ params }: { params: Promise<{ id: string 
                     startsAtLocal: toLocalInput(s.startsAt.toDate()),
                     endsAtLocal: toLocalInput(s.endsAt.toDate()),
                     speakerIds: s.speakerIds ?? [],
+                    isComingSoon: s.isComingSoon ?? false,
+                    capacityText: s.capacity != null ? String(s.capacity) : "",
                   }}
                   onDone={() => setEditingId(null)}
                   onCancel={() => setEditingId(null)}
@@ -357,8 +412,14 @@ export default function SessionsPage({ params }: { params: Promise<{ id: string 
               >
                 <div className="flex gap-4">
                   <div className="w-28 shrink-0 text-sm tabular-nums text-zinc-500">
-                    {timeLabel(s)}
-                    {s.track && (
+                    {s.isComingSoon ? (
+                      <span className="inline-block rounded-full bg-zinc-900 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
+                        Coming Soon
+                      </span>
+                    ) : (
+                      timeLabel(s)
+                    )}
+                    {s.track && !s.isComingSoon && (
                       <span className="mt-1 block rounded-full bg-zinc-100 px-2 py-0.5 text-center text-xs text-zinc-600">
                         {s.track}
                       </span>
@@ -368,6 +429,11 @@ export default function SessionsPage({ params }: { params: Promise<{ id: string 
                     <p className="font-semibold">{s.title}</p>
                     {s.description && (
                       <p className="mt-1 line-clamp-2 text-sm text-zinc-500">{s.description}</p>
+                    )}
+                    {!s.isComingSoon && s.capacity != null && (
+                      <p className="mt-1 text-xs text-zinc-500">
+                        予約 {s.reservedCount ?? 0} / {s.capacity} 名
+                      </p>
                     )}
                     {(s.speakerIds ?? []).length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">

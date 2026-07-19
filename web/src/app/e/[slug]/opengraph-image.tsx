@@ -22,6 +22,8 @@ const FALLBACK_EVENT = {
   venueAddress: "",
   startsAt: new Date(),
   endsAt: new Date(),
+  loungeEnabled: false,
+  loungeCategories: [] as string[],
 };
 
 export default async function OgImage(props: { params: Promise<{ slug: string }> }) {
