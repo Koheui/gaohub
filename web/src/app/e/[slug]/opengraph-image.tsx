@@ -17,6 +17,7 @@ const FALLBACK_EVENT = {
   ghostText: "",
   showGhostText: true,
   showMarquee: true,
+  statsStyle: "classic" as const,
   venueName: "",
   venueAddress: "",
   startsAt: new Date(),

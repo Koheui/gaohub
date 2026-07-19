@@ -10,7 +10,29 @@ import {
   signInWithPopup,
 } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { FirebaseError } from "firebase/app";
 import { auth, db } from "@/lib/firebase/client";
+
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  "auth/email-already-in-use":
+    "このメールアドレスは登録済みです。下の「ログイン」からサインインしてください。",
+  "auth/invalid-credential": "メールアドレスまたはパスワードが正しくありません。",
+  "auth/user-not-found": "このメールアドレスのアカウントが見つかりません。",
+  "auth/wrong-password": "パスワードが正しくありません。",
+  "auth/weak-password": "パスワードが弱すぎます。8文字以上で設定してください。",
+  "auth/invalid-email": "メールアドレスの形式が正しくありません。",
+  "auth/too-many-requests":
+    "試行回数が多すぎます。しばらく時間をおいてからお試しください。",
+  "auth/popup-closed-by-user": "Googleログインがキャンセルされました。",
+  "auth/network-request-failed": "ネットワークエラーが発生しました。接続を確認してください。",
+};
+
+function authErrorMessage(err: unknown): string {
+  if (err instanceof FirebaseError) {
+    return AUTH_ERROR_MESSAGES[err.code] ?? `認証に失敗しました(${err.code})`;
+  }
+  return err instanceof Error ? err.message : "認証に失敗しました";
+}
 
 async function ensureUserProfile() {
   const u = auth.currentUser;
@@ -55,7 +77,7 @@ function LoginForm() {
       }
       await afterAuth();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "認証に失敗しました");
+      setError(authErrorMessage(err));
       setBusy(false);
     }
   }
@@ -67,7 +89,7 @@ function LoginForm() {
       await signInWithPopup(auth, new GoogleAuthProvider());
       await afterAuth();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "認証に失敗しました");
+      setError(authErrorMessage(err));
       setBusy(false);
     }
   }

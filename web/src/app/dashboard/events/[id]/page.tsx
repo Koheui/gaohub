@@ -80,6 +80,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
       ghostText: values.ghostText,
       showGhostText: values.showGhostText,
       showMarquee: values.showMarquee,
+      statsStyle: values.statsStyle,
       venueName: values.venueName,
       venueAddress: values.venueAddress,
       startsAt: Timestamp.fromDate(new Date(values.startsAtLocal)),

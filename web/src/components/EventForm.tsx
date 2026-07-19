@@ -14,6 +14,7 @@ export interface EventFormValues {
   ghostText: string;
   showGhostText: boolean;
   showMarquee: boolean;
+  statsStyle: "classic" | "poster";
   venueName: string;
   venueAddress: string;
   startsAtLocal: string; // datetime-local value
@@ -61,6 +62,7 @@ export function eventToFormValues(ev?: EventDoc): EventFormValues {
     ghostText: ev?.ghostText ?? "",
     showGhostText: ev?.showGhostText ?? true,
     showMarquee: ev?.showMarquee ?? true,
+    statsStyle: ev?.statsStyle ?? "classic",
     venueName: ev?.venueName ?? "",
     venueAddress: ev?.venueAddress ?? "",
     startsAtLocal: ev?.startsAt ? toLocalInput(ev.startsAt.toDate()) : "",
@@ -237,6 +239,31 @@ export function EventForm({
           />
           <span className="text-sm font-bold">イベント名が流れる帯(マーキー)を表示する</span>
         </label>
+        <div>
+          <label className={label}>統計・カウントダウンの見せ方</label>
+          <div className="mt-2 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => set("statsStyle", "classic")}
+              className={`border-2 p-3 text-left transition-colors ${
+                values.statsStyle === "classic" ? "border-zinc-900" : "border-zinc-200 hover:border-zinc-400"
+              }`}
+            >
+              <p className="text-sm font-black">クラシック {values.statsStyle === "classic" && "✓"}</p>
+              <p className="mt-0.5 text-xs text-zinc-500">枠付きストリップ+黒帯カウントダウン</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => set("statsStyle", "poster")}
+              className={`border-2 p-3 text-left transition-colors ${
+                values.statsStyle === "poster" ? "border-zinc-900" : "border-zinc-200 hover:border-zinc-400"
+              }`}
+            >
+              <p className="text-sm font-black">ポスター数字 {values.statsStyle === "poster" && "✓"}</p>
+              <p className="mt-0.5 text-xs text-zinc-500">枠なし特大数字(塗り/アウトライン混合)</p>
+            </button>
+          </div>
+        </div>
       </div>
       <div>
         <label className={label}>LPテンプレート</label>

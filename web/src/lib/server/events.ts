@@ -24,6 +24,7 @@ export interface PublicEvent {
   ghostText: string;
   showGhostText: boolean;
   showMarquee: boolean;
+  statsStyle: "classic" | "poster";
   venueName: string;
   venueAddress: string;
   startsAt: Date;
@@ -67,6 +68,7 @@ function toPublicEvent(id: string, d: FirebaseFirestore.DocumentData): PublicEve
     ghostText: d.ghostText ?? "",
     showGhostText: d.showGhostText ?? true,
     showMarquee: d.showMarquee ?? true,
+    statsStyle: (d.statsStyle as "classic" | "poster") ?? "classic",
     venueName: d.venueName ?? "",
     venueAddress: d.venueAddress ?? "",
     startsAt: d.startsAt.toDate(),

@@ -22,6 +22,33 @@ function remaining(target: number): Remaining {
   };
 }
 
+/**
+ * ポスター数字パターン用のインラインカウントダウン。
+ * 「53日 09:50:50」の1行表記で毎秒更新し、開催後は何も描画しない。
+ */
+export function CountdownInline({ targetIso }: { targetIso: string }) {
+  const [t, setT] = useState<Remaining | null>(null);
+
+  useEffect(() => {
+    const target = new Date(targetIso).getTime();
+    const tick = () => setT(remaining(target));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [targetIso]);
+
+  if (t?.over) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  return (
+    <span className="tabular-nums">
+      {t ? t.days : "--"}
+      <span className="opacity-60">日</span> {t ? pad(t.hours) : "--"}:{t ? pad(t.minutes) : "--"}:
+      {t ? pad(t.seconds) : "--"}
+    </span>
+  );
+}
+
 function Cell({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-col items-center">

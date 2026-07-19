@@ -170,7 +170,8 @@ registrations/{registrationId}          … コレクショングループで横
 
 ```
 /                       … サービスLP
-/login, /signup         … 認証
+/login, /signup         … 認証(Firebaseのエラーコードは日本語メッセージに変換して表示。
+                            ログイン後は所属 org のイベントのみ表示 = テナント分離)
 /dashboard              … Organization ダッシュボード(イベント一覧)
 /dashboard/events/new
 /dashboard/events/[id]          … 概要・申込状況(リアルタイム)・カバー画像
@@ -227,6 +228,13 @@ registrations/{registrationId}          … コレクショングループで横
   開催年(startsAtの年)を自動表示。`showGhostText` で非表示にもできる
 - **マーキー(showMarquee)**: イベント名が流れる帯の表示/非表示。
   アニメーションは60秒/周(速すぎると読めないため低速固定)
+- **統計・カウントダウンの見せ方(statsStyle)**: 2パターンから選択
+  - `classic`(既定): 枠付きパネルの統計ストリップ+黒帯のカウントダウンバンド
+  - `poster`: 枠なしでキャンバスに直置きした特大数字(塗り/アウトライン交互、
+    3つ目はアクセントカラー)+右寄せ1行カウントダウン「N日 HH:MM:SS」
+    (`CountdownInline`)。ポスター的なタイポグラフィで毎回同じ見た目になるのを
+    避ける。将来パターン追加(スプリットフラップ/サークルバッジ/タイムライン等)
+    を想定した union 型
 
 Satori(`next/og` のレンダラー)は `text-overflow: ellipsis` の挙動が不安定なため、
 バナー内の短いラベル(登壇者名・会社・肩書・イベント名)は表示前に文字数で

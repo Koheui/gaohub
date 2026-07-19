@@ -13,7 +13,7 @@ import {
 import { formatJpy } from "@/lib/format";
 import { spectrumAccent, spectrumStops } from "@/lib/color";
 import { Grain } from "@/components/Grain";
-import { CountdownBand } from "@/components/Countdown";
+import { CountdownBand, CountdownInline } from "@/components/Countdown";
 import { FixedBackdrop, Parallax, Reveal } from "@/components/motion";
 import { LP_THEMES, type LpTheme } from "@/components/lp/theme";
 
@@ -428,45 +428,90 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
 
         {event.showMarquee && <Marquee event={event} t={t} />}
 
-        {/* ─── 統計 ─── */}
-        {sessions.length > 0 && (
-          <div className="mx-auto max-w-6xl px-6">
-            <Panel t={t}>
-              <div className="grid grid-cols-2 sm:grid-cols-4">
-                {stats.map(([label, value], i) => (
-                  <Reveal key={label} delayMs={i * 90}>
-                    <div
-                      className={`flex flex-col items-center py-8 ${
-                        t.id === "kodak" ? "border-zinc-950" : dark ? "border-white/15" : "border-zinc-200"
-                      } ${i > 0 ? (t.id === "kodak" ? "sm:border-l-2" : "sm:border-l") : ""}`}
-                    >
-                      <span className="text-5xl font-black tabular-nums tracking-tighter">
-                        {value}
-                      </span>
-                      <span className={`mt-2 font-mono text-[11px] font-bold uppercase tracking-[0.3em] ${t.muted}`}>
-                        [{label}]
-                      </span>
-                    </div>
-                  </Reveal>
-                ))}
+        {/* ─── 統計 + カウントダウン ─── */}
+        {event.statsStyle === "poster" ? (
+          /* ポスター数字: 枠なしで塗り/アウトラインの特大数字をキャンバスに直置き */
+          <section className="mx-auto max-w-6xl px-6">
+            {sessions.length > 0 && (
+              <div className="flex flex-wrap items-end gap-x-12 gap-y-10 sm:gap-x-16">
+                {stats.map(([label, value], i) => {
+                  const ink = dark ? "rgba(255,255,255,0.9)" : "rgba(24,24,27,0.9)";
+                  const style =
+                    i === 2
+                      ? { color }
+                      : i % 2 === 1
+                        ? { color: "transparent", WebkitTextStroke: `2px ${ink}` }
+                        : undefined;
+                  return (
+                    <Reveal key={label} delayMs={i * 90}>
+                      <div className="flex flex-col">
+                        <span
+                          className="text-7xl font-black leading-none tabular-nums tracking-tighter sm:text-8xl lg:text-[8.5rem]"
+                          style={style}
+                        >
+                          {value}
+                        </span>
+                        <span className={`mt-3 font-mono text-[11px] font-bold uppercase tracking-[0.3em] ${t.muted}`}>
+                          [{label}]
+                        </span>
+                      </div>
+                    </Reveal>
+                  );
+                })}
               </div>
-            </Panel>
-          </div>
-        )}
+            )}
+            <Reveal delayMs={sessions.length > 0 ? 360 : 0}>
+              <div className="mt-14 flex flex-col items-end text-right sm:mt-20">
+                <p className="text-4xl font-black leading-none tracking-tighter sm:text-6xl lg:text-7xl">
+                  <CountdownInline targetIso={event.startsAt.toISOString()} />
+                </p>
+                <p className={`mt-3 font-mono text-[11px] font-bold uppercase tracking-[0.3em] ${t.muted}`}>
+                  [Until doors open]
+                </p>
+              </div>
+            </Reveal>
+          </section>
+        ) : (
+          <>
+            {sessions.length > 0 && (
+              <div className="mx-auto max-w-6xl px-6">
+                <Panel t={t}>
+                  <div className="grid grid-cols-2 sm:grid-cols-4">
+                    {stats.map(([label, value], i) => (
+                      <Reveal key={label} delayMs={i * 90}>
+                        <div
+                          className={`flex flex-col items-center py-8 ${
+                            t.id === "kodak" ? "border-zinc-950" : dark ? "border-white/15" : "border-zinc-200"
+                          } ${i > 0 ? (t.id === "kodak" ? "sm:border-l-2" : "sm:border-l") : ""}`}
+                        >
+                          <span className="text-5xl font-black tabular-nums tracking-tighter">
+                            {value}
+                          </span>
+                          <span className={`mt-2 font-mono text-[11px] font-bold uppercase tracking-[0.3em] ${t.muted}`}>
+                            [{label}]
+                          </span>
+                        </div>
+                      </Reveal>
+                    ))}
+                  </div>
+                </Panel>
+              </div>
+            )}
 
-        {/* ─── カウントダウン ─── */}
-        <div className="mx-auto mt-16 max-w-6xl px-6 sm:mt-24">
-          <CountdownBand
-            targetIso={event.startsAt.toISOString()}
-            className={`relative overflow-hidden py-14 text-white ${
-              t.id === "aurora"
-                ? "rounded-3xl bg-zinc-950/90 backdrop-blur"
-                : t.id === "spectrum"
-                  ? "bg-zinc-950/90 shadow-2xl shadow-black/20 backdrop-blur"
-                  : "border-2 border-zinc-950 bg-zinc-950/90 backdrop-blur"
-            }`}
-          />
-        </div>
+            <div className="mx-auto mt-16 max-w-6xl px-6 sm:mt-24">
+              <CountdownBand
+                targetIso={event.startsAt.toISOString()}
+                className={`relative overflow-hidden py-14 text-white ${
+                  t.id === "aurora"
+                    ? "rounded-3xl bg-zinc-950/90 backdrop-blur"
+                    : t.id === "spectrum"
+                      ? "bg-zinc-950/90 shadow-2xl shadow-black/20 backdrop-blur"
+                      : "border-2 border-zinc-950 bg-zinc-950/90 backdrop-blur"
+                }`}
+              />
+            </div>
+          </>
+        )}
 
         {/* ─── 概要 ─── */}
         {event.description && (
