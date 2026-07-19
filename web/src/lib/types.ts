@@ -52,7 +52,7 @@ export interface EventDoc {
   loungeEnabled: boolean;
   /** 主催者が定義する参加者カテゴリ(例: 運営者/投資家/支援者/スタートアップ) */
   loungeCategories: string[];
-  /** セッションの「トラック/会場」欄で選択できる会場名の一覧(主催者が管理) */
+  /** セッションの「会場」欄で選択できる会場名の一覧(主催者が管理) */
   tracks: string[];
   /** 申込フォームに追加する主催者定義のカスタム質問項目 */
   registrationFields: RegistrationFieldDef[];

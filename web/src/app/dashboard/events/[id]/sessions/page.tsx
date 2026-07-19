@@ -269,7 +269,7 @@ function SessionForm({
           />
         </div>
         <div>
-          <label className={label}>トラック/会場</label>
+          <label className={label}>会場</label>
           <select
             value={draft.track}
             onChange={(e) => set("track", e.target.value)}
@@ -522,10 +522,10 @@ export default function SessionsPage({ params }: { params: Promise<{ id: string 
         )}
       </div>
 
-      <div className={`mt-6 p-4 ${ui.card}`}>
-        <p className={ui.label}>会場・トラック管理</p>
-        <p className="mt-1 text-xs text-zinc-500">
-          ここで登録した会場は、セッション編集の「トラック/会場」欄から選択できるようになり、
+      <div className={`mt-6 p-5 ${ui.card}`}>
+        <p className={ui.h2}>会場管理</p>
+        <p className="mt-1.5 text-sm text-zinc-500">
+          ここで登録した会場は、セッション編集の「会場」欄から選択できるようになり、
           公開LPのタイムテーブルにも表示されます。
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
