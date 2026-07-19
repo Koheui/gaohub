@@ -56,6 +56,14 @@ export interface EventDoc {
   tracks: string[];
   /** 申込フォームに追加する主催者定義のカスタム質問項目 */
   registrationFields: RegistrationFieldDef[];
+  /** 申込フォームで「会社名」欄を表示するか(氏名・メールアドレスは常時必須のため対象外) */
+  askCompany: boolean;
+  /** 「会社名」欄を必須にするか(askCompanyがfalseの場合は無視) */
+  requireCompany: boolean;
+  /** 申込フォームで「役職」欄を表示するか */
+  askJobTitle: boolean;
+  /** 「役職」欄を必須にするか(askJobTitleがfalseの場合は無視) */
+  requireJobTitle: boolean;
   /** スポンサーの序列(先頭ほど上位)。例: ["プラチナ","ゴールド","シルバー"] */
   sponsorTiers: string[];
   createdAt: Timestamp;

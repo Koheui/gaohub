@@ -45,6 +45,10 @@ export default async function RegisterPage(props: {
           tickets={available}
           initialTicketId={selected.id}
           registrationFields={event.registrationFields}
+          askCompany={event.askCompany}
+          requireCompany={event.requireCompany}
+          askJobTitle={event.askJobTitle}
+          requireJobTitle={event.requireJobTitle}
         />
       </div>
     </main>

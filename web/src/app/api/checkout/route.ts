@@ -61,6 +61,15 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const askCompany: boolean = eventSnap.get("askCompany") ?? true;
+  const requireCompany: boolean = eventSnap.get("requireCompany") ?? false;
+  const askJobTitle: boolean = eventSnap.get("askJobTitle") ?? true;
+  const requireJobTitle: boolean = eventSnap.get("requireJobTitle") ?? false;
+  if (askCompany && requireCompany && !company) return bad("会社名を入力してください");
+  if (askJobTitle && requireJobTitle && !jobTitle) return bad("役職を入力してください");
+  const finalCompany = askCompany ? company : "";
+  const finalJobTitle = askJobTitle ? jobTitle : "";
+
   const registrationFields: RegistrationFieldDef[] = eventSnap.get("registrationFields") ?? [];
   const customAnswers: Record<string, string> = {};
   for (const field of registrationFields) {
@@ -98,7 +107,7 @@ export async function POST(req: NextRequest) {
     orgId,
     ticketTypeId,
     ticketTypeName: ticketSnap.get("name") as string,
-    attendee: { name, email, company, jobTitle },
+    attendee: { name, email, company: finalCompany, jobTitle: finalJobTitle },
     amountJpy: priceJpy,
     stripeSessionId: null as string | null,
     stripePaymentIntentId: null as string | null,

@@ -17,16 +17,27 @@ function randomId(): string {
   return Math.random().toString(36).slice(2, 10);
 }
 
+interface StandardFieldSettings {
+  askCompany: boolean;
+  requireCompany: boolean;
+  askJobTitle: boolean;
+  requireJobTitle: boolean;
+}
+
 /**
  * 申込フォームの主催者カスタム質問を管理する。氏名・メールアドレス・会社名・役職の
  * 固定項目に加えて、イベントごとに自由な質問(短文/長文/選択式/チェックボックス)を追加できる。
+ * 氏名・メールアドレスはチケット配送に必須のため常時表示・必須固定。会社名・役職は
+ * イベントごとに表示有無・必須有無を切り替えられる。
  */
 export function RegistrationFieldsManager({
   eventId,
   fields,
+  standardFields,
 }: {
   eventId: string;
   fields: RegistrationFieldDef[];
+  standardFields: StandardFieldSettings;
 }) {
   const [adding, setAdding] = useState(false);
   const [labelText, setLabelText] = useState("");
@@ -42,6 +53,10 @@ export function RegistrationFieldsManager({
     } finally {
       setBusy(false);
     }
+  }
+
+  async function updateStandard(patch: Partial<StandardFieldSettings>) {
+    await updateDoc(doc(db, "events", eventId), patch);
   }
 
   async function addField() {
@@ -76,7 +91,67 @@ export function RegistrationFieldsManager({
     <div className={`mt-6 p-4 ${ui.card}`}>
       <p className={ui.label}>申込フォームの質問項目</p>
       <p className="mt-1 text-xs text-zinc-500">
-        氏名・メールアドレス・会社名・役職に加えて、イベントごとに自由な質問を追加できます。
+        イベントごとに参加者へ入力してもらう項目を設定できます。氏名・メールアドレスは
+        QRチケットの送付に必要なため常に必須です。
+      </p>
+
+      <div className="mt-4 divide-y divide-zinc-100 rounded border border-zinc-200">
+        <div className="flex items-center justify-between px-3 py-2 text-sm">
+          <span className="font-bold text-zinc-400">氏名・メールアドレス</span>
+          <span className="text-xs text-zinc-400">常時表示・必須</span>
+        </div>
+        <div className="flex items-center justify-between px-3 py-2 text-sm">
+          <span className="font-bold">会社名</span>
+          <span className="flex items-center gap-4">
+            <label className="flex items-center gap-1.5">
+              <input
+                type="checkbox"
+                checked={standardFields.askCompany}
+                onChange={(e) => updateStandard({ askCompany: e.target.checked })}
+                className="h-4 w-4"
+              />
+              表示する
+            </label>
+            <label className="flex items-center gap-1.5">
+              <input
+                type="checkbox"
+                checked={standardFields.requireCompany}
+                disabled={!standardFields.askCompany}
+                onChange={(e) => updateStandard({ requireCompany: e.target.checked })}
+                className="h-4 w-4 disabled:opacity-40"
+              />
+              必須にする
+            </label>
+          </span>
+        </div>
+        <div className="flex items-center justify-between px-3 py-2 text-sm">
+          <span className="font-bold">役職</span>
+          <span className="flex items-center gap-4">
+            <label className="flex items-center gap-1.5">
+              <input
+                type="checkbox"
+                checked={standardFields.askJobTitle}
+                onChange={(e) => updateStandard({ askJobTitle: e.target.checked })}
+                className="h-4 w-4"
+              />
+              表示する
+            </label>
+            <label className="flex items-center gap-1.5">
+              <input
+                type="checkbox"
+                checked={standardFields.requireJobTitle}
+                disabled={!standardFields.askJobTitle}
+                onChange={(e) => updateStandard({ requireJobTitle: e.target.checked })}
+                className="h-4 w-4 disabled:opacity-40"
+              />
+              必須にする
+            </label>
+          </span>
+        </div>
+      </div>
+
+      <p className="mt-4 text-xs font-black uppercase tracking-[0.15em] text-zinc-400">
+        追加のカスタム質問
       </p>
       {fields.length > 0 && (
         <ul className="mt-3 space-y-2">

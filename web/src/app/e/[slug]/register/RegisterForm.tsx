@@ -14,6 +14,10 @@ export function RegisterForm({
   tickets,
   initialTicketId,
   registrationFields,
+  askCompany,
+  requireCompany,
+  askJobTitle,
+  requireJobTitle,
 }: {
   eventId: string;
   slug: string;
@@ -21,6 +25,10 @@ export function RegisterForm({
   tickets: PublicTicketType[];
   initialTicketId: string;
   registrationFields: RegistrationFieldDef[];
+  askCompany: boolean;
+  requireCompany: boolean;
+  askJobTitle: boolean;
+  requireJobTitle: boolean;
 }) {
   const [ticketTypeId, setTicketTypeId] = useState(initialTicketId);
   const [name, setName] = useState("");
@@ -42,6 +50,14 @@ export function RegisterForm({
     e.preventDefault();
     if (selected.requiresVerification && !verificationFile) {
       setError("このチケットには確認書類の画像アップロードが必要です");
+      return;
+    }
+    if (askCompany && requireCompany && !company) {
+      setError("会社名を入力してください");
+      return;
+    }
+    if (askJobTitle && requireJobTitle && !jobTitle) {
+      setError("役職を入力してください");
       return;
     }
     for (const field of registrationFields) {
@@ -129,16 +145,38 @@ export function RegisterForm({
         />
         <p className="mt-1 text-xs text-zinc-400">QRチケットをこのアドレスへお送りします</p>
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className={label}>会社名</label>
-          <input value={company} onChange={(e) => setCompany(e.target.value)} className={input} />
+      {(askCompany || askJobTitle) && (
+        <div className="grid grid-cols-2 gap-4">
+          {askCompany && (
+            <div>
+              <label className={label}>
+                会社名
+                {requireCompany && " *"}
+              </label>
+              <input
+                required={requireCompany}
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                className={input}
+              />
+            </div>
+          )}
+          {askJobTitle && (
+            <div>
+              <label className={label}>
+                役職
+                {requireJobTitle && " *"}
+              </label>
+              <input
+                required={requireJobTitle}
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                className={input}
+              />
+            </div>
+          )}
         </div>
-        <div>
-          <label className={label}>役職</label>
-          <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className={input} />
-        </div>
-      </div>
+      )}
 
       {registrationFields.map((field) => (
         <div key={field.id}>

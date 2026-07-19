@@ -33,6 +33,10 @@ export interface PublicEvent {
   loungeCategories: string[];
   registrationFields: RegistrationFieldDef[];
   sponsorTiers: string[];
+  askCompany: boolean;
+  requireCompany: boolean;
+  askJobTitle: boolean;
+  requireJobTitle: boolean;
 }
 
 export interface PublicSponsor {
@@ -93,6 +97,10 @@ function toPublicEvent(id: string, d: FirebaseFirestore.DocumentData): PublicEve
     loungeCategories: d.loungeCategories ?? [],
     registrationFields: d.registrationFields ?? [],
     sponsorTiers: d.sponsorTiers ?? [],
+    askCompany: d.askCompany ?? true,
+    requireCompany: d.requireCompany ?? false,
+    askJobTitle: d.askJobTitle ?? true,
+    requireJobTitle: d.requireJobTitle ?? false,
   };
 }
 

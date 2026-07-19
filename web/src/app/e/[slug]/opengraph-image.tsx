@@ -27,6 +27,10 @@ const FALLBACK_EVENT = {
   loungeCategories: [] as string[],
   registrationFields: [] as RegistrationFieldDef[],
   sponsorTiers: [] as string[],
+  askCompany: true,
+  requireCompany: false,
+  askJobTitle: true,
+  requireJobTitle: false,
 };
 
 export default async function OgImage(props: { params: Promise<{ slug: string }> }) {

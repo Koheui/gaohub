@@ -109,7 +109,18 @@ export default function TicketsPage({ params }: { params: Promise<{ id: string }
         </div>
       </div>
 
-      {event && <RegistrationFieldsManager eventId={id} fields={event.registrationFields ?? []} />}
+      {event && (
+        <RegistrationFieldsManager
+          eventId={id}
+          fields={event.registrationFields ?? []}
+          standardFields={{
+            askCompany: event.askCompany ?? true,
+            requireCompany: event.requireCompany ?? false,
+            askJobTitle: event.askJobTitle ?? true,
+            requireJobTitle: event.requireJobTitle ?? false,
+          }}
+        />
+      )}
 
       {showForm && (
         <form onSubmit={handleCreate} className="mt-6 max-w-xl space-y-4 border-2 border-zinc-950 bg-white p-6">
