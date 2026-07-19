@@ -4,11 +4,13 @@ import type { Metadata } from "next";
 import {
   getPublicSessions,
   getPublicSpeakers,
+  getPublicSponsors,
   getPublicTicketTypes,
   getPublishedEventBySlug,
   type PublicEvent,
   type PublicSession,
   type PublicSpeaker,
+  type PublicSponsor,
 } from "@/lib/server/events";
 import { formatJpy } from "@/lib/format";
 import { spectrumAccent, spectrumStops } from "@/lib/color";
@@ -266,12 +268,16 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
   const event = await getPublishedEventBySlug(slug);
   if (!event) notFound();
 
-  const [tickets, sessions, speakers] = await Promise.all([
+  const [tickets, sessions, speakers, sponsors] = await Promise.all([
     getPublicTicketTypes(event.id),
     getPublicSessions(event.id),
     getPublicSpeakers(event.id),
+    getPublicSponsors(event.id),
   ]);
   const speakerById = new Map(speakers.map((s) => [s.id, s]));
+  const sponsorTierGroups: [string, PublicSponsor[]][] = [...event.sponsorTiers, ""]
+    .map((tier): [string, PublicSponsor[]] => [tier, sponsors.filter((s) => (s.tier || "") === tier)])
+    .filter(([, list]) => list.length > 0);
   const comingSoonSessions = sessions.filter((s) => s.isComingSoon);
   const confirmedSessions = sessions.filter((s) => !s.isComingSoon);
   const days = groupSessionsByDay(confirmedSessions);
@@ -787,6 +793,78 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
             </div>
           </Panel>
         </section>
+
+        {/* ─── スポンサー ─── */}
+        {sponsorTierGroups.length > 0 && (
+          <section
+            id="sponsors"
+            className="relative mx-auto max-w-6xl scroll-mt-24 px-6 pt-24 sm:pt-32"
+          >
+            <Ghost text="Sponsors" light={t.ghostLight} />
+            <Panel t={t} className="p-8 sm:p-12">
+              <SectionHead label="Sponsors" title="スポンサー" light={dark} />
+              <div className="mt-12 space-y-12">
+                {sponsorTierGroups.map(([tier, list], ti) => {
+                  const logoBox = ti === 0 ? "h-28" : ti === 1 ? "h-20" : "h-14";
+                  const gridCols =
+                    ti === 0
+                      ? "grid-cols-2 sm:grid-cols-3"
+                      : ti === 1
+                        ? "grid-cols-3 sm:grid-cols-4"
+                        : "grid-cols-4 sm:grid-cols-6";
+                  return (
+                    <div key={tier || "unranked"}>
+                      {tier && (
+                        <p
+                          className="text-[11px] font-black uppercase tracking-[0.3em]"
+                          style={{ color }}
+                        >
+                          {tier}
+                        </p>
+                      )}
+                      <div className={`mt-5 grid gap-4 ${gridCols}`}>
+                        {list.map((sp, i) => {
+                          const logo = sp.logoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={sp.logoUrl}
+                              alt={sp.name}
+                              className={`${logoBox} w-full object-contain p-3`}
+                            />
+                          ) : (
+                            <span
+                              className={`flex ${logoBox} w-full items-center justify-center text-sm font-black ${t.muted}`}
+                            >
+                              {sp.name}
+                            </span>
+                          );
+                          return (
+                            <Reveal key={sp.id} delayMs={i * 60}>
+                              {sp.websiteUrl ? (
+                                <a
+                                  href={sp.websiteUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`flex items-center justify-center bg-white/70 transition-opacity hover:opacity-80 ${t.radius}`}
+                                >
+                                  {logo}
+                                </a>
+                              ) : (
+                                <div className={`flex items-center justify-center bg-white/70 ${t.radius}`}>
+                                  {logo}
+                                </div>
+                              )}
+                            </Reveal>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Panel>
+          </section>
+        )}
 
         {event.showMarquee && <Marquee event={event} t={t} />}
 

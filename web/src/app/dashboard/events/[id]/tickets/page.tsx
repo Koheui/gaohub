@@ -13,16 +13,18 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
-import type { TicketType } from "@/lib/types";
+import type { EventDoc, TicketType } from "@/lib/types";
 import { formatJpy } from "@/lib/format";
 import { ui, chip } from "@/lib/ui";
 import { ViewPublicPageButton } from "@/components/ViewPublicPageButton";
+import { RegistrationFieldsManager } from "@/components/RegistrationFieldsManager";
 
 const label = ui.label;
 const input = ui.input;
 
 export default function TicketsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const [event, setEvent] = useState<EventDoc | null>(null);
   const [tickets, setTickets] = useState<TicketType[] | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
@@ -32,6 +34,12 @@ export default function TicketsPage({ params }: { params: Promise<{ id: string }
   const [requiresVerification, setRequiresVerification] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    return onSnapshot(doc(db, "events", id), (snap) => {
+      setEvent(snap.exists() ? ({ id: snap.id, ...snap.data() } as EventDoc) : null);
+    });
+  }, [id]);
 
   useEffect(() => {
     const q = query(
@@ -100,6 +108,8 @@ export default function TicketsPage({ params }: { params: Promise<{ id: string }
           </button>
         </div>
       </div>
+
+      {event && <RegistrationFieldsManager eventId={id} fields={event.registrationFields ?? []} />}
 
       {showForm && (
         <form onSubmit={handleCreate} className="mt-6 max-w-xl space-y-4 border-2 border-zinc-950 bg-white p-6">

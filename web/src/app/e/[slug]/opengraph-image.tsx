@@ -1,5 +1,6 @@
 import { getPublicSpeakers, getPublishedEventBySlug } from "@/lib/server/events";
 import { renderBannerImage } from "@/lib/server/bannerImage";
+import type { RegistrationFieldDef } from "@/lib/types";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -24,6 +25,8 @@ const FALLBACK_EVENT = {
   endsAt: new Date(),
   loungeEnabled: false,
   loungeCategories: [] as string[],
+  registrationFields: [] as RegistrationFieldDef[],
+  sponsorTiers: [] as string[],
 };
 
 export default async function OgImage(props: { params: Promise<{ slug: string }> }) {

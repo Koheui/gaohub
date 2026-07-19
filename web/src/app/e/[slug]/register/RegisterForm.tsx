@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { PublicTicketType } from "@/lib/server/events";
+import type { RegistrationFieldDef } from "@/lib/types";
 import { formatJpy } from "@/lib/format";
 
 const label = "block text-sm font-medium text-zinc-700";
@@ -12,12 +13,14 @@ export function RegisterForm({
   themeColor,
   tickets,
   initialTicketId,
+  registrationFields,
 }: {
   eventId: string;
   slug: string;
   themeColor: string;
   tickets: PublicTicketType[];
   initialTicketId: string;
+  registrationFields: RegistrationFieldDef[];
 }) {
   const [ticketTypeId, setTicketTypeId] = useState(initialTicketId);
   const [name, setName] = useState("");
@@ -25,16 +28,27 @@ export function RegisterForm({
   const [company, setCompany] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [verificationFile, setVerificationFile] = useState<File | null>(null);
+  const [customAnswers, setCustomAnswers] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const selected = tickets.find((t) => t.id === ticketTypeId)!;
+
+  function setAnswer(id: string, value: string) {
+    setCustomAnswers((prev) => ({ ...prev, [id]: value }));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (selected.requiresVerification && !verificationFile) {
       setError("このチケットには確認書類の画像アップロードが必要です");
       return;
+    }
+    for (const field of registrationFields) {
+      if (field.required && !customAnswers[field.id]) {
+        setError(`「${field.label}」を入力してください`);
+        return;
+      }
     }
     setBusy(true);
     setError(null);
@@ -47,6 +61,9 @@ export function RegisterForm({
       formData.set("company", company);
       formData.set("jobTitle", jobTitle);
       if (verificationFile) formData.set("verificationImage", verificationFile);
+      for (const field of registrationFields) {
+        formData.set(`field_${field.id}`, customAnswers[field.id] ?? "");
+      }
 
       const res = await fetch("/api/checkout", { method: "POST", body: formData });
       const data = await res.json();
@@ -122,6 +139,62 @@ export function RegisterForm({
           <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className={input} />
         </div>
       </div>
+
+      {registrationFields.map((field) => (
+        <div key={field.id}>
+          {field.type === "checkbox" ? (
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={customAnswers[field.id] === "true"}
+                onChange={(e) => setAnswer(field.id, e.target.checked ? "true" : "false")}
+                className="h-4 w-4"
+              />
+              <span className="text-sm font-medium text-zinc-700">
+                {field.label}
+                {field.required && " *"}
+              </span>
+            </label>
+          ) : (
+            <>
+              <label className={label}>
+                {field.label}
+                {field.required && " *"}
+              </label>
+              {field.type === "textarea" ? (
+                <textarea
+                  required={field.required}
+                  rows={3}
+                  value={customAnswers[field.id] ?? ""}
+                  onChange={(e) => setAnswer(field.id, e.target.value)}
+                  className={input}
+                />
+              ) : field.type === "select" ? (
+                <select
+                  required={field.required}
+                  value={customAnswers[field.id] ?? ""}
+                  onChange={(e) => setAnswer(field.id, e.target.value)}
+                  className={input}
+                >
+                  <option value="">選択してください</option>
+                  {field.options.map((o) => (
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  required={field.required}
+                  value={customAnswers[field.id] ?? ""}
+                  onChange={(e) => setAnswer(field.id, e.target.value)}
+                  className={input}
+                />
+              )}
+            </>
+          )}
+        </div>
+      ))}
 
       {selected.requiresVerification && (
         <div>

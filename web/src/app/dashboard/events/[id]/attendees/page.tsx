@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
-import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { collection, doc, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/client";
 import { useAuth } from "@/components/AuthProvider";
-import type { Registration } from "@/lib/types";
+import type { EventDoc, Registration, RegistrationFieldDef } from "@/lib/types";
 import { formatJpy } from "@/lib/format";
 import { ui, chip } from "@/lib/ui";
 
@@ -21,7 +21,7 @@ const verificationLabel: Record<NonNullable<Registration["verificationStatus"]>,
   rejected: "却下",
 };
 
-function toCsv(regs: Registration[]): string {
+function toCsv(regs: Registration[], customFields: RegistrationFieldDef[]): string {
   const header = [
     "氏名",
     "メールアドレス",
@@ -33,6 +33,7 @@ function toCsv(regs: Registration[]): string {
     "確認書類",
     "チェックイン",
     "申込日時",
+    ...customFields.map((f) => f.label),
   ];
   const rows = regs.map((r) => [
     r.attendee.name,
@@ -45,6 +46,10 @@ function toCsv(regs: Registration[]): string {
     r.verificationStatus ? verificationLabel[r.verificationStatus] : "",
     r.checkedInAt ? r.checkedInAt.toDate().toISOString() : "",
     r.createdAt ? r.createdAt.toDate().toISOString() : "",
+    ...customFields.map((f) => {
+      const v = r.customAnswers?.[f.id] ?? "";
+      return f.type === "checkbox" ? (v === "true" ? "はい" : "いいえ") : v;
+    }),
   ]);
   return [header, ...rows]
     .map((row) => row.map((c) => `"${(c ?? "").replaceAll('"', '""')}"`).join(","))
@@ -162,6 +167,13 @@ export default function AttendeesPage({ params }: { params: Promise<{ id: string
   const { profile } = useAuth();
   const orgId = profile?.orgId ?? null;
   const [regs, setRegs] = useState<Registration[] | null>(null);
+  const [event, setEvent] = useState<EventDoc | null>(null);
+
+  useEffect(() => {
+    return onSnapshot(doc(db, "events", id), (snap) => {
+      setEvent(snap.exists() ? ({ id: snap.id, ...snap.data() } as EventDoc) : null);
+    });
+  }, [id]);
 
   useEffect(() => {
     if (!orgId) return;
@@ -177,10 +189,12 @@ export default function AttendeesPage({ params }: { params: Promise<{ id: string
     });
   }, [id, orgId]);
 
+  const customFields = event?.registrationFields ?? [];
+
   function downloadCsv() {
     if (!regs) return;
     // ExcelでのUTF-8認識のためBOM付き
-    const blob = new Blob(["﻿" + toCsv(regs)], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob(["﻿" + toCsv(regs, customFields)], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -232,6 +246,9 @@ export default function AttendeesPage({ params }: { params: Promise<{ id: string
                 <th className="px-4 py-3 font-medium">ステータス</th>
                 <th className="px-4 py-3 font-medium">確認書類</th>
                 <th className="px-4 py-3 font-medium">チェックイン</th>
+                {customFields.length > 0 && (
+                  <th className="px-4 py-3 font-medium">その他の回答</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
@@ -272,6 +289,18 @@ export default function AttendeesPage({ params }: { params: Promise<{ id: string
                         })
                       : "—"}
                   </td>
+                  {customFields.length > 0 && (
+                    <td className="px-4 py-3 text-xs text-zinc-500">
+                      {customFields
+                        .map((f) => {
+                          const v = r.customAnswers?.[f.id];
+                          if (!v) return null;
+                          return `${f.label}: ${f.type === "checkbox" ? (v === "true" ? "はい" : "いいえ") : v}`;
+                        })
+                        .filter(Boolean)
+                        .join("、") || "—"}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

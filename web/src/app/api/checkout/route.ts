@@ -5,6 +5,7 @@ import { adminDb, adminStorageBucket } from "@/lib/firebase/admin";
 import { applicationFeeAmount, getStripe } from "@/lib/stripe";
 import { sendTicketEmail } from "@/lib/email";
 import { appUrl, formatDateRange } from "@/lib/format";
+import type { RegistrationFieldDef } from "@/lib/types";
 
 const MAX_VERIFICATION_IMAGE_BYTES = 10 * 1024 * 1024;
 
@@ -60,6 +61,19 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const registrationFields: RegistrationFieldDef[] = eventSnap.get("registrationFields") ?? [];
+  const customAnswers: Record<string, string> = {};
+  for (const field of registrationFields) {
+    const raw = str(form.get(`field_${field.id}`));
+    if (field.required && !raw) {
+      return bad(`「${field.label}」を入力してください`);
+    }
+    if (field.type === "select" && raw && !field.options.includes(raw)) {
+      return bad(`「${field.label}」の値が不正です`);
+    }
+    customAnswers[field.id] = raw;
+  }
+
   const priceJpy: number = ticketSnap.get("priceJpy") ?? 0;
   // Stripe の JPY 最低決済金額(¥50)未満の有料価格は決済できない(¥0 は Stripe を経由しない)
   if (priceJpy > 0 && priceJpy < 50) {
@@ -95,6 +109,7 @@ export async function POST(req: NextRequest) {
     verificationImagePath,
     verificationStatus: requiresVerification ? ("pending" as const) : null,
     reservedSessionIds: [] as string[],
+    customAnswers,
     createdAt: FieldValue.serverTimestamp(),
   };
 

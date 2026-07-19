@@ -44,6 +44,7 @@ export default async function RegisterPage(props: {
           themeColor={event.themeColor}
           tickets={available}
           initialTicketId={selected.id}
+          registrationFields={event.registrationFields}
         />
       </div>
     </main>

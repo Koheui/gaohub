@@ -54,7 +54,23 @@ export interface EventDoc {
   loungeCategories: string[];
   /** セッションの「トラック/会場」欄で選択できる会場名の一覧(主催者が管理) */
   tracks: string[];
+  /** 申込フォームに追加する主催者定義のカスタム質問項目 */
+  registrationFields: RegistrationFieldDef[];
+  /** スポンサーの序列(先頭ほど上位)。例: ["プラチナ","ゴールド","シルバー"] */
+  sponsorTiers: string[];
   createdAt: Timestamp;
+}
+
+export type RegistrationFieldType = "text" | "textarea" | "select" | "checkbox";
+
+/** 申込フォームの主催者カスタム質問。回答は Registration.customAnswers[id] に保存 */
+export interface RegistrationFieldDef {
+  id: string;
+  label: string;
+  type: RegistrationFieldType;
+  required: boolean;
+  /** type === "select" の場合の選択肢 */
+  options: string[];
 }
 
 export interface TicketType {
@@ -139,6 +155,19 @@ export interface Registration {
   verificationStatus: VerificationStatus | null;
   /** 予約済みセッションID一覧(events/{eventId}/sessions への参照) */
   reservedSessionIds: string[];
+  /** 主催者定義のカスタム質問(EventDoc.registrationFields)への回答。key は RegistrationFieldDef.id */
+  customAnswers: Record<string, string>;
+  createdAt: Timestamp;
+}
+
+/** スポンサー企業(イベント配下の独立コレクション) */
+export interface SponsorDoc {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+  websiteUrl: string;
+  /** event.sponsorTiers のいずれか(主催者が定義した序列)。未設定は "" */
+  tier: string;
   createdAt: Timestamp;
 }
 

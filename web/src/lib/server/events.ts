@@ -1,6 +1,6 @@
 import "server-only";
 import { adminDb } from "@/lib/firebase/admin";
-import type { EventTemplate } from "@/lib/types";
+import type { EventTemplate, RegistrationFieldDef } from "@/lib/types";
 
 export interface PublicTicketType {
   id: string;
@@ -31,6 +31,16 @@ export interface PublicEvent {
   endsAt: Date;
   loungeEnabled: boolean;
   loungeCategories: string[];
+  registrationFields: RegistrationFieldDef[];
+  sponsorTiers: string[];
+}
+
+export interface PublicSponsor {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+  websiteUrl: string;
+  tier: string;
 }
 
 export interface PublicSpeaker {
@@ -81,6 +91,8 @@ function toPublicEvent(id: string, d: FirebaseFirestore.DocumentData): PublicEve
     endsAt: d.endsAt.toDate(),
     loungeEnabled: d.loungeEnabled ?? false,
     loungeCategories: d.loungeCategories ?? [],
+    registrationFields: d.registrationFields ?? [],
+    sponsorTiers: d.sponsorTiers ?? [],
   };
 }
 
@@ -145,6 +157,25 @@ export async function getPublicSpeakers(eventId: string): Promise<PublicSpeaker[
       instagramUrl: d.instagramUrl ?? "",
       linkedinUrl: d.linkedinUrl ?? "",
       facebookUrl: d.facebookUrl ?? "",
+    };
+  });
+}
+
+export async function getPublicSponsors(eventId: string): Promise<PublicSponsor[]> {
+  const snap = await adminDb()
+    .collection("events")
+    .doc(eventId)
+    .collection("sponsors")
+    .orderBy("createdAt", "asc")
+    .get();
+  return snap.docs.map((doc) => {
+    const d = doc.data();
+    return {
+      id: doc.id,
+      name: d.name ?? "",
+      logoUrl: d.logoUrl ?? null,
+      websiteUrl: d.websiteUrl ?? "",
+      tier: d.tier ?? "",
     };
   });
 }
