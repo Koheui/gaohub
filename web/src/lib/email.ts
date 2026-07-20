@@ -42,6 +42,52 @@ export async function sendTicketEmail(params: {
           <tr><td style="padding:4px 12px 4px 0;color:#888;">日時</td><td>${escapeHtml(params.eventDateText)}</td></tr>
           <tr><td style="padding:4px 12px 4px 0;color:#888;">会場</td><td>${escapeHtml(params.venueName)}</td></tr>
         </table>
+        <p style="margin-top:24px;color:#555;font-size:13px;">
+          チケットページでは、セッションの予約・変更やコミュニティラウンジへの参加が
+          <strong>開催当日までいつでも</strong>行えます。このメールは大切に保管してください。
+        </p>
+      </div>
+    `,
+  });
+}
+
+export async function sendTicketLinksEmail(params: {
+  to: string;
+  eventTitle: string;
+  tickets: { name: string; url: string }[];
+}) {
+  const client = getResend();
+  if (!client) {
+    console.warn(
+      "[email] RESEND_API_KEY not set — skipping ticket links email to",
+      params.to,
+      params.tickets.map((t) => t.url)
+    );
+    return;
+  }
+  const from = process.env.EMAIL_FROM ?? "onboarding@resend.dev";
+  await client.emails.send({
+    from,
+    to: params.to,
+    subject: `【チケット再送】${params.eventTitle}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
+        <h2>${escapeHtml(params.eventTitle)}</h2>
+        <p>ご登録のチケットページへのリンクをお送りします。</p>
+        ${params.tickets
+          .map(
+            (t) => `
+        <p style="margin: 20px 0;">
+          <a href="${t.url}"
+             style="background:#111;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">
+            チケットを表示(${escapeHtml(t.name)})
+          </a>
+        </p>`
+          )
+          .join("")}
+        <p style="margin-top:24px;color:#555;font-size:13px;">
+          チケットページでは、セッションの予約・変更が開催当日までいつでも行えます。
+        </p>
       </div>
     `,
   });

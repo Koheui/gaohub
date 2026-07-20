@@ -77,6 +77,10 @@ export function SessionReservations({
       <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400">
         セッション予約
       </p>
+      <p className="mt-2 text-xs text-zinc-400">
+        予約は確定ではなく、このページから開催当日までいつでも追加・取消できます。
+        このページへはメールのチケットリンクからいつでも戻れます。
+      </p>
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
       <ul className="mt-3 space-y-3">
         {sessions.map((s) => {

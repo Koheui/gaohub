@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicTicketTypes, getPublishedEventBySlug } from "@/lib/server/events";
 import { RegisterForm } from "./RegisterForm";
@@ -38,6 +39,13 @@ export default async function RegisterPage(props: {
         </p>
         <h1 className="mt-2 text-3xl font-black tracking-tighter">{event.title}</h1>
         <h2 className="mt-10 text-lg font-black tracking-tight">参加申し込み</h2>
+        <p className="mt-2 text-xs text-zinc-500">
+          申込済みの方は{" "}
+          <Link href={`/e/${event.slug}/my-ticket`} className="font-bold underline">
+            マイチケット
+          </Link>{" "}
+          からセッション予約の確認・変更ができます
+        </p>
         <RegisterForm
           eventId={event.id}
           slug={event.slug}

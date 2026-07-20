@@ -800,6 +800,14 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                   ))}
                 </div>
               )}
+              {hasTickets && (
+                <p className={`mt-10 text-sm font-medium ${t.muted}`}>
+                  申込済みの方:{" "}
+                  <Link href={`/e/${event.slug}/my-ticket`} className="font-bold underline">
+                    マイチケット(セッション予約の確認・変更)
+                  </Link>
+                </p>
+              )}
             </div>
           </Panel>
         </section>
