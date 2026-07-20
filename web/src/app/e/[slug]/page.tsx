@@ -583,9 +583,14 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                           </div>
                           <div className="mt-4 flex-1 sm:mt-0">
                             <div className="flex flex-wrap items-center gap-3">
-                              <h4 className="text-2xl font-black leading-tight tracking-tight">
-                                {s.title}
-                              </h4>
+                              <Link
+                                href={`/e/${event.slug}/sessions/${s.id}`}
+                                className="hover:underline"
+                              >
+                                <h4 className="text-2xl font-black leading-tight tracking-tight">
+                                  {s.title}
+                                </h4>
+                              </Link>
                               {s.capacity != null && (
                                 <span
                                   className={`inline-block rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.1em] ${
@@ -653,9 +658,14 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                         >
                           Coming Soon
                         </span>
-                        <h4 className="mt-3 text-xl font-black leading-tight tracking-tight">
-                          {s.title}
-                        </h4>
+                        <Link
+                          href={`/e/${event.slug}/sessions/${s.id}`}
+                          className="hover:underline"
+                        >
+                          <h4 className="mt-3 text-xl font-black leading-tight tracking-tight">
+                            {s.title}
+                          </h4>
+                        </Link>
                         {s.description && (
                           <p className={`mt-2 text-sm leading-relaxed ${t.muted}`}>
                             {s.description}

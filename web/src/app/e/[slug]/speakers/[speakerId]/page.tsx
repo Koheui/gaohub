@@ -205,7 +205,12 @@ export default async function SpeakerDetailPage(props: {
                       </span>
                     )}
                   </p>
-                  <h3 className="mt-2 text-xl font-black tracking-tight">{s.title}</h3>
+                  <Link
+                    href={`/e/${event.slug}/sessions/${s.id}`}
+                    className="hover:underline"
+                  >
+                    <h3 className="mt-2 text-xl font-black tracking-tight">{s.title}</h3>
+                  </Link>
                   {s.description && (
                     <p className={`mt-2 text-sm leading-relaxed ${t.muted}`}>{s.description}</p>
                   )}

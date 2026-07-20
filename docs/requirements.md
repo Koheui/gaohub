@@ -190,6 +190,11 @@ registrations/{registrationId}          … コレクショングループで横
 /admin/organizations            … マスター管理: 全組織一覧(検索・ソート)
 /admin/organizations/[orgId]    … マスター管理: 組織詳細(イベント別の申込・売上)
 /e/[slug]               … 公開イベントページ(LP)
+/e/[slug]/sessions/[sessionId] … セッション(コンテンツ)詳細ページ。SNSシェアボタン付き。
+                          OGカードにはセッションバナー(カスタム設定時はそちら)を自動使用 —
+                          登壇者が自分の登壇コンテンツを自身のSNSで発信できることが
+                          集客導線の要のため、タイムテーブル・登壇者ページからリンクする
+/e/[slug]/speakers/[speakerId] … 登壇者詳細ページ(登壇セッションから詳細ページへリンク)
 /e/[slug]/register      … 申込フォーム → Stripe Checkout
 /t/[ticketId]           … QRチケット表示(メールのリンク先)。セッション予約と
                           コミュニティラウンジもここに統合表示
