@@ -28,6 +28,7 @@ interface SpeakerDraft {
   company: string;
   photoUrl: string | null;
   bio: string;
+  email: string;
   websiteUrl: string;
   xUrl: string;
   instagramUrl: string;
@@ -41,6 +42,7 @@ const emptyDraft: SpeakerDraft = {
   company: "",
   photoUrl: null,
   bio: "",
+  email: "",
   websiteUrl: "",
   xUrl: "",
   instagramUrl: "",
@@ -149,6 +151,19 @@ function SpeakerForm({
           className={input}
           placeholder="経歴・実績・登壇テーマなど"
         />
+      </div>
+      <div>
+        <label className={label}>メールアドレス(非公開・ラウンジ連絡用)</label>
+        <input
+          type="email"
+          value={draft.email}
+          onChange={(e) => set("email", e.target.value)}
+          className={input}
+          placeholder="speaker@example.com"
+        />
+        <p className="mt-1 text-xs text-zinc-400">
+          設定すると、コミュニティラウンジの参加者からメッセージを受け取れます。公開ページには表示されません。
+        </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
@@ -269,6 +284,7 @@ export default function SpeakersPage({ params }: { params: Promise<{ id: string 
                     company: sp.company,
                     photoUrl: sp.photoUrl,
                     bio: sp.bio ?? "",
+                    email: sp.email ?? "",
                     websiteUrl: sp.websiteUrl ?? "",
                     xUrl: sp.xUrl ?? "",
                     instagramUrl: sp.instagramUrl ?? "",

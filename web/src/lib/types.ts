@@ -109,6 +109,8 @@ export interface SpeakerDoc {
   company: string;
   photoUrl: string | null;
   bio: string;
+  /** ラウンジからのメッセージ受信用(公開ページには一切出さない)。空なら受信不可 */
+  email: string;
   websiteUrl: string;
   xUrl: string;
   instagramUrl: string;
@@ -171,6 +173,8 @@ export interface Registration {
   reservedSessionIds: string[];
   /** 主催者定義のカスタム質問(EventDoc.registrationFields)への回答。key は RegistrationFieldDef.id */
   customAnswers: Record<string, string>;
+  /** 申込時に「コミュニティラウンジに参加する」へチェックしたか。確定時にプロフィールを自動作成する */
+  joinLounge: boolean;
   createdAt: Timestamp;
 }
 

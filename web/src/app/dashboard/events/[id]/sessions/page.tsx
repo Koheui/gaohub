@@ -130,6 +130,7 @@ function SessionForm({
         company: newSpeakerCompany.trim(),
         photoUrl: null,
         bio: "",
+        email: "",
         websiteUrl: "",
         xUrl: "",
         instagramUrl: "",

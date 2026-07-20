@@ -5,6 +5,7 @@ import { adminDb, adminStorageBucket } from "@/lib/firebase/admin";
 import { applicationFeeAmount, getStripe } from "@/lib/stripe";
 import { sendTicketEmail } from "@/lib/email";
 import { appUrl, formatDateRange } from "@/lib/format";
+import { createLoungeProfileFromRegistration } from "@/lib/server/lounge";
 import type { RegistrationFieldDef } from "@/lib/types";
 
 const MAX_VERIFICATION_IMAGE_BYTES = 10 * 1024 * 1024;
@@ -32,6 +33,7 @@ export async function POST(req: NextRequest) {
   const company = str(form.get("company"));
   const jobTitle = str(form.get("jobTitle"));
   const verificationImage = form.get("verificationImage");
+  const joinLoungeRequested = str(form.get("joinLounge")) === "true";
 
   if (!eventId || !ticketTypeId || !name || !email) {
     return bad("必須項目が不足しています");
@@ -134,6 +136,7 @@ export async function POST(req: NextRequest) {
     verificationStatus: requiresVerification ? ("pending" as const) : null,
     reservedSessionIds: [] as string[],
     customAnswers,
+    joinLounge: joinLoungeRequested && (eventSnap.get("loungeEnabled") ?? false),
     createdAt: FieldValue.serverTimestamp(),
   };
 
@@ -160,6 +163,15 @@ export async function POST(req: NextRequest) {
         return bad("このチケットは売り切れました");
       }
       throw err;
+    }
+
+    // ラウンジ参加にチェックがあれば、申込情報からプロフィールを自動作成
+    if (registration.joinLounge) {
+      await createLoungeProfileFromRegistration({
+        eventId,
+        registrationId: regRef.id,
+        attendee: registration.attendee,
+      }).catch((e) => console.error("[checkout] lounge join failed:", e));
     }
 
     const ticketUrl = appUrl(`/t/${regRef.id}?k=${qrToken}`);

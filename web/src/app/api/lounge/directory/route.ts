@@ -1,21 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase/admin";
-import { verifyLoungeAccess } from "@/lib/server/lounge";
+import { getLoungeEntries, getLoungeSpeakers, verifyLoungeAccess } from "@/lib/server/lounge";
 
 function bad(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
 
-export interface LoungeDirectoryEntry {
-  registrationId: string;
-  name: string;
-  company: string;
-  jobTitle: string;
-  category: string;
-  bio: string;
-}
-
-/** 確定チケット保有者なら誰でも閲覧可(自分がまだ参加していなくても可)。メールアドレスは含めない。 */
+/**
+ * 確定チケット保有者なら誰でも閲覧可(自分がまだ参加していなくても可)。
+ * 参加者・登壇者ともメールアドレスは含めない(登壇者は連絡可否フラグのみ)。
+ */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const registrationId = searchParams.get("registrationId") ?? undefined;
@@ -25,21 +18,11 @@ export async function GET(req: NextRequest) {
   if (!("ok" in result)) return bad(result.error, result.status);
   const { auth } = result;
 
-  const snap = await adminDb()
-    .collection(`events/${auth.eventId}/loungeProfiles`)
-    .orderBy("createdAt", "asc")
-    .get();
-
-  const entries: LoungeDirectoryEntry[] = snap.docs.map((d) => ({
-    registrationId: d.id,
-    name: d.get("name") ?? "",
-    company: d.get("company") ?? "",
-    jobTitle: d.get("jobTitle") ?? "",
-    category: d.get("category") ?? "",
-    bio: d.get("bio") ?? "",
-  }));
-
+  const [entries, speakers] = await Promise.all([
+    getLoungeEntries(auth.eventId),
+    getLoungeSpeakers(auth.eventId),
+  ]);
   const selfProfile = entries.find((e) => e.registrationId === auth.registrationId) ?? null;
 
-  return NextResponse.json({ ok: true, entries, selfProfile });
+  return NextResponse.json({ ok: true, entries, speakers, selfProfile });
 }

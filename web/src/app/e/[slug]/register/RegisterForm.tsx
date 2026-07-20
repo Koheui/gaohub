@@ -22,6 +22,7 @@ export function RegisterForm({
   companyFieldOptions,
   jobTitleFieldType,
   jobTitleFieldOptions,
+  loungeEnabled,
 }: {
   eventId: string;
   slug: string;
@@ -37,6 +38,7 @@ export function RegisterForm({
   companyFieldOptions: string[];
   jobTitleFieldType: "text" | "select";
   jobTitleFieldOptions: string[];
+  loungeEnabled: boolean;
 }) {
   const [ticketTypeId, setTicketTypeId] = useState(initialTicketId);
   const [name, setName] = useState("");
@@ -45,6 +47,7 @@ export function RegisterForm({
   const [jobTitle, setJobTitle] = useState("");
   const [verificationFile, setVerificationFile] = useState<File | null>(null);
   const [customAnswers, setCustomAnswers] = useState<Record<string, string>>({});
+  const [joinLounge, setJoinLounge] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,6 +88,7 @@ export function RegisterForm({
       formData.set("company", company);
       formData.set("jobTitle", jobTitle);
       if (verificationFile) formData.set("verificationImage", verificationFile);
+      formData.set("joinLounge", joinLounge ? "true" : "false");
       for (const field of registrationFields) {
         formData.set(`field_${field.id}`, customAnswers[field.id] ?? "");
       }
@@ -273,6 +277,24 @@ export function RegisterForm({
           )}
         </div>
       ))}
+
+      {loungeEnabled && (
+        <label className="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4">
+          <input
+            type="checkbox"
+            checked={joinLounge}
+            onChange={(e) => setJoinLounge(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0"
+          />
+          <span>
+            <span className="block text-sm font-bold">コミュニティラウンジに参加する</span>
+            <span className="mt-0.5 block text-xs text-zinc-500">
+              登壇者や参加者同士で交流できるラウンジページに入れます。
+              お名前・会社名・役職がプロフィールとして他の参加者に表示されます(あとから編集・退出できます)。
+            </span>
+          </span>
+        </label>
+      )}
 
       {selected.requiresVerification && (
         <div>

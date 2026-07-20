@@ -72,22 +72,21 @@ export default async function TicketPage(props: {
   const reservedSessionIds: string[] = regSnap.get("reservedSessionIds") ?? [];
 
   const loungeEnabled: boolean = eventSnap.get("loungeEnabled") ?? false;
-  let loungeEntries: LoungeDirectoryEntry[] = [];
   let loungeSelfProfile: LoungeDirectoryEntry | null = null;
   if (loungeEnabled) {
-    const loungeSnap = await db
-      .collection(`events/${regSnap.get("eventId")}/loungeProfiles`)
-      .orderBy("createdAt", "asc")
+    const profileSnap = await db
+      .doc(`events/${regSnap.get("eventId")}/loungeProfiles/${registrationId}`)
       .get();
-    loungeEntries = loungeSnap.docs.map((d) => ({
-      registrationId: d.id,
-      name: d.get("name") ?? "",
-      company: d.get("company") ?? "",
-      jobTitle: d.get("jobTitle") ?? "",
-      category: d.get("category") ?? "",
-      bio: d.get("bio") ?? "",
-    }));
-    loungeSelfProfile = loungeEntries.find((e) => e.registrationId === registrationId) ?? null;
+    if (profileSnap.exists) {
+      loungeSelfProfile = {
+        registrationId,
+        name: profileSnap.get("name") ?? "",
+        company: profileSnap.get("company") ?? "",
+        jobTitle: profileSnap.get("jobTitle") ?? "",
+        category: profileSnap.get("category") ?? "",
+        bio: profileSnap.get("bio") ?? "",
+      };
+    }
   }
 
   return (
@@ -141,14 +140,8 @@ export default async function TicketPage(props: {
           />
           {loungeEnabled && (
             <CommunityLounge
-              registrationId={registrationId}
-              qrToken={qrToken}
-              categories={eventSnap.get("loungeCategories") ?? []}
-              defaultName={attendee.name}
-              defaultCompany={attendee.company}
-              defaultJobTitle={attendee.jobTitle}
-              initialEntries={loungeEntries}
-              initialSelfProfile={loungeSelfProfile}
+              selfProfile={loungeSelfProfile}
+              loungeUrl={`/t/${registrationId}/lounge?k=${qrToken}`}
             />
           )}
         </div>

@@ -5,6 +5,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { getStripe } from "@/lib/stripe";
 import { sendTicketEmail } from "@/lib/email";
 import { appUrl, formatDateRange } from "@/lib/format";
+import { createLoungeProfileFromRegistration } from "@/lib/server/lounge";
 
 export async function POST(req: NextRequest) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -47,6 +48,15 @@ export async function POST(req: NextRequest) {
           paidAt: FieldValue.serverTimestamp(),
         });
       });
+
+      // 申込時に「ラウンジに参加する」へチェックしていた場合はプロフィールを自動作成
+      if (regSnap.get("joinLounge")) {
+        await createLoungeProfileFromRegistration({
+          eventId: regSnap.get("eventId"),
+          registrationId,
+          attendee: regSnap.get("attendee"),
+        }).catch((e) => console.error("[webhook] lounge join failed:", e));
+      }
 
       // 申込完了メール
       const eventSnap = await db.doc(`events/${regSnap.get("eventId")}`).get();
