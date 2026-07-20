@@ -18,6 +18,10 @@ export function RegisterForm({
   requireCompany,
   askJobTitle,
   requireJobTitle,
+  companyFieldType,
+  companyFieldOptions,
+  jobTitleFieldType,
+  jobTitleFieldOptions,
 }: {
   eventId: string;
   slug: string;
@@ -29,6 +33,10 @@ export function RegisterForm({
   requireCompany: boolean;
   askJobTitle: boolean;
   requireJobTitle: boolean;
+  companyFieldType: "text" | "select";
+  companyFieldOptions: string[];
+  jobTitleFieldType: "text" | "select";
+  jobTitleFieldOptions: string[];
 }) {
   const [ticketTypeId, setTicketTypeId] = useState(initialTicketId);
   const [name, setName] = useState("");
@@ -153,12 +161,28 @@ export function RegisterForm({
                 会社名
                 {requireCompany && " *"}
               </label>
-              <input
-                required={requireCompany}
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                className={input}
-              />
+              {companyFieldType === "select" ? (
+                <select
+                  required={requireCompany}
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  className={input}
+                >
+                  <option value="">選択してください</option>
+                  {companyFieldOptions.map((o) => (
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  required={requireCompany}
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  className={input}
+                />
+              )}
             </div>
           )}
           {askJobTitle && (
@@ -167,12 +191,28 @@ export function RegisterForm({
                 役職
                 {requireJobTitle && " *"}
               </label>
-              <input
-                required={requireJobTitle}
-                value={jobTitle}
-                onChange={(e) => setJobTitle(e.target.value)}
-                className={input}
-              />
+              {jobTitleFieldType === "select" ? (
+                <select
+                  required={requireJobTitle}
+                  value={jobTitle}
+                  onChange={(e) => setJobTitle(e.target.value)}
+                  className={input}
+                >
+                  <option value="">選択してください</option>
+                  {jobTitleFieldOptions.map((o) => (
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  required={requireJobTitle}
+                  value={jobTitle}
+                  onChange={(e) => setJobTitle(e.target.value)}
+                  className={input}
+                />
+              )}
             </div>
           )}
         </div>

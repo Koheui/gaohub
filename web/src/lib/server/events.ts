@@ -37,6 +37,10 @@ export interface PublicEvent {
   requireCompany: boolean;
   askJobTitle: boolean;
   requireJobTitle: boolean;
+  companyFieldType: "text" | "select";
+  companyFieldOptions: string[];
+  jobTitleFieldType: "text" | "select";
+  jobTitleFieldOptions: string[];
 }
 
 export interface PublicSponsor {
@@ -101,6 +105,10 @@ function toPublicEvent(id: string, d: FirebaseFirestore.DocumentData): PublicEve
     requireCompany: d.requireCompany ?? false,
     askJobTitle: d.askJobTitle ?? true,
     requireJobTitle: d.requireJobTitle ?? false,
+    companyFieldType: (d.companyFieldType as "text" | "select") ?? "text",
+    companyFieldOptions: d.companyFieldOptions ?? [],
+    jobTitleFieldType: (d.jobTitleFieldType as "text" | "select") ?? "text",
+    jobTitleFieldOptions: d.jobTitleFieldOptions ?? [],
   };
 }
 

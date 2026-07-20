@@ -118,6 +118,10 @@ export default function TicketsPage({ params }: { params: Promise<{ id: string }
             requireCompany: event.requireCompany ?? false,
             askJobTitle: event.askJobTitle ?? true,
             requireJobTitle: event.requireJobTitle ?? false,
+            companyFieldType: event.companyFieldType ?? "text",
+            companyFieldOptions: event.companyFieldOptions ?? [],
+            jobTitleFieldType: event.jobTitleFieldType ?? "text",
+            jobTitleFieldOptions: event.jobTitleFieldOptions ?? [],
           }}
         />
       )}

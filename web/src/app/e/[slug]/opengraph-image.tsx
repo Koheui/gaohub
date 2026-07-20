@@ -31,6 +31,10 @@ const FALLBACK_EVENT = {
   requireCompany: false,
   askJobTitle: true,
   requireJobTitle: false,
+  companyFieldType: "text" as const,
+  companyFieldOptions: [] as string[],
+  jobTitleFieldType: "text" as const,
+  jobTitleFieldOptions: [] as string[],
 };
 
 export default async function OgImage(props: { params: Promise<{ slug: string }> }) {

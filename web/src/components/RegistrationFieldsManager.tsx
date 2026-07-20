@@ -22,6 +22,98 @@ interface StandardFieldSettings {
   requireCompany: boolean;
   askJobTitle: boolean;
   requireJobTitle: boolean;
+  companyFieldType: "text" | "select";
+  companyFieldOptions: string[];
+  jobTitleFieldType: "text" | "select";
+  jobTitleFieldOptions: string[];
+}
+
+function StandardFieldRow({
+  label: fieldLabel,
+  ask,
+  require,
+  fieldType,
+  options,
+  onAskChange,
+  onRequireChange,
+  onTypeChange,
+  onOptionsSave,
+}: {
+  label: string;
+  ask: boolean;
+  require: boolean;
+  fieldType: "text" | "select";
+  options: string[];
+  onAskChange: (v: boolean) => void;
+  onRequireChange: (v: boolean) => void;
+  onTypeChange: (v: "text" | "select") => void;
+  onOptionsSave: (v: string[]) => void;
+}) {
+  const [optionsText, setOptionsText] = useState(options.join(","));
+  const optionsDirty = optionsText !== options.join(",");
+
+  return (
+    <div className="px-3 py-2 text-sm">
+      <div className="flex items-center justify-between">
+        <span className="font-bold">{fieldLabel}</span>
+        <span className="flex items-center gap-4">
+          <label className="flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              checked={ask}
+              onChange={(e) => onAskChange(e.target.checked)}
+              className="h-4 w-4"
+            />
+            表示する
+          </label>
+          <label className="flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              checked={require}
+              disabled={!ask}
+              onChange={(e) => onRequireChange(e.target.checked)}
+              className="h-4 w-4 disabled:opacity-40"
+            />
+            必須にする
+          </label>
+          <select
+            value={fieldType}
+            disabled={!ask}
+            onChange={(e) => onTypeChange(e.target.value as "text" | "select")}
+            className="rounded border border-zinc-300 px-2 py-1 text-xs disabled:opacity-40"
+          >
+            <option value="text">自由入力</option>
+            <option value="select">プルダウン</option>
+          </select>
+        </span>
+      </div>
+      {ask && fieldType === "select" && (
+        <div className="mt-2 flex gap-2 pl-0">
+          <input
+            value={optionsText}
+            onChange={(e) => setOptionsText(e.target.value)}
+            className={`${ui.input} mt-0 flex-1`}
+            placeholder="選択肢をカンマ区切りで入力(例: 株式会社A,株式会社B,その他)"
+          />
+          <button
+            type="button"
+            onClick={() =>
+              onOptionsSave(
+                optionsText
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              )
+            }
+            disabled={!optionsDirty}
+            className={ui.btnGhost}
+          >
+            保存
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /**
@@ -100,54 +192,28 @@ export function RegistrationFieldsManager({
           <span className="font-bold text-zinc-400">氏名・メールアドレス</span>
           <span className="text-xs text-zinc-400">常時表示・必須</span>
         </div>
-        <div className="flex items-center justify-between px-3 py-2 text-sm">
-          <span className="font-bold">会社名</span>
-          <span className="flex items-center gap-4">
-            <label className="flex items-center gap-1.5">
-              <input
-                type="checkbox"
-                checked={standardFields.askCompany}
-                onChange={(e) => updateStandard({ askCompany: e.target.checked })}
-                className="h-4 w-4"
-              />
-              表示する
-            </label>
-            <label className="flex items-center gap-1.5">
-              <input
-                type="checkbox"
-                checked={standardFields.requireCompany}
-                disabled={!standardFields.askCompany}
-                onChange={(e) => updateStandard({ requireCompany: e.target.checked })}
-                className="h-4 w-4 disabled:opacity-40"
-              />
-              必須にする
-            </label>
-          </span>
-        </div>
-        <div className="flex items-center justify-between px-3 py-2 text-sm">
-          <span className="font-bold">役職</span>
-          <span className="flex items-center gap-4">
-            <label className="flex items-center gap-1.5">
-              <input
-                type="checkbox"
-                checked={standardFields.askJobTitle}
-                onChange={(e) => updateStandard({ askJobTitle: e.target.checked })}
-                className="h-4 w-4"
-              />
-              表示する
-            </label>
-            <label className="flex items-center gap-1.5">
-              <input
-                type="checkbox"
-                checked={standardFields.requireJobTitle}
-                disabled={!standardFields.askJobTitle}
-                onChange={(e) => updateStandard({ requireJobTitle: e.target.checked })}
-                className="h-4 w-4 disabled:opacity-40"
-              />
-              必須にする
-            </label>
-          </span>
-        </div>
+        <StandardFieldRow
+          label="会社名"
+          ask={standardFields.askCompany}
+          require={standardFields.requireCompany}
+          fieldType={standardFields.companyFieldType}
+          options={standardFields.companyFieldOptions}
+          onAskChange={(v) => updateStandard({ askCompany: v })}
+          onRequireChange={(v) => updateStandard({ requireCompany: v })}
+          onTypeChange={(v) => updateStandard({ companyFieldType: v })}
+          onOptionsSave={(v) => updateStandard({ companyFieldOptions: v })}
+        />
+        <StandardFieldRow
+          label="役職"
+          ask={standardFields.askJobTitle}
+          require={standardFields.requireJobTitle}
+          fieldType={standardFields.jobTitleFieldType}
+          options={standardFields.jobTitleFieldOptions}
+          onAskChange={(v) => updateStandard({ askJobTitle: v })}
+          onRequireChange={(v) => updateStandard({ requireJobTitle: v })}
+          onTypeChange={(v) => updateStandard({ jobTitleFieldType: v })}
+          onOptionsSave={(v) => updateStandard({ jobTitleFieldOptions: v })}
+        />
       </div>
 
       <p className="mt-4 text-xs font-black uppercase tracking-[0.15em] text-zinc-400">

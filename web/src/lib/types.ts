@@ -64,6 +64,12 @@ export interface EventDoc {
   askJobTitle: boolean;
   /** 「役職」欄を必須にするか(askJobTitleがfalseの場合は無視) */
   requireJobTitle: boolean;
+  /** 「会社名」欄の入力形式。text=自由入力 / select=プルダウン(companyFieldOptionsから選択) */
+  companyFieldType: "text" | "select";
+  companyFieldOptions: string[];
+  /** 「役職」欄の入力形式。text=自由入力 / select=プルダウン(jobTitleFieldOptionsから選択) */
+  jobTitleFieldType: "text" | "select";
+  jobTitleFieldOptions: string[];
   /** スポンサーの序列(先頭ほど上位)。例: ["プラチナ","ゴールド","シルバー"] */
   sponsorTiers: string[];
   createdAt: Timestamp;

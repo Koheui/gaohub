@@ -65,8 +65,23 @@ export async function POST(req: NextRequest) {
   const requireCompany: boolean = eventSnap.get("requireCompany") ?? false;
   const askJobTitle: boolean = eventSnap.get("askJobTitle") ?? true;
   const requireJobTitle: boolean = eventSnap.get("requireJobTitle") ?? false;
+  const companyFieldType: string = eventSnap.get("companyFieldType") ?? "text";
+  const companyFieldOptions: string[] = eventSnap.get("companyFieldOptions") ?? [];
+  const jobTitleFieldType: string = eventSnap.get("jobTitleFieldType") ?? "text";
+  const jobTitleFieldOptions: string[] = eventSnap.get("jobTitleFieldOptions") ?? [];
   if (askCompany && requireCompany && !company) return bad("会社名を入力してください");
   if (askJobTitle && requireJobTitle && !jobTitle) return bad("役職を入力してください");
+  if (askCompany && company && companyFieldType === "select" && !companyFieldOptions.includes(company)) {
+    return bad("会社名の値が不正です");
+  }
+  if (
+    askJobTitle &&
+    jobTitle &&
+    jobTitleFieldType === "select" &&
+    !jobTitleFieldOptions.includes(jobTitle)
+  ) {
+    return bad("役職の値が不正です");
+  }
   const finalCompany = askCompany ? company : "";
   const finalJobTitle = askJobTitle ? jobTitle : "";
 
