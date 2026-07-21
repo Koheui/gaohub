@@ -51,7 +51,7 @@ export function TimetableSection({
     return set.size > 0 ? Array.from(set) : ["Main Stage"];
   }, [event.tracks, sessions]);
 
-  // デフォルトは本格タイムテーブル表 ('matrix')、リスト表示 ('timeline')
+  // デフォルトは固定高さ・タイムラインキャンバス ('matrix')、リスト ('timeline')
   const [viewMode, setViewMode] = useState<"matrix" | "timeline">("matrix");
 
   // 日付ごとのグループ化
@@ -75,42 +75,58 @@ export function TimetableSection({
     [sessions]
   );
 
-  // タイムスケジュールマトリックス構築用の時間スロット抽出 (開始時間の昇順)
-  const timeSlots = useMemo(() => {
-    if (currentDaySessions.length === 0) return [];
-    // 全セッションの開始・終了時刻のユニークな整列リスト
-    const times = new Set<number>();
+  // 当日の時間範囲 (最少開始時間 〜 最大終了時間)
+  const timelineRange = useMemo(() => {
+    if (currentDaySessions.length === 0) {
+      const now = new Date();
+      const defaultStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10, 0, 0);
+      return { startHour: 10, endHour: 18, totalHours: 8, dayStartMs: defaultStart.getTime() };
+    }
+    let minStart = Infinity;
+    let maxEnd = -Infinity;
+
     currentDaySessions.forEach((s) => {
-      times.add(s.startsAt.getTime());
+      const startMs = s.startsAt.getTime();
+      const endMs = s.endsAt.getTime();
+      if (startMs < minStart) minStart = startMs;
+      if (endMs > maxEnd) maxEnd = endMs;
     });
-    const sorted = Array.from(times).sort((a, b) => a - b);
-    return sorted.map((tMs) => new Date(tMs));
+
+    const startDate = new Date(minStart);
+    const endDate = new Date(maxEnd);
+
+    let startHour = startDate.getHours();
+    let endHour = endDate.getHours() + (endDate.getMinutes() > 0 ? 1 : 0);
+
+    if (endHour <= startHour) endHour = startHour + 4;
+    // 余裕を持たせる
+    return {
+      startHour,
+      endHour,
+      totalHours: endHour - startHour,
+      dayStartMs: new Date(
+        startDate.getFullYear(),
+        startDate.getMonth(),
+        startDate.getDate(),
+        startHour,
+        0,
+        0
+      ).getTime(),
+    };
   }, [currentDaySessions]);
 
-  // 時間スロット x ステージ のマトリックスマップ
-  const matrixData = useMemo(() => {
-    // timeSlotKey -> trackName -> PublicSession[]
-    const map = new Map<string, Map<string, PublicSession[]>>();
+  // 1時間あたりの固定高さ (ピクセル) ➔ セッションの「所要時間(尺)」が完全に視覚比例する
+  const HOUR_HEIGHT = 220; // 1時間 = 220px, 30分 = 110px
 
-    timeSlots.forEach((slotDate) => {
-      const slotKey = timeFmt.format(slotDate);
-      const trackMap = new Map<string, PublicSession[]>();
-      tracks.forEach((tr) => trackMap.set(tr, []));
-
-      currentDaySessions.forEach((s) => {
-        const sTimeKey = timeFmt.format(s.startsAt);
-        if (sTimeKey === slotKey) {
-          const tr = s.track && tracks.includes(s.track) ? s.track : tracks[0];
-          const list = trackMap.get(tr) ?? [];
-          list.push(s);
-          trackMap.set(tr, list);
-        }
-      });
-      map.set(slotKey, trackMap);
-    });
-
-    return map;
-  }, [timeSlots, tracks, currentDaySessions]);
+  // 1時間単位の目盛りラベル一覧
+  const hourLabels = useMemo(() => {
+    const list: { hour: number; label: string }[] = [];
+    for (let h = timelineRange.startHour; h <= timelineRange.endHour; h++) {
+      const pad = String(h).padStart(2, "0");
+      list.push({ hour: h, label: `${pad}:00` });
+    }
+    return list;
+  }, [timelineRange]);
 
   return (
     <div className="mt-8">
@@ -135,7 +151,7 @@ export function TimetableSection({
           </div>
         ) : (
           <div className="text-xs font-bold uppercase tracking-widest text-zinc-400">
-            Schedule & Timetable
+            Schedule & Timetable Canvas
           </div>
         )}
 
@@ -149,7 +165,7 @@ export function TimetableSection({
                 : `${t.muted} hover:text-zinc-900 dark:hover:text-white`
             }`}
           >
-            <span>ステージ別スケジュール表 📅</span>
+            <span>タイムスケール表 📅</span>
           </button>
           <button
             onClick={() => setViewMode("timeline")}
@@ -164,15 +180,15 @@ export function TimetableSection({
         </div>
       </div>
 
-      {/* ─── モード 1: ステージ別タイムスケジュール表 (Gantt/Matrix View) ─── */}
+      {/* ─── モード 1: 固定時間軸 タイムスケール・キャンバス (Gantt Matrix Canvas) ─── */}
       {viewMode === "matrix" && (
-        <div className="mt-8 overflow-x-auto rounded-3xl border border-zinc-200/80 bg-white/70 shadow-lg dark:border-white/10 dark:bg-zinc-950/60">
-          <div className="min-w-[800px]">
-            {/* タイムテーブル・グリッドヘッダー (ステージ一覧) */}
+        <div className="mt-8 overflow-x-auto rounded-3xl border border-zinc-200/80 bg-white/80 shadow-xl dark:border-white/10 dark:bg-zinc-950/80">
+          <div className="min-w-[900px]">
+            {/* ヘッダー行: 左端 TIME / 各ステージ名 */}
             <div
-              className="grid border-b border-zinc-200/80 bg-zinc-100/90 dark:border-white/10 dark:bg-zinc-900/90"
+              className="sticky top-0 z-20 grid border-b border-zinc-200/80 bg-zinc-100/95 backdrop-blur dark:border-white/10 dark:bg-zinc-900/95"
               style={{
-                gridTemplateColumns: `120px repeat(${tracks.length}, minmax(0, 1fr))`,
+                gridTemplateColumns: `100px repeat(${tracks.length}, minmax(0, 1fr))`,
               }}
             >
               <div className="flex items-center justify-center border-r p-4 font-mono text-xs font-black uppercase tracking-widest text-zinc-400 border-zinc-200 dark:border-white/10">
@@ -191,154 +207,201 @@ export function TimetableSection({
                           tIdx === 0 ? color : tIdx === 1 ? "#3b82f6" : "#10b981",
                       }}
                     />
-                    <span className="text-sm font-black tracking-tight">{trackName}</span>
+                    <span className="text-base font-black tracking-tight">{trackName}</span>
                   </div>
-                  <span className="rounded-full bg-zinc-200/60 px-2 py-0.5 text-[10px] font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                  <span className="rounded-full bg-zinc-200/70 px-2.5 py-0.5 text-[10px] font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
                     STAGE {tIdx + 1}
                   </span>
                 </div>
               ))}
             </div>
 
-            {/* 時間スロットごとの行 (タイムライン行) */}
-            <div className="divide-y divide-zinc-200/80 dark:divide-white/10">
-              {timeSlots.map((slotDate) => {
-                const slotKey = timeFmt.format(slotDate);
-                const trackMap = matrixData.get(slotKey);
-
+            {/* タイムスケジュール・メインキャンバス (固定高さグリッド + 絶対位置カード配置) */}
+            <div
+              className="relative"
+              style={{
+                height: `${timelineRange.totalHours * HOUR_HEIGHT}px`,
+                gridTemplateColumns: `100px repeat(${tracks.length}, minmax(0, 1fr))`,
+              }}
+            >
+              {/* 1. 1時間ごとの背景グリッドライン & 左時間目盛り */}
+              {hourLabels.map((hl, i) => {
+                const topPx = i * HOUR_HEIGHT;
                 return (
                   <div
-                    key={slotKey}
-                    className="grid min-h-[160px] transition-colors hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30"
-                    style={{
-                      gridTemplateColumns: `120px repeat(${tracks.length}, minmax(0, 1fr))`,
-                    }}
+                    key={hl.hour}
+                    className="absolute inset-x-0 flex pointer-events-none border-b border-zinc-200/70 dark:border-white/10"
+                    style={{ top: `${topPx}px`, height: `${HOUR_HEIGHT}px` }}
                   >
-                    {/* 左軸：時間目盛り */}
-                    <div className="flex flex-col items-center justify-start border-r p-4 border-zinc-200 dark:border-white/10">
-                      <span className="font-mono text-xl font-black tabular-nums tracking-tight">
-                        {slotKey}
-                      </span>
-                      <span className="mt-1 font-mono text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                        START
+                    {/* 左固定軸: 時間目盛り */}
+                    <div className="w-[100px] shrink-0 border-r border-zinc-200/80 p-3 text-center dark:border-white/10">
+                      <span className="font-mono text-base font-black tabular-nums tracking-tight">
+                        {hl.label}
                       </span>
                     </div>
 
-                    {/* 各ステージのセッションセル */}
-                    {tracks.map((trackName) => {
-                      const sessionList = trackMap?.get(trackName) ?? [];
+                    {/* 各ステージ背景カラム + 30分中間の補助点線 */}
+                    <div
+                      className="grid flex-1 relative"
+                      style={{
+                        gridTemplateColumns: `repeat(${tracks.length}, minmax(0, 1fr))`,
+                      }}
+                    >
+                      {/* 30分間隔の補助線 */}
+                      <div
+                        className="absolute inset-x-0 border-b border-dashed border-zinc-200/40 dark:border-white/5"
+                        style={{ top: `${HOUR_HEIGHT / 2}px` }}
+                      />
 
-                      return (
+                      {tracks.map((tr, idx) => (
                         <div
-                          key={trackName}
-                          className="border-r p-4 border-zinc-200 dark:border-white/10 last:border-r-0 flex flex-col justify-center"
-                        >
-                          {sessionList.length > 0 ? (
-                            sessionList.map((s) => {
-                              const sessionSpeakers = s.speakerIds
-                                .map((sid) => speakerMap.get(sid))
-                                .filter((sp): sp is PublicSpeaker => !!sp);
-                              const bannerUrl =
-                                s.customBannerUrl ||
-                                `/api/banner/${event.id}/sessions/${s.id}?size=wide`;
-
-                              return (
-                                <div
-                                  key={s.id}
-                                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-md transition-all duration-300 hover:scale-[1.01] hover:shadow-xl dark:border-white/15 dark:bg-zinc-900 my-1"
-                                >
-                                  {/* 特大告知バナー画像 */}
-                                  <Link
-                                    href={`/e/${event.slug}/sessions/${s.id}`}
-                                    className="relative aspect-[16/9] w-full overflow-hidden bg-zinc-950"
-                                  >
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      src={bannerUrl}
-                                      alt={s.title}
-                                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                      loading="lazy"
-                                    />
-                                    {/* 時間帯表示 */}
-                                    <div className="absolute top-2.5 left-2.5 rounded-full bg-black/75 px-3 py-1 font-mono text-xs font-bold text-white backdrop-blur-md">
-                                      {timeFmt.format(s.startsAt)} – {timeFmt.format(s.endsAt)}
-                                    </div>
-                                    {/* 満席・残り表示 */}
-                                    {s.capacity != null && (
-                                      <div className="absolute top-2.5 right-2.5">
-                                        <span
-                                          className={`rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider ${
-                                            s.reservedCount >= s.capacity
-                                              ? "bg-red-600 text-white"
-                                              : "bg-black/75 text-white backdrop-blur-md"
-                                          }`}
-                                        >
-                                          {s.reservedCount >= s.capacity
-                                            ? "満席"
-                                            : `残り${s.capacity - s.reservedCount}席`}
-                                        </span>
-                                      </div>
-                                    )}
-                                  </Link>
-
-                                  {/* セッションテキスト */}
-                                  <div className="p-4">
-                                    <Link
-                                      href={`/e/${event.slug}/sessions/${s.id}`}
-                                      className="group-hover:underline"
-                                    >
-                                      <h4 className="text-base font-black leading-snug tracking-tight">
-                                        {s.title}
-                                      </h4>
-                                    </Link>
-
-                                    {s.description && (
-                                      <p className={`mt-2 text-xs leading-relaxed line-clamp-2 ${t.muted}`}>
-                                        {s.description}
-                                      </p>
-                                    )}
-
-                                    {/* 登壇者表示 */}
-                                    {sessionSpeakers.length > 0 && (
-                                      <div className="mt-3 flex flex-wrap gap-2 border-t pt-3 border-zinc-100 dark:border-white/10">
-                                        {sessionSpeakers.map((sp) => (
-                                          <Link
-                                            key={sp.id}
-                                            href={`/e/${event.slug}/speakers/${sp.id}`}
-                                            className="flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 py-0.5 pr-2.5 pl-0.5 transition-all hover:bg-zinc-200/60 dark:border-white/10 dark:bg-zinc-800/60"
-                                          >
-                                            {sp.photoUrl ? (
-                                              // eslint-disable-next-line @next/next/no-img-element
-                                              <img
-                                                src={sp.photoUrl}
-                                                alt={sp.name}
-                                                className="h-5 w-5 rounded-full object-cover"
-                                              />
-                                            ) : (
-                                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-300 text-[9px] font-black text-zinc-800 dark:bg-zinc-700 dark:text-white">
-                                                {sp.name.charAt(0)}
-                                              </span>
-                                            )}
-                                            <span className="text-[11px] font-bold">{sp.name}</span>
-                                          </Link>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })
-                          ) : (
-                            <div className="flex h-full min-h-[100px] items-center justify-center rounded-xl border border-dashed border-zinc-200/60 text-xs font-bold text-zinc-400 dark:border-white/5">
-                              —
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                          key={tr}
+                          className="border-r border-zinc-100 dark:border-white/5 last:border-r-0 h-full"
+                        />
+                      ))}
+                    </div>
                   </div>
                 );
               })}
+
+              {/* 2. 各セッションカードを「尺(所要時間)」と「開始時刻」に応じた絶対位置(top/height)で精密配置 */}
+              <div
+                className="absolute inset-y-0 right-0 grid left-[100px]"
+                style={{
+                  gridTemplateColumns: `repeat(${tracks.length}, minmax(0, 1fr))`,
+                }}
+              >
+                {tracks.map((trackName) => {
+                  const trackSessions = currentDaySessions.filter(
+                    (s) =>
+                      (s.track && tracks.includes(s.track) ? s.track : tracks[0]) ===
+                      trackName
+                  );
+
+                  return (
+                    <div key={trackName} className="relative h-full px-2.5">
+                      {trackSessions.map((s) => {
+                        const startMs = s.startsAt.getTime();
+                        const endMs = s.endsAt.getTime();
+                        const durationMins = Math.max(
+                          (endMs - startMs) / (1000 * 60),
+                          15
+                        );
+
+                        const startOffsetMins =
+                          (startMs - timelineRange.dayStartMs) / (1000 * 60);
+
+                        const topPx = (startOffsetMins / 60) * HOUR_HEIGHT;
+                        const heightPx = (durationMins / 60) * HOUR_HEIGHT;
+
+                        const sessionSpeakers = s.speakerIds
+                          .map((sid) => speakerMap.get(sid))
+                          .filter((sp): sp is PublicSpeaker => !!sp);
+
+                        const bannerUrl =
+                          s.customBannerUrl ||
+                          `/api/banner/${event.id}/sessions/${s.id}?size=wide`;
+
+                        // 尺が短い(30分以下)場合はコンパクト配置
+                        const isShort = durationMins <= 30;
+
+                        return (
+                          <div
+                            key={s.id}
+                            style={{
+                              top: `${topPx + 6}px`,
+                              height: `${Math.max(heightPx - 12, 110)}px`,
+                            }}
+                            className="group absolute inset-x-2.5 z-10 flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-md transition-all duration-300 hover:z-30 hover:scale-[1.02] hover:shadow-2xl dark:border-white/15 dark:bg-zinc-900"
+                          >
+                            <Link
+                              href={`/e/${event.slug}/sessions/${s.id}`}
+                              className="flex h-full flex-col min-h-0"
+                            >
+                              {/* 告知バナー画像エリア (16:9 アイキャッチ) */}
+                              <div
+                                className={`relative w-full overflow-hidden bg-zinc-950 shrink-0 ${
+                                  isShort ? "h-20" : "aspect-[16/9]"
+                                }`}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={bannerUrl}
+                                  alt={s.title}
+                                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                  loading="lazy"
+                                />
+                                {/* 時間帯バッジ (尺が一目でわかる) */}
+                                <div className="absolute top-2 left-2 rounded-full bg-black/80 px-2.5 py-0.5 font-mono text-[11px] font-bold text-white backdrop-blur-md">
+                                  {timeFmt.format(s.startsAt)} – {timeFmt.format(s.endsAt)} ({durationMins}分)
+                                </div>
+                                {s.capacity != null && (
+                                  <div className="absolute top-2 right-2">
+                                    <span
+                                      className={`rounded-full px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider ${
+                                        s.reservedCount >= s.capacity
+                                          ? "bg-red-600 text-white"
+                                          : "bg-black/80 text-white backdrop-blur-md"
+                                      }`}
+                                    >
+                                      {s.reservedCount >= s.capacity
+                                        ? "満席"
+                                        : `残${s.capacity - s.reservedCount}席`}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* セッションテキスト情報 */}
+                              <div className="flex flex-1 flex-col justify-between p-3.5 min-h-0">
+                                <div>
+                                  <h4 className="text-sm font-black leading-snug tracking-tight text-zinc-900 group-hover:underline dark:text-white line-clamp-2">
+                                    {s.title}
+                                  </h4>
+
+                                  {!isShort && s.description && (
+                                    <p
+                                      className={`mt-1 text-[11px] leading-relaxed line-clamp-2 ${t.muted}`}
+                                    >
+                                      {s.description}
+                                    </p>
+                                  )}
+                                </div>
+
+                                {/* 登壇者表示 */}
+                                {sessionSpeakers.length > 0 && (
+                                  <div className="mt-2 flex flex-wrap gap-1.5 pt-2 border-t border-zinc-100 dark:border-white/10">
+                                    {sessionSpeakers.map((sp) => (
+                                      <div
+                                        key={sp.id}
+                                        className="flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 py-0.5 pr-2 pl-0.5 text-[10px] font-bold dark:border-white/10 dark:bg-zinc-800"
+                                      >
+                                        {sp.photoUrl ? (
+                                          // eslint-disable-next-line @next/next/no-img-element
+                                          <img
+                                            src={sp.photoUrl}
+                                            alt={sp.name}
+                                            className="h-4 w-4 rounded-full object-cover"
+                                          />
+                                        ) : (
+                                          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-zinc-300 text-[8px] font-black">
+                                            {sp.name.charAt(0)}
+                                          </span>
+                                        )}
+                                        <span>{sp.name}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </Link>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
