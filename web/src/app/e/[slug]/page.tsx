@@ -19,6 +19,7 @@ import { CountdownBand, CountdownInline } from "@/components/Countdown";
 import { FixedBackdrop, Parallax, Reveal } from "@/components/motion";
 import { LP_THEMES, type LpTheme } from "@/components/lp/theme";
 import { TimetableSection } from "@/components/lp/TimetableSection";
+import { OrganizerFollowCard } from "@/components/lp/OrganizerFollowCard";
 
 export const dynamic = "force-dynamic";
 
@@ -760,6 +761,11 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
         )}
 
         {event.showMarquee && <Marquee event={event} t={t} />}
+
+        {/* ─── 主催者フォロー・コミュニティ登録 ─── */}
+        <section className="relative mx-auto max-w-4xl px-6 pt-12">
+          <OrganizerFollowCard organizerName="主催者" eventId={event.id} />
+        </section>
 
         {/* ─── 締めのCTA ─── */}
         {hasTickets && (

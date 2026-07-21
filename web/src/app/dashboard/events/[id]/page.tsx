@@ -38,12 +38,20 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   const [event, setEvent] = useState<EventDoc | null>(null);
   const [regs, setRegs] = useState<Registration[]>([]);
   const [editing, setEditing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
 
   useEffect(() => {
     return onSnapshot(doc(db, "events", id), (snap) => {
       setEvent(snap.exists() ? ({ id: snap.id, ...snap.data() } as EventDoc) : null);
     });
   }, [id]);
+
+  useEffect(() => {
+    const qFol = query(collection(db, "organizer_followers"));
+    return onSnapshot(qFol, (snap) => {
+      setFollowerCount(snap.size);
+    });
+  }, []);
 
   useEffect(() => {
     if (!orgId) return;
@@ -141,10 +149,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         ))}
       </nav>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
+      <div className="mt-8 grid gap-4 sm:grid-cols-4">
         <Stat label="Confirmed" value={confirmed.length} />
         <Stat label="Checked in" value={checkedIn.length} />
         <Stat label="Revenue" value={`¥${revenue.toLocaleString("ja-JP")}`} />
+        <Stat label="Followers 🔔" value={followerCount} />
       </div>
 
       <div className={`mt-10 p-6 ${ui.card}`}>

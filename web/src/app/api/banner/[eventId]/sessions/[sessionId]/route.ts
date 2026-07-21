@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const VALID_SIZES: BannerSize[] = ["wide", "square", "story"];
-const VALID_STYLES: SessionBannerStyle[] = ["workandrole", "classic", "duotone", "geo"];
+const VALID_STYLES: SessionBannerStyle[] = ["classic", "duotone", "geo", "workandrole"];
 
 export async function GET(req: NextRequest, context: any) {
   try {
@@ -33,10 +33,10 @@ export async function GET(req: NextRequest, context: any) {
     const size: BannerSize = VALID_SIZES.includes(sizeParam as BannerSize)
       ? (sizeParam as BannerSize)
       : "wide";
-    const styleParam = searchParams.get("style") ?? "workandrole";
+    const styleParam = searchParams.get("style") ?? "classic";
     const style: SessionBannerStyle = VALID_STYLES.includes(styleParam as SessionBannerStyle)
       ? (styleParam as SessionBannerStyle)
-      : "workandrole";
+      : "classic";
 
     const [event, session] = await Promise.all([
       getEventById(eventId),

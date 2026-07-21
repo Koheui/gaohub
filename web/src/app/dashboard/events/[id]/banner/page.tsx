@@ -24,8 +24,8 @@ const EVENT_STYLE_OPTIONS: { id: BannerStyle; label: string; desc: string }[] = 
 ];
 
 const SESSION_STYLE_OPTIONS: { id: BannerStyle; label: string; desc: string }[] = [
-  { id: "workandrole", label: "WORK AND ROLE", desc: "決定版: 登壇者切り抜き × 黒帯タイトル" },
-  { id: "classic", label: "クラシック", desc: "LPと同じグラデーション地" },
+  { id: "classic", label: "クラシック (標準)", desc: "LPと同じグラデーション地 × 清涼なレイアウト" },
+  { id: "workandrole", label: "WORK AND ROLE", desc: "登壇者切り抜き × タイトル" },
   { id: "duotone", label: "デュオトーン", desc: "紙地 × 写真にカラーを重ねる" },
   { id: "geo", label: "ジオメトリック", desc: "全面写真 × 斜めのカラーブロック" },
 ];
@@ -90,7 +90,7 @@ export default function BannerPage({ params }: { params: Promise<{ id: string }>
   const [speakers, setSpeakers] = useState<SpeakerDoc[]>([]);
   const [target, setTarget] = useState<Target>("event");
   const [selected, setSelected] = useState<BannerSize>("wide");
-  const [bannerStyle, setBannerStyle] = useState<BannerStyle>("workandrole");
+  const [bannerStyle, setBannerStyle] = useState<BannerStyle>("classic");
   const [downloading, setDownloading] = useState(false);
   const [applying, setApplying] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);

@@ -169,6 +169,70 @@ export async function sendSurveyEmail(params: {
   });
 }
 
+export async function sendFollowerWelcomeEmail(params: {
+  to: string;
+  organizerName: string;
+  eventTitle: string;
+}) {
+  const client = getResend();
+  if (!client) {
+    console.warn("[email] RESEND_API_KEY not set — skipping follower welcome email to", params.to);
+    return;
+  }
+  const from = process.env.EMAIL_FROM ?? "onboarding@resend.dev";
+  await client.emails.send({
+    from,
+    to: params.to,
+    subject: `【フォロー完了】${params.organizerName} の次回イベント通知を登録しました`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #111;">
+        <h2>${escapeHtml(params.organizerName)} をフォローしました 🔔</h2>
+        <p>ご登録ありがとうございます。</p>
+        <p>今後 ${escapeHtml(params.organizerName)} が新しいイベントやワークショップを開催する際に、優先的に案内メールをお届けいたします。</p>
+        <p style="margin-top:24px;color:#666;font-size:13px;">
+          GAO HUB コミュニティプラットフォーム
+        </p>
+      </div>
+    `,
+  });
+}
+
+export async function sendOrganizerNewEventNotification(params: {
+  to: string[];
+  organizerName: string;
+  eventTitle: string;
+  eventDateText: string;
+  eventUrl: string;
+}) {
+  const client = getResend();
+  if (!client) {
+    console.warn("[email] RESEND_API_KEY not set — skipping new event notification email to", params.to);
+    return;
+  }
+  const from = process.env.EMAIL_FROM ?? "onboarding@resend.dev";
+  await client.emails.send({
+    from,
+    to: params.to,
+    subject: `【新着イベント】${params.organizerName} が「${params.eventTitle}」の開催を発表しました`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #111;">
+        <p style="color:#666;font-size:13px;">フォロー中の ${escapeHtml(params.organizerName)} からの新着イベント通知</p>
+        <h2 style="margin-top:8px;">${escapeHtml(params.eventTitle)}</h2>
+        <p>日時: ${escapeHtml(params.eventDateText)}</p>
+        <p style="margin: 24px 0;">
+          <a href="${params.eventUrl}"
+             style="background:#111;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">
+            イベントの詳細・参加申込みへ →
+          </a>
+        </p>
+        <p style="margin-top:24px;color:#888;font-size:12px;">
+          このメールは ${escapeHtml(params.organizerName)} をフォローしている参加者の皆様へお送りしています。
+        </p>
+      </div>
+    `,
+  });
+}
+
 function escapeHtml(s: string): string {
   return s
     .replaceAll("&", "&amp;")
