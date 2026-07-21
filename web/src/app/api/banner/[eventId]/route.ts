@@ -47,17 +47,22 @@ export async function GET(req: NextRequest, context: any) {
         ? await renderTimetableBannerImage(event, await getPublicSessions(eventId), speakers, size)
         : await renderBannerImage(event, speakers, size);
 
+    const buffer = await image.arrayBuffer();
+    const headers = new Headers();
+    headers.set("Content-Type", "image/png");
+    headers.set("Cache-Control", "public, max-age=0, must-revalidate");
+
     if (searchParams.get("download") === "1") {
       const asciiSlug =
         (event.slug || "").replace(/[^a-zA-Z0-9\-_]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) ||
         "event";
       const utf8Name = `${event.slug || "event"}-${style}-${size}.png`;
-      image.headers.set(
+      headers.set(
         "Content-Disposition",
         `attachment; filename="${asciiSlug}-${style}-${size}.png"; filename*=UTF-8''${encodeURIComponent(utf8Name)}`
       );
     }
-    return image;
+    return new Response(buffer, { status: 200, headers });
   } catch (err: any) {
     console.error("Banner API GET Error:", err);
     return NextResponse.json(

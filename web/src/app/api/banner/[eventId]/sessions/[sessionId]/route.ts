@@ -72,14 +72,19 @@ export async function GET(req: NextRequest, context: any) {
 
     const image = await renderSessionBannerImage(event, session, speakers, size, style);
 
+    const buffer = await image.arrayBuffer();
+    const headers = new Headers();
+    headers.set("Content-Type", "image/png");
+    headers.set("Cache-Control", "public, max-age=0, must-revalidate");
+
     if (searchParams.get("download") === "1") {
       const utf8Name = `${event.slug}-${session.title}-${size}.png`;
-      image.headers.set(
+      headers.set(
         "Content-Disposition",
         `attachment; filename="${event.slug}-${asciiTitle}-${size}.png"; filename*=UTF-8''${encodeURIComponent(utf8Name)}`
       );
     }
-    return image;
+    return new Response(buffer, { status: 200, headers });
   } catch (err: any) {
     console.error("Session Banner API Error:", err);
     return NextResponse.json(
