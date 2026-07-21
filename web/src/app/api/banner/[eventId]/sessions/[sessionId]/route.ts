@@ -11,7 +11,15 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const VALID_SIZES: BannerSize[] = ["wide", "square", "story"];
-const VALID_STYLES: SessionBannerStyle[] = ["classic", "duotone", "geo", "workandrole"];
+const VALID_STYLES: SessionBannerStyle[] = [
+  "classic",
+  "duotone",
+  "geo",
+  "workandrole",
+  "type-heavy",
+  "monochrome-minimal",
+  "split-duotone",
+];
 
 export async function GET(req: NextRequest, context: any) {
   try {

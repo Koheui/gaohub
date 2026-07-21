@@ -119,7 +119,8 @@ organizations/{orgId}
 
 events/{eventId}
   orgId, slug, title, tagline, description, coverImageUrl
-  themeColor, template ("kodak" | "spectrum" | "aurora")
+  themeColor, template ("kodak" | "spectrum" | "aurora" | "neon-cyber"
+    | "swiss-minimal" | "editorial-serif" | "metro-grid")
   venue: { name, address }, startsAt, endsAt
   status: "draft" | "published" | "ended"
   publishedAt, createdAt
@@ -243,8 +244,18 @@ registrations/{registrationId}          … コレクショングループで横
 - イベント全体: クラシック(LPと同じグラデーション地) /
   **タイムテーブル**(プログラムポスター風 — 日付・時間帯の特大ヘッダー+
   セッション一覧を罫線区切りで自動掲載。コンテンツと完全連動)
-- セッション: クラシック / **デュオトーン**(紙地×写真にアクセントカラーの
-  グラデーションを重ねる) / **ジオメトリック**(全面写真×斜めのカラーブロック)
+- セッション: クラシック / **WORK AND ROLE**(登壇者切り抜き×タイトル) /
+  **デュオトーン**(紙地×写真にアクセントカラーのグラデーションを重ねる) /
+  **ジオメトリック**(全面写真×斜めのカラーブロック) /
+  **タイポポスター**(写真を暗く敷き詰め×巨大タイトル) /
+  **モノクロ・ミニマル**(白地×細い黒フレーム×端正なグリッド) /
+  **スプリット2色**(左右/上下2色分割×写真をデュオトーンで染める)
+
+LP テンプレートも7種(kodak/spectrum/aurora + neon-cyber/swiss-minimal/
+editorial-serif/metro-grid)。テーマは `LpTheme` のトークン
+(panel/backdrop/grain/heroLight/button/marquee/speakerPanelDark/
+speakerGray/fontClass)で駆動し、公開LPページは特定テンプレートIDへの
+分岐を持たずトークン参照で描画する(テーマ追加が容易)。
 
 セッションバナーは自動生成に加えて、**独自にデザインした画像をアップロードして
 差し替える**こともできる(`SessionDoc.customBannerUrl`)。設定されている間は

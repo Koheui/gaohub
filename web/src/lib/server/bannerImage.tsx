@@ -8,7 +8,14 @@ import type { PublicEvent, PublicSession, PublicSpeaker } from "@/lib/server/eve
 export type BannerSize = "wide" | "square" | "story";
 
 /** セッションバナーのデザインパターン */
-export type SessionBannerStyle = "classic" | "duotone" | "geo" | "workandrole";
+export type SessionBannerStyle =
+  | "classic"
+  | "duotone"
+  | "geo"
+  | "workandrole"
+  | "type-heavy"
+  | "monochrome-minimal"
+  | "split-duotone";
 
 /** イベント全体バナーのデザインパターン */
 export type EventBannerStyle = "classic" | "timetable";
@@ -475,6 +482,9 @@ export async function renderSessionBannerImage(
   if (style === "workandrole") return renderSessionWorkAndRole(shared);
   if (style === "duotone") return renderSessionDuotone(shared);
   if (style === "geo") return renderSessionGeo(shared);
+  if (style === "type-heavy") return renderSessionTypeHeavy(shared);
+  if (style === "monochrome-minimal") return renderSessionMonochrome(shared);
+  if (style === "split-duotone") return renderSessionSplitDuotone(shared);
 
   const titleLen = session.title.length;
   const baseTitleSize = titleLen <= 16 ? 72 : titleLen <= 32 ? 54 : 40;
@@ -885,6 +895,306 @@ function renderSessionGeo(args: SessionBannerArgs): ImageResponse {
               GAO HUB
             </span>
           </div>
+        </div>
+      </div>
+    ),
+    { ...dim, fonts }
+  );
+}
+
+/**
+ * type-heavy(タイポグラフィ・ポスター): 登壇者写真を暗く敷き詰めた上に、
+ * セッションタイトルを画面いっぱいの巨大文字で配置するポスター調。
+ */
+function renderSessionTypeHeavy(args: SessionBannerArgs): ImageResponse {
+  const { event, session, speakers, dim, isTall, scale, dateText, timeText, fonts } = args;
+  const hero = speakers.find((s) => s.photoUrl) ?? speakers[0];
+  const titleLen = session.title.length;
+  const titleSize = (titleLen <= 12 ? 130 : titleLen <= 24 ? 96 : titleLen <= 40 ? 68 : 52) * (isTall ? scale : 0.9);
+  const names = speakers.map((s) => s.name).filter(Boolean).join("  /  ");
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          position: "relative",
+          backgroundColor: "#0b0b0d",
+          fontFamily: fonts ? "NotoSansJP" : "sans-serif",
+        }}
+      >
+        {hero?.photoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={hero.photoUrl}
+            alt=""
+            width={dim.width}
+            height={dim.height}
+            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        )}
+        {/* 濃い色被せ(可読性 + テーマカラーの気配) */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundImage: `linear-gradient(180deg, rgba(11,11,13,0.72) 0%, rgba(11,11,13,0.55) 45%, ${accentRgba(event, 0.6)} 130%)`,
+          }}
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={NOISE_PNG_DATA_URI}
+          alt=""
+          width={dim.width}
+          height={dim.height}
+          style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.28 }}
+        />
+
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, position: "relative", padding: `${56 * scale}px ${60 * scale}px` }}>
+          <span style={{ fontSize: 20 * scale, letterSpacing: "0.28em", textTransform: "uppercase", color: "rgba(255,255,255,0.8)" }}>
+            {dateText} ・ {timeText}
+            {session.track ? ` ・ ${session.track}` : ""}
+          </span>
+          <div style={{ display: "flex", flex: 1, alignItems: "center" }}>
+            <div
+              style={{
+                fontSize: titleSize,
+                lineHeight: 0.98,
+                letterSpacing: "-0.03em",
+                color: "#ffffff",
+                textTransform: "uppercase",
+                maxWidth: dim.width - 120 * scale,
+              }}
+            >
+              {session.title}
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {names && (
+              <span style={{ fontSize: 26 * scale, fontWeight: 900, color: accentRgba(event, 1), marginBottom: 16 * scale }}>
+                {truncate(names, isTall ? 40 : 34)}
+              </span>
+            )}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                borderTop: "2px solid rgba(255,255,255,0.3)",
+                paddingTop: 14 * scale,
+              }}
+            >
+              <span style={{ fontSize: 15 * scale, letterSpacing: "0.12em", color: "rgba(255,255,255,0.7)" }}>
+                {truncate(event.title, 26)}
+              </span>
+              <span style={{ fontSize: 22 * scale, letterSpacing: "0.12em", color: "#ffffff" }}>GAO HUB</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    ),
+    { ...dim, fonts }
+  );
+}
+
+/**
+ * monochrome-minimal(モノクロ・エディトリアル): 白地に細い黒フレームと
+ * 直線グリッド、黒の特大タイトル、登壇者は円形サムネイルで端正に並べる。
+ */
+function renderSessionMonochrome(args: SessionBannerArgs): ImageResponse {
+  const { event, session, speakers, dim, isTall, scale, dateText, timeText, fonts } = args;
+  const shown = speakers.slice(0, isTall ? 5 : 4);
+  const titleLen = session.title.length;
+  const titleSize = (titleLen <= 16 ? 72 : titleLen <= 32 ? 54 : 42) * (isTall ? scale * 0.95 : 0.82);
+  const thumb = (isTall ? 96 : 82) * scale;
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          position: "relative",
+          backgroundColor: "#ffffff",
+          fontFamily: fonts ? "NotoSansJP" : "sans-serif",
+        }}
+      >
+        {/* 細い黒フレーム */}
+        <div
+          style={{
+            position: "absolute",
+            top: 24 * scale,
+            left: 24 * scale,
+            width: dim.width - 48 * scale,
+            height: dim.height - 48 * scale,
+            border: `${2 * scale}px solid #111`,
+          }}
+        />
+        {/* 中央の水平ルール */}
+        <div
+          style={{
+            position: "absolute",
+            left: 24 * scale,
+            top: dim.height * 0.52,
+            width: dim.width - 48 * scale,
+            height: `${1 * scale}px`,
+            backgroundColor: "#111",
+          }}
+        />
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: `${60 * scale}px ${60 * scale}px` }}>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 17 * scale, letterSpacing: "0.28em", textTransform: "uppercase", color: "#111" }}>
+              {dateText} ・ {timeText}
+            </span>
+            {session.track && (
+              <span style={{ fontSize: 17 * scale, letterSpacing: "0.28em", textTransform: "uppercase", color: "#111" }}>
+                {session.track}
+              </span>
+            )}
+          </div>
+          <div style={{ display: "flex", flex: 1, alignItems: "center", marginTop: 20 * scale }}>
+            <div style={{ fontSize: titleSize, lineHeight: 1.06, letterSpacing: "-0.02em", color: "#111", maxWidth: dim.width - 130 * scale }}>
+              {session.title}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 26 * scale, alignItems: "flex-start", marginBottom: 8 * scale }}>
+            {shown.map((sp) => (
+              <div key={sp.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: thumb + 20 * scale }}>
+                <div
+                  style={{
+                    display: "flex",
+                    width: thumb,
+                    height: thumb,
+                    borderRadius: thumb,
+                    border: `${2 * scale}px solid #111`,
+                    backgroundColor: "#e5e5e5",
+                    overflow: "hidden",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {sp.photoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={sp.photoUrl} alt={sp.name} width={thumb} height={thumb} style={{ width: thumb, height: thumb, objectFit: "cover" }} />
+                  ) : (
+                    <span style={{ fontSize: thumb * 0.4, fontWeight: 900, color: "#111" }}>{sp.name.charAt(0)}</span>
+                  )}
+                </div>
+                <span style={{ marginTop: 8 * scale, fontSize: 14 * scale, fontWeight: 900, color: "#111", textAlign: "center" }}>
+                  {truncate(sp.name, 10)}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderTop: "2px solid #111",
+              paddingTop: 14 * scale,
+            }}
+          >
+            <span style={{ fontSize: 15 * scale, letterSpacing: "0.12em", color: "#555" }}>{truncate(event.title, 26)}</span>
+            <span style={{ fontSize: 22 * scale, letterSpacing: "0.12em", color: "#111" }}>GAO HUB</span>
+          </div>
+        </div>
+      </div>
+    ),
+    { ...dim, fonts }
+  );
+}
+
+/**
+ * split-duotone(左右2色分割デュオトーン): 画面を2色に大胆に分割し、
+ * 片側に登壇者写真を配置してアクセントカラーの半透明レイヤーで染める。
+ */
+function renderSessionSplitDuotone(args: SessionBannerArgs): ImageResponse {
+  const { event, session, speakers, dim, isTall, scale, dateText, timeText, fonts } = args;
+  const hero = speakers.find((s) => s.photoUrl) ?? speakers[0];
+  const names = speakers.map((s) => s.name).filter(Boolean).join(" / ");
+  const titleLen = session.title.length;
+  const titleSize = (titleLen <= 16 ? 58 : titleLen <= 32 ? 44 : 34) * (isTall ? scale : 0.95);
+  const NAVY = "#14293f";
+  // 縦長サイズは上下分割、横長は左右分割
+  const rowLayout = isTall ? "column" : "row";
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: rowLayout,
+          position: "relative",
+          backgroundColor: NAVY,
+          fontFamily: fonts ? "NotoSansJP" : "sans-serif",
+        }}
+      >
+        {/* テキスト側(ネイビー) */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            flexBasis: isTall ? "50%" : "56%",
+            padding: `${52 * scale}px ${52 * scale}px`,
+            justifyContent: "space-between",
+          }}
+        >
+          <span style={{ fontSize: 18 * scale, letterSpacing: "0.24em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)" }}>
+            {dateText} ・ {timeText}
+            {session.track ? ` ・ ${session.track}` : ""}
+          </span>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ fontSize: titleSize, lineHeight: 1.08, letterSpacing: "-0.02em", color: "#ffffff", maxWidth: dim.width * (isTall ? 0.86 : 0.5) }}>
+              {session.title}
+            </div>
+            {names && (
+              <span style={{ marginTop: 16 * scale, fontSize: 24 * scale, fontWeight: 900, color: accentRgba(event, 1) }}>
+                {truncate(names, isTall ? 34 : 26)}
+              </span>
+            )}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "2px solid rgba(255,255,255,0.3)", paddingTop: 12 * scale }}>
+            <span style={{ fontSize: 15 * scale, letterSpacing: "0.12em", color: "rgba(255,255,255,0.65)" }}>{truncate(event.title, 22)}</span>
+            <span style={{ fontSize: 22 * scale, letterSpacing: "0.12em", color: "#ffffff" }}>GAO HUB</span>
+          </div>
+        </div>
+        {/* 写真側(アクセントで染める) */}
+        <div style={{ display: "flex", flex: 1, position: "relative", overflow: "hidden", alignItems: "center", justifyContent: "center", backgroundColor: accentRgba(event, 1) }}>
+          {hero?.photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={hero.photoUrl}
+              alt={hero.name}
+              width={dim.width}
+              height={dim.height}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          ) : (
+            <span style={{ fontSize: 180 * scale, fontWeight: 900, color: "rgba(255,255,255,0.6)" }}>
+              {hero?.name.charAt(0) ?? "G"}
+            </span>
+          )}
+          {/* デュオトーンの染めレイヤー(アクセント + ネイビー) */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              backgroundImage: `linear-gradient(145deg, ${accentRgba(event, 0.55)} 0%, ${accentRgba(event, 0.2)} 45%, rgba(20,41,63,0.62) 100%)`,
+            }}
+          />
         </div>
       </div>
     ),

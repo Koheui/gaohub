@@ -11,15 +11,15 @@
 ## 🎨 Claude Code で推進するデザインパターン・テンプレート量産プロジェクト
 詳細は `TASK_DESIGN_TEMPLATES.md` を参照のこと。
 
-- [ ] **1. LPテーマテンプレートの追加・多角化 (`src/components/lp/theme.ts`)**
-  - [ ] `neon-cyber` (サイバー・ネオンダーク)
-  - [ ] `swiss-minimal` (スイス・タイポグラフィ)
-  - [ ] `editorial-serif` (エディトリアル・ラグジュアリー)
-  - [ ] `metro-grid` (ブルータリズム・グリッド)
+- [x] **1. LPテーマテンプレートの追加・多角化 (`src/components/lp/theme.ts`) ✅ (2026-07-21)**
+  - [x] `neon-cyber` (サイバー・ネオンダーク)
+  - [x] `swiss-minimal` (スイス・タイポグラフィ)
+  - [x] `editorial-serif` (エディトリアル・ラグジュアリー)
+  - [x] `metro-grid` (ブルータリズム・グリッド)
 
-- [ ] **2. 告知バナー生成テンプレートの追加 (`src/lib/server/bannerImage.tsx`)**
-  - [ ] `type-heavy` (タイポグラフィ・ポスター)
-  - [ ] `monochrome-minimal` (モノクロ・エディトリアル)
-  - [ ] `split-duotone` (左右2色分割デュオトーン)
+- [x] **2. 告知バナー生成テンプレートの追加 (`src/lib/server/bannerImage.tsx`) ✅ (2026-07-21)**
+  - [x] `type-heavy` (タイポグラフィ・ポスター)
+  - [x] `monochrome-minimal` (モノクロ・エディトリアル)
+  - [x] `split-duotone` (左右2色分割デュオトーン)
 
-- [ ] **3. 管理画面UIでのプレビュー＆ワンクリック切り替えの強化 (`EventForm.tsx` & `banner/page.tsx`)**
+- [x] **3. 管理画面UIでのプレビュー＆ワンクリック切り替えの強化 (`EventForm.tsx` & `banner/page.tsx`) ✅ (2026-07-21)**

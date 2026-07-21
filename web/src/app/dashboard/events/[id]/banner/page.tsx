@@ -9,7 +9,15 @@ import type { SessionDoc, SpeakerDoc } from "@/lib/types";
 import { ui } from "@/lib/ui";
 
 type BannerSize = "wide" | "square" | "story";
-type BannerStyle = "workandrole" | "classic" | "duotone" | "geo" | "timetable";
+type BannerStyle =
+  | "workandrole"
+  | "classic"
+  | "duotone"
+  | "geo"
+  | "type-heavy"
+  | "monochrome-minimal"
+  | "split-duotone"
+  | "timetable";
 type Target = "event" | string;
 
 const SIZE_OPTIONS: { id: BannerSize; label: string; use: string; width: number; height: number }[] = [
@@ -28,6 +36,9 @@ const SESSION_STYLE_OPTIONS: { id: BannerStyle; label: string; desc: string }[] 
   { id: "workandrole", label: "WORK AND ROLE", desc: "登壇者切り抜き × タイトル" },
   { id: "duotone", label: "デュオトーン", desc: "紙地 × 写真にカラーを重ねる" },
   { id: "geo", label: "ジオメトリック", desc: "全面写真 × 斜めのカラーブロック" },
+  { id: "type-heavy", label: "タイポポスター", desc: "写真を暗く敷き × 巨大タイトル" },
+  { id: "monochrome-minimal", label: "モノクロ・ミニマル", desc: "白地 × 黒フレーム × 端正なグリッド" },
+  { id: "split-duotone", label: "スプリット2色", desc: "左右2色分割 × 写真を染める" },
 ];
 
 async function processRemoveBackground(file: File, isMonochrome: boolean): Promise<File> {
