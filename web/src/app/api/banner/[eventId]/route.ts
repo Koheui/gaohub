@@ -42,9 +42,13 @@ export async function GET(
         : await renderBannerImage(event, speakers, size);
 
     if (searchParams.get("download") === "1") {
+      const asciiSlug =
+        (event.slug || "").replace(/[^a-zA-Z0-9\-_]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) ||
+        "event";
+      const utf8Name = `${event.slug || "event"}-${style}-${size}.png`;
       image.headers.set(
         "Content-Disposition",
-        `attachment; filename="${event.slug}-${style}-${size}.png"`
+        `attachment; filename="${asciiSlug}-${style}-${size}.png"; filename*=UTF-8''${encodeURIComponent(utf8Name)}`
       );
     }
     return image;

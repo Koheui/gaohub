@@ -67,8 +67,21 @@ export default function BannerPage({ params }: { params: Promise<{ id: string }>
   async function handleDownload() {
     setDownloading(true);
     try {
-      const res = await fetch(`${basePath}?size=${selected}${styleQuery}&download=1`);
-      if (!res.ok) throw new Error("生成に失敗しました");
+      const downloadApiUrl = `${basePath}?size=${selected}${styleQuery}&download=1`;
+      const res = await fetch(downloadApiUrl);
+      if (!res.ok) {
+        // 万が一 download=1 で失敗した場合はプレビューURLから直取得
+        const fallbackRes = await fetch(previewUrl);
+        if (!fallbackRes.ok) throw new Error("生成に失敗しました");
+        const blob = await fallbackRes.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `banner-${fileLabel}-${selected}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+        return;
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
