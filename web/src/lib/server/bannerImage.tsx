@@ -8,7 +8,7 @@ import type { PublicEvent, PublicSession, PublicSpeaker } from "@/lib/server/eve
 export type BannerSize = "wide" | "square" | "story";
 
 /** セッションバナーのデザインパターン */
-export type SessionBannerStyle = "classic" | "duotone" | "geo";
+export type SessionBannerStyle = "classic" | "duotone" | "geo" | "workandrole";
 
 /** イベント全体バナーのデザインパターン */
 export type EventBannerStyle = "classic" | "timetable";
@@ -456,6 +456,7 @@ export async function renderSessionBannerImage(
     : undefined;
 
   const shared = { event, session, speakers, size, dim, isTall, scale, dateText, timeText, fonts };
+  if (style === "workandrole") return renderSessionWorkAndRole(shared);
   if (style === "duotone") return renderSessionDuotone(shared);
   if (style === "geo") return renderSessionGeo(shared);
 
@@ -1128,6 +1129,203 @@ export async function renderTimetableBannerImage(
             </span>
             <span style={{ fontSize: 24 * scale, letterSpacing: "0.12em", color: INK }}>GAO HUB</span>
           </div>
+        </div>
+      </div>
+    ),
+    { ...dim, fonts }
+  );
+}
+
+/**
+ * WORK AND ROLE スタイル (決定版):
+ * 右上のアクセントグラフィック、中央にモノクロ切り抜き人物像が並び、
+ * 下部に黒背景の大迫力タイトル帯を配した決定版コンテンツバナー。
+ */
+function renderSessionWorkAndRole(args: SessionBannerArgs): ImageResponse {
+  const { event, session, speakers, dim, isTall, scale, dateText, timeText, fonts } = args;
+  const accentColor = event.themeColor || "#ff4500";
+  const shownSpeakers = speakers.slice(0, 5);
+
+  const titleLen = session.title.length;
+  const titleSize = (titleLen <= 16 ? 42 : titleLen <= 32 ? 32 : 24) * scale;
+  const descSize = (session.description.length <= 40 ? 18 : 14) * scale;
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          position: "relative",
+          backgroundColor: "#f4f4f5",
+          fontFamily: fonts ? "NotoSansJP" : "sans-serif",
+          overflow: "hidden",
+        }}
+      >
+        {/* 右上の巨大アクセント斜めシェイプ */}
+        <div
+          style={{
+            position: "absolute",
+            top: -50 * scale,
+            right: -80 * scale,
+            width: 500 * scale,
+            height: 400 * scale,
+            backgroundColor: accentColor,
+            transform: "rotate(-15deg)",
+          }}
+        />
+
+        {/* ヘッダーエリア */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: `${32 * scale}px ${48 * scale}px ${12 * scale}px ${48 * scale}px`,
+            zIndex: 10,
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <span style={{ fontSize: 16 * scale, fontWeight: 900, letterSpacing: "0.15em", color: "#18181b" }}>
+              {truncate(event.title, 24)}
+            </span>
+            <span style={{ fontSize: 14 * scale, fontWeight: 700, color: "#52525b", marginTop: 4 * scale }}>
+              {dateText} {session.track ? `| ${session.track}` : ""}
+            </span>
+          </div>
+          <div
+            style={{
+              fontSize: 36 * scale,
+              fontWeight: 900,
+              color: "#ffffff",
+              letterSpacing: "-0.02em",
+              textShadow: "0 2px 8px rgba(0,0,0,0.3)",
+            }}
+          >
+            Session
+          </div>
+        </div>
+
+        {/* 中央：切り抜き人物像 ＋ プロフィールネームプレートの並び */}
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+            alignItems: "flex-end",
+            justifyContent: "center",
+            padding: `0 ${24 * scale}px`,
+            zIndex: 10,
+            position: "relative",
+          }}
+        >
+          {shownSpeakers.map((sp, idx) => (
+            <div
+              key={sp.id || idx}
+              style={{
+                display: "flex",
+                alignItems: "flex-end",
+                position: "relative",
+                margin: `0 ${-12 * scale}px`,
+              }}
+            >
+              {sp.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={sp.photoUrl}
+                  alt=""
+                  style={{
+                    height: `${(isTall ? 340 : 280) * scale}px`,
+                    objectFit: "contain",
+                    filter: "grayscale(100%) contrast(110%)",
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    display: "flex",
+                    width: 140 * scale,
+                    height: 180 * scale,
+                    backgroundColor: "#3f3f46",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: 16 * scale,
+                    color: "#ffffff",
+                    fontSize: 48 * scale,
+                    fontWeight: 900,
+                  }}
+                >
+                  {sp.name.charAt(0)}
+                </div>
+              )}
+              {/* プロフィールネームプレート */}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  padding: `${6 * scale}px ${10 * scale}px`,
+                  backgroundColor: "rgba(255,255,255,0.92)",
+                  borderRadius: 6 * scale,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                  marginLeft: -20 * scale,
+                  marginBottom: 20 * scale,
+                  zIndex: 20,
+                  maxWidth: 140 * scale,
+                }}
+              >
+                <span style={{ fontSize: 13 * scale, fontWeight: 900, color: "#09090b" }}>
+                  {truncate(sp.name, 10)}
+                </span>
+                {(sp.company || sp.title) && (
+                  <span style={{ fontSize: 10 * scale, fontWeight: 700, color: "#52525b", marginTop: 2 * scale }}>
+                    {truncate(sp.company || sp.title, 14)}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 下部：黒背景キャッチコピー帯 */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#000000",
+            padding: `${22 * scale}px ${40 * scale}px`,
+            zIndex: 30,
+          }}
+        >
+          <div
+            style={{
+              fontSize: titleSize,
+              fontWeight: 900,
+              color: accentColor,
+              textAlign: "center",
+              letterSpacing: "-0.02em",
+              lineHeight: 1.15,
+            }}
+          >
+            {session.title}
+          </div>
+          {session.description && (
+            <div
+              style={{
+                fontSize: descSize,
+                fontWeight: 700,
+                color: "#e4e4e7",
+                marginTop: 6 * scale,
+                textAlign: "center",
+                lineHeight: 1.3,
+                opacity: 0.9,
+              }}
+            >
+              {truncate(session.description, 80)}
+            </div>
+          )}
         </div>
       </div>
     ),
