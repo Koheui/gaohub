@@ -1,5 +1,4 @@
 import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
 import { isPlatformAdminEmail } from "@/lib/platformAdmin";
@@ -35,7 +34,8 @@ export function adminDb() {
   return getFirestore(getAdminApp());
 }
 
-export function adminAuth() {
+export async function adminAuth() {
+  const { getAuth } = await import("firebase-admin/auth");
   return getAuth(getAdminApp());
 }
 
@@ -47,7 +47,8 @@ export function adminStorageBucket() {
 export async function verifyIdToken(authorization: string | null): Promise<string | null> {
   if (!authorization?.startsWith("Bearer ")) return null;
   try {
-    const decoded = await adminAuth().verifyIdToken(authorization.slice(7));
+    const auth = await adminAuth();
+    const decoded = await auth.verifyIdToken(authorization.slice(7));
     return decoded.uid;
   } catch {
     return null;
@@ -62,7 +63,8 @@ export async function verifyIdToken(authorization: string | null): Promise<strin
 export async function verifyPlatformAdmin(authorization: string | null): Promise<string | null> {
   if (!authorization?.startsWith("Bearer ")) return null;
   try {
-    const decoded = await adminAuth().verifyIdToken(authorization.slice(7));
+    const auth = await adminAuth();
+    const decoded = await auth.verifyIdToken(authorization.slice(7));
     if (!decoded.email || !decoded.email_verified) return null;
     if (!isPlatformAdminEmail(decoded.email)) return null;
     return decoded.uid;
