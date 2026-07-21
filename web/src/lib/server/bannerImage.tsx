@@ -81,7 +81,7 @@ function computeBackground(event: PublicEvent): string {
   return `linear-gradient(150deg, ${PAPER} 0%, ${PAPER} 35%, ${color} 95%)`;
 }
 
-/** バナー共通の背景レイヤー(テンプレート背景 + カバー画像 + フィルムグレイン) */
+/** バナー共通の背景レイヤー(テンプレート背景 + カバー画像 + フィルムグレインノイズ) */
 function BannerBackdrop({
   event,
   dim,
@@ -122,7 +122,23 @@ function BannerBackdrop({
           />
         </>
       )}
-
+      {/* フィルムグレインノイズ(ざらざらした粒子感) */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={NOISE_PNG_DATA_URI}
+        alt=""
+        width={dim.width}
+        height={dim.height}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          opacity: 0.35,
+        }}
+      />
     </>
   );
 }
@@ -1224,16 +1240,29 @@ function renderSessionWorkAndRole(args: SessionBannerArgs): ImageResponse {
               }}
             >
               {sp.photoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={sp.photoUrl}
-                  alt=""
+                <div
                   style={{
-                    height: `${(isTall ? 360 : 300) * scale}px`,
-                    objectFit: "contain",
-                    filter: "grayscale(100%) contrast(110%)",
+                    display: "flex",
+                    height: `${(isTall ? 340 : 280) * scale}px`,
+                    width: `${(isTall ? 240 : 200) * scale}px`,
+                    borderRadius: `${140 * scale}px ${140 * scale}px 0 0`,
+                    overflow: "hidden",
+                    alignItems: "flex-end",
+                    justifyContent: "center",
                   }}
-                />
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={sp.photoUrl}
+                    alt=""
+                    style={{
+                      height: "100%",
+                      width: "100%",
+                      objectFit: "cover",
+                      filter: "grayscale(100%) contrast(110%)",
+                    }}
+                  />
+                </div>
               ) : (
                 <div
                   style={{
