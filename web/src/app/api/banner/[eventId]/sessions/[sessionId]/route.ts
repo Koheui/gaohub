@@ -13,13 +13,22 @@ export const revalidate = 0;
 const VALID_SIZES: BannerSize[] = ["wide", "square", "story"];
 const VALID_STYLES: SessionBannerStyle[] = ["classic", "duotone", "geo"];
 
-export async function GET(
-  req: NextRequest,
-  props: { params: Promise<{ eventId: string; sessionId: string }> }
-) {
+export async function GET(req: NextRequest, context: any) {
   try {
-    const { eventId, sessionId } = await props.params;
-    const { searchParams } = new URL(req.url);
+    const rawParams = context?.params ? await context.params : {};
+    let eventId = rawParams?.eventId;
+    let sessionId = rawParams?.sessionId;
+    if (!eventId || !sessionId) {
+      const parts = req.nextUrl.pathname.split("/").filter(Boolean);
+      // /api/banner/[eventId]/sessions/[sessionId]
+      eventId = eventId || parts[2];
+      sessionId = sessionId || parts[4];
+    }
+    if (!eventId || !sessionId) {
+      return NextResponse.json({ error: "Missing eventId or sessionId" }, { status: 400 });
+    }
+
+    const { searchParams } = req.nextUrl;
     const sizeParam = searchParams.get("size") ?? "wide";
     const size: BannerSize = VALID_SIZES.includes(sizeParam as BannerSize)
       ? (sizeParam as BannerSize)
@@ -34,7 +43,7 @@ export async function GET(
       getSessionById(eventId, sessionId),
     ]);
     if (!event || !session) {
-      return new Response("Not found", { status: 404 });
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
     const asciiTitle =
       session.title.replace(/[^a-zA-Z0-9\-_]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) ||
@@ -43,7 +52,7 @@ export async function GET(
     if (session.customBannerUrl) {
       if (searchParams.get("download") === "1") {
         const res = await fetch(session.customBannerUrl);
-        if (!res.ok) return new Response("Not found", { status: 404 });
+        if (!res.ok) return NextResponse.json({ error: "Not found" }, { status: 404 });
         const contentType = res.headers.get("content-type") ?? "image/png";
         const ext = contentType.split("/")[1]?.split("+")[0] ?? "png";
         const buffer = Buffer.from(await res.arrayBuffer());
@@ -73,16 +82,13 @@ export async function GET(
     return image;
   } catch (err: any) {
     console.error("Session Banner API Error:", err);
-    return new Response(
-      JSON.stringify({
+    return NextResponse.json(
+      {
         error: err?.message || String(err),
         stack: err?.stack,
         name: err?.name,
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+      },
+      { status: 500 }
     );
   }
 }

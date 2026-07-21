@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getEventById, getPublicSessions, getPublicSpeakers } from "@/lib/server/events";
 import {
   renderBannerImage,
@@ -14,13 +14,19 @@ export const revalidate = 0;
 const VALID_SIZES: BannerSize[] = ["wide", "square", "story"];
 const VALID_STYLES: EventBannerStyle[] = ["classic", "timetable"];
 
-export async function GET(
-  req: NextRequest,
-  props: { params: Promise<{ eventId: string }> }
-) {
+export async function GET(req: NextRequest, context: any) {
   try {
-    const { eventId } = await props.params;
-    const { searchParams } = new URL(req.url);
+    const rawParams = context?.params ? await context.params : {};
+    let eventId = rawParams?.eventId;
+    if (!eventId) {
+      const parts = req.nextUrl.pathname.split("/").filter(Boolean);
+      eventId = parts[2]; // /api/banner/[eventId]
+    }
+    if (!eventId) {
+      return NextResponse.json({ error: "Missing eventId" }, { status: 400 });
+    }
+
+    const { searchParams } = req.nextUrl;
     const sizeParam = searchParams.get("size") ?? "wide";
     const size: BannerSize = VALID_SIZES.includes(sizeParam as BannerSize)
       ? (sizeParam as BannerSize)
@@ -32,7 +38,7 @@ export async function GET(
 
     const event = await getEventById(eventId);
     if (!event) {
-      return new Response("Not found", { status: 404 });
+      return NextResponse.json({ error: `Event not found for ID: ${eventId}` }, { status: 404 });
     }
     const speakers = await getPublicSpeakers(eventId);
 
@@ -54,16 +60,13 @@ export async function GET(
     return image;
   } catch (err: any) {
     console.error("Banner API GET Error:", err);
-    return new Response(
-      JSON.stringify({
+    return NextResponse.json(
+      {
         error: err?.message || String(err),
         stack: err?.stack,
         name: err?.name,
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+      },
+      { status: 500 }
     );
   }
 }
