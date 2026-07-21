@@ -50,6 +50,33 @@ const emptyDraft: SpeakerDraft = {
   facebookUrl: "",
 };
 
+async function processMonochromeImage(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return resolve(file);
+
+      // モノクロ・ハイコントラスト補正 (トマナ・不揃い写真の補正)
+      ctx.filter = "grayscale(100%) contrast(115%) brightness(102%)";
+      ctx.drawImage(img, 0, 0);
+
+      canvas.toBlob((blob) => {
+        if (!blob) return resolve(file);
+        const processedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + "_mono.jpg", {
+          type: "image/jpeg",
+        });
+        resolve(processedFile);
+      }, "image/jpeg", 0.92);
+    };
+    img.onerror = () => resolve(file);
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 function SpeakerForm({
   eventId,
   initial,
@@ -72,12 +99,18 @@ function SpeakerForm({
     setDraft((d) => ({ ...d, [key]: value }));
   }
 
+  const [applyMonochrome, setApplyMonochrome] = useState(true);
+
   async function handlePhoto(file: File | undefined) {
     if (!file) return;
     setUploading(true);
     setError(null);
     try {
-      set("photoUrl", await uploadEventImage(eventId, file, "speaker"));
+      let finalFile = file;
+      if (applyMonochrome) {
+        finalFile = await processMonochromeImage(file);
+      }
+      set("photoUrl", await uploadEventImage(eventId, finalFile, "speaker"));
     } catch (err) {
       setError(err instanceof Error ? err.message : "アップロードに失敗しました");
     } finally {
@@ -111,22 +144,33 @@ function SpeakerForm({
       className="space-y-4 border-2 border-zinc-950 bg-white p-6"
     >
       <div className="flex items-start gap-5">
-        <label className="relative block h-24 w-24 shrink-0 cursor-pointer overflow-hidden rounded-full bg-zinc-100 hover:ring-2 hover:ring-zinc-400">
-          {draft.photoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={draft.photoUrl} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <span className="flex h-full w-full items-center justify-center text-xs text-zinc-400">
-              {uploading ? "…" : "写真を選択"}
-            </span>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => handlePhoto(e.target.files?.[0])}
-          />
-        </label>
+        <div className="flex flex-col gap-2">
+          <label className="relative block h-24 w-24 shrink-0 cursor-pointer overflow-hidden rounded-full bg-zinc-100 hover:ring-2 hover:ring-zinc-400">
+            {draft.photoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={draft.photoUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center text-xs text-zinc-400">
+                {uploading ? "…" : "写真を選択"}
+              </span>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handlePhoto(e.target.files?.[0])}
+            />
+          </label>
+          <label className="flex items-center gap-1.5 text-xs text-zinc-600 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={applyMonochrome}
+              onChange={(e) => setApplyMonochrome(e.target.checked)}
+              className="h-3.5 w-3.5"
+            />
+            <span>モノクロ補正(トーン統一)</span>
+          </label>
+        </div>
         <div className="grid flex-1 gap-4 sm:grid-cols-3">
           <div>
             <label className={label}>氏名 *</label>
