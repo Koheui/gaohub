@@ -22,7 +22,14 @@ export interface UserProfile {
 export type EventStatus = "draft" | "published" | "ended";
 
 /** 公開LPのテンプレート */
-export type EventTemplate = "kodak" | "spectrum" | "aurora";
+export type EventTemplate =
+  | "kodak"
+  | "spectrum"
+  | "aurora"
+  | "neon-cyber"
+  | "swiss-minimal"
+  | "editorial-serif"
+  | "metro-grid";
 
 export interface EventDoc {
   id: string;

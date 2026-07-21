@@ -84,13 +84,7 @@ function Panel({
   className?: string;
   children: React.ReactNode;
 }) {
-  const styles =
-    t.id === "kodak"
-      ? "border-2 border-zinc-950 bg-[#f6f5f2]/90 backdrop-blur-sm"
-      : t.id === "spectrum"
-        ? "bg-white/95 shadow-2xl shadow-black/10 backdrop-blur-sm"
-        : "rounded-3xl bg-white/75 shadow-xl shadow-black/5 backdrop-blur-xl";
-  return <div className={`relative overflow-hidden ${styles} ${className}`}>{children}</div>;
+  return <div className={`relative overflow-hidden ${t.panel} ${className}`}>{children}</div>;
 }
 
 function SectionHead({
@@ -154,6 +148,138 @@ function SmallAvatar({ speaker, dark }: { speaker: PublicSpeaker; dark: boolean 
   );
 }
 
+/** カバー画像が無い場合の背景生成(テーマの backdrop 種別で分岐) */
+function BackdropLayer({ t, color }: { t: LpTheme; color: string }) {
+  switch (t.backdrop) {
+    case "kodak":
+      return (
+        <div
+          className="h-full w-full"
+          style={{
+            background: `linear-gradient(155deg, ${t.paper} 0%, ${t.paper} 22%, ${color} 70%, #1a1a1a 130%)`,
+          }}
+        />
+      );
+    case "spectrum": {
+      const [c1, c2, c3, c4] = spectrumStops(color);
+      return (
+        <div
+          className="h-full w-full"
+          style={{
+            background: `
+              radial-gradient(ellipse 55% 38% at 88% 6%, hsl(${c1} / 0.72), transparent 62%),
+              radial-gradient(ellipse 52% 36% at 58% 34%, hsl(${c2} / 0.65), transparent 62%),
+              radial-gradient(ellipse 55% 38% at 26% 62%, hsl(${c3} / 0.59), transparent 62%),
+              radial-gradient(ellipse 62% 42% at -4% 96%, hsl(${c4} / 0.53), transparent 66%),
+              ${t.paper}`,
+          }}
+        />
+      );
+    }
+    case "neon":
+      // 漆黒 × テーマカラー/シアン/マゼンタのネオン発光 × グリッドライン
+      return (
+        <div className="h-full w-full" style={{ backgroundColor: "#09090b" }}>
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `
+                linear-gradient(to right, rgba(34,211,238,0.06) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(34,211,238,0.06) 1px, transparent 1px)`,
+              backgroundSize: "56px 56px",
+            }}
+          />
+          <div
+            className="absolute right-[-12%] top-[-10%] h-[46rem] w-[46rem] rounded-full opacity-60"
+            style={{ backgroundColor: color, filter: "blur(150px)" }}
+          />
+          <div
+            className="absolute left-[-10%] top-[30%] h-[36rem] w-[36rem] rounded-full opacity-45"
+            style={{ backgroundColor: "#22d3ee", filter: "blur(150px)" }}
+          />
+          <div
+            className="absolute bottom-[-8%] left-[30%] h-[38rem] w-[38rem] rounded-full opacity-40"
+            style={{ backgroundColor: "#e0338f", filter: "blur(160px)" }}
+          />
+        </div>
+      );
+    case "swiss":
+      // 純白 × 大胆な単色アクセントブロック × 細いルール(余白を活かす)
+      return (
+        <div className="h-full w-full" style={{ backgroundColor: "#ffffff" }}>
+          <div
+            className="absolute right-0 top-0 h-[62vh] w-[34vw] opacity-[0.10]"
+            style={{ backgroundColor: color }}
+          />
+          <div
+            className="absolute bottom-[8%] left-[-6%] h-[26rem] w-[26rem] rounded-full opacity-[0.07]"
+            style={{ backgroundColor: color }}
+          />
+          <div
+            className="absolute left-[8%] top-0 h-full w-px opacity-60"
+            style={{ backgroundColor: "#e4e4e7" }}
+          />
+        </div>
+      );
+    case "editorial":
+      // ディープグリーンの深いグラデーション × 上質なビネット
+      return (
+        <div
+          className="h-full w-full"
+          style={{
+            background: `
+              radial-gradient(ellipse 70% 50% at 78% 4%, ${color}55, transparent 60%),
+              radial-gradient(ellipse 90% 70% at 20% 110%, #06140d 0%, transparent 60%),
+              linear-gradient(160deg, #123021 0%, #0f2419 45%, #0a1a11 100%)`,
+          }}
+        />
+      );
+    case "metro": {
+      // 紙地 × ポップな高コントラストのカラーブロック(ブロック分割)
+      const block = (extra: string, style: React.CSSProperties) => (
+        <div className={`absolute ${extra}`} style={style} />
+      );
+      return (
+        <div className="h-full w-full" style={{ backgroundColor: t.paper }}>
+          {block("right-0 top-0 h-[38vh] w-[30vw]", { backgroundColor: color, opacity: 0.9 })}
+          {block("left-0 bottom-0 h-[30vh] w-[22vw]", { backgroundColor: "#111", opacity: 0.9 })}
+          {block("left-[26vw] bottom-0 h-[16vh] w-[16vw]", {
+            background: `color-mix(in oklch, ${color} 60%, #ffe600)`,
+            opacity: 0.85,
+          })}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `
+                linear-gradient(to right, rgba(9,9,11,0.08) 2px, transparent 2px),
+                linear-gradient(to bottom, rgba(9,9,11,0.08) 2px, transparent 2px)`,
+              backgroundSize: "120px 120px",
+            }}
+          />
+        </div>
+      );
+    }
+    default:
+      // aurora: メッシュのソフトグラデーション
+      return (
+        <div className="h-full w-full" style={{ backgroundColor: t.paper }}>
+          <div
+            className="absolute left-[-10%] top-[-6%] h-[42rem] w-[42rem] rounded-full opacity-50"
+            style={{ backgroundColor: color, filter: "blur(120px)" }}
+          />
+          <div
+            className="absolute right-[-8%] top-[22%] h-[34rem] w-[34rem] rounded-full opacity-35"
+            style={{ background: `color-mix(in oklch, ${color} 55%, #22d3ee)`, filter: "blur(120px)" }}
+          />
+          <div
+            className="absolute bottom-[4%] left-[24%] h-[36rem] w-[36rem] rounded-full opacity-30"
+            style={{ background: `color-mix(in oklch, ${color} 45%, #34d399)`, filter: "blur(130px)" }}
+          />
+        </div>
+      );
+  }
+}
+
 /** テンプレート別の全画面キャンバス(固定・低速パララックス) */
 function BackdropCanvas({ event, t }: { event: PublicEvent; t: LpTheme }) {
   const color = event.themeColor;
@@ -179,49 +305,10 @@ function BackdropCanvas({ event, t }: { event: PublicEvent; t: LpTheme }) {
             }}
           />
         </>
-      ) : t.id === "kodak" ? (
-        <div
-          className="h-full w-full"
-          style={{
-            background: `linear-gradient(155deg, ${t.paper} 0%, ${t.paper} 22%, ${color} 70%, #1a1a1a 130%)`,
-          }}
-        />
-      ) : t.id === "spectrum" ? (
-        // グレーのコンクリート地に、テーマカラーから生成した類縁色のスペクトラムを重ねる
-        // (アクセントカラーと背景を同じ色族に統一)
-        (() => {
-          const [c1, c2, c3, c4] = spectrumStops(color);
-          return (
-            <div
-              className="h-full w-full"
-              style={{
-                background: `
-                  radial-gradient(ellipse 55% 38% at 88% 6%, hsl(${c1} / 0.72), transparent 62%),
-                  radial-gradient(ellipse 52% 36% at 58% 34%, hsl(${c2} / 0.65), transparent 62%),
-                  radial-gradient(ellipse 55% 38% at 26% 62%, hsl(${c3} / 0.59), transparent 62%),
-                  radial-gradient(ellipse 62% 42% at -4% 96%, hsl(${c4} / 0.53), transparent 66%),
-                  ${t.paper}`,
-              }}
-            />
-          );
-        })()
       ) : (
-        <div className="h-full w-full" style={{ backgroundColor: t.paper }}>
-          <div
-            className="absolute left-[-10%] top-[-6%] h-[42rem] w-[42rem] rounded-full opacity-50"
-            style={{ backgroundColor: color, filter: "blur(120px)" }}
-          />
-          <div
-            className="absolute right-[-8%] top-[22%] h-[34rem] w-[34rem] rounded-full opacity-35"
-            style={{ background: `color-mix(in oklch, ${color} 55%, #22d3ee)`, filter: "blur(120px)" }}
-          />
-          <div
-            className="absolute bottom-[4%] left-[24%] h-[36rem] w-[36rem] rounded-full opacity-30"
-            style={{ background: `color-mix(in oklch, ${color} 45%, #34d399)`, filter: "blur(130px)" }}
-          />
-        </div>
+        <BackdropLayer t={t} color={color} />
       )}
-      {t.id !== "aurora" && <Grain opacity={t.id === "spectrum" ? 0.38 : 0.32} />}
+      {t.grain > 0 && <Grain opacity={t.grain} />}
       {/* 巨大アウトライン飾り文字(イベント設定で変更・非表示可能) */}
       {event.showGhostText && (
         <span
@@ -249,13 +336,7 @@ function Marquee({ event, t }: { event: PublicEvent; t: LpTheme }) {
         {[0, 1].map((i) => (
           <span
             key={i}
-            className={`pr-8 text-5xl font-black uppercase leading-none tracking-tighter sm:text-7xl ${
-              t.mode === "dark"
-                ? "text-white/12"
-                : t.id === "spectrum"
-                  ? "text-white/30"
-                  : "text-zinc-950/10"
-            }`}
+            className={`pr-8 text-5xl font-black uppercase leading-none tracking-tighter sm:text-7xl ${t.marquee}`}
           >
             {row}
           </span>
@@ -304,7 +385,7 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
   ];
 
   return (
-    <main className={`relative flex-1 ${t.page}`} style={{ backgroundColor: t.paper }}>
+    <main className={`relative flex-1 ${t.page} ${t.fontClass}`} style={{ backgroundColor: t.paper }}>
       {/* 開場カーテン(テーマカラー → 上に抜ける) */}
       <div
         aria-hidden
@@ -333,12 +414,12 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                 <Link
                   href={registerHref}
                   className={`rounded-full px-5 py-1.5 text-sm font-black hover:opacity-85 ${
-                    t.id === "spectrum" ? "bg-white text-zinc-950 shadow-lg" : "text-white"
+                    t.button === "paper" ? "bg-white text-zinc-950 shadow-lg" : "text-white"
                   }`}
                   style={
-                    t.id === "spectrum"
+                    t.button === "paper"
                       ? undefined
-                      : { backgroundColor: dark || t.id === "aurora" ? color : "#09090b" }
+                      : { backgroundColor: t.button === "accent" ? color : "#09090b" }
                   }
                 >
                   参加登録
@@ -365,8 +446,8 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                 className="lp-fade-up mt-12 text-xl font-black tracking-tight sm:text-3xl"
                 style={{
                   animationDelay: "0.95s",
-                  // spectrum は「白を色として使う」: グレー地に白のキャッチコピー
-                  color: dark || t.id === "spectrum" ? "#fff" : "#18181b",
+                  // 白抜き指定のテーマは白のキャッチコピー(spectrum は白を色として使う)
+                  color: t.heroLight ? "#fff" : "#18181b",
                 }}
               >
                 {event.tagline}
@@ -389,13 +470,13 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                 <Link
                   href={registerHref}
                   className={`rounded-full px-9 py-4 text-base font-black transition-transform hover:scale-[1.02] ${
-                    t.id === "spectrum" ? "bg-white text-zinc-950 shadow-2xl shadow-black/20" : "text-white"
+                    t.button === "paper" ? "bg-white text-zinc-950 shadow-2xl shadow-black/20" : "text-white"
                   }`}
                   style={
-                    t.id === "spectrum"
+                    t.button === "paper"
                       ? undefined
                       : {
-                          backgroundColor: dark || t.id === "aurora" ? color : "#09090b",
+                          backgroundColor: t.button === "accent" ? color : "#09090b",
                           boxShadow: dark ? `0 8px 40px ${color}66` : undefined,
                         }
                   }
@@ -562,17 +643,17 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
             <Ghost text="Speakers" light={t.ghostLight} />
             <Panel
               t={t}
-              className={`p-8 sm:p-12 ${t.id === "aurora" ? "" : "!bg-zinc-950/85 text-white"}`}
+              className={`p-8 sm:p-12 ${t.speakerPanelDark ? "!bg-zinc-950/85 text-white" : ""}`}
             >
-              {t.id !== "aurora" && <Grain opacity={0.2} />}
+              {t.speakerPanelDark && <Grain opacity={0.2} />}
               <div className="relative">
-                <SectionHead label="Speakers" title="登壇者" light={t.id !== "aurora"} />
+                <SectionHead label="Speakers" title="登壇者" light={t.speakerPanelDark} />
                 <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-4">
                   {speakers.map((sp, i) => (
                     <Reveal key={sp.id} delayMs={(i % 4) * 90}>
                       <Link href={`/e/${event.slug}/speakers/${sp.id}`} className="group block">
                         <div
-                          className={`relative aspect-square overflow-hidden ${t.id === "aurora" ? "rounded-3xl" : ""}`}
+                          className={`relative aspect-square overflow-hidden ${t.radius}`}
                           style={{ backgroundColor: color }}
                         >
                           {sp.photoUrl ? (
@@ -581,7 +662,7 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                               src={sp.photoUrl}
                               alt={sp.name}
                               className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04] ${
-                                t.id === "aurora" ? "" : "grayscale mix-blend-luminosity"
+                                t.speakerGray ? "grayscale mix-blend-luminosity" : ""
                               }`}
                             />
                           ) : (
@@ -589,7 +670,7 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                               {sp.name.charAt(0)}
                             </span>
                           )}
-                          {t.id !== "aurora" && <Grain opacity={0.3} blend="soft-light" />}
+                          {t.speakerGray && <Grain opacity={0.3} blend="soft-light" />}
                         </div>
                         <p
                           className="mt-4 border-l-2 pl-3 text-lg font-black leading-tight tracking-tight group-hover:underline"
@@ -599,7 +680,7 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                         </p>
                         <p
                           className={`mt-1 pl-3 text-[11px] font-bold uppercase leading-relaxed tracking-[0.15em] ${
-                            t.id === "aurora" ? "text-zinc-500" : "text-zinc-400"
+                            t.speakerPanelDark ? "text-zinc-400" : "text-zinc-500"
                           }`}
                         >
                           {[sp.company, sp.title].filter(Boolean).join(" / ")}
@@ -642,7 +723,9 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                             ? "bg-[#ecece8] shadow-lg shadow-black/10"
                             : t.id === "aurora"
                               ? "bg-white shadow-lg shadow-black/5"
-                              : "border-2 border-zinc-950 bg-[#f6f5f2]"
+                              : dark
+                                ? "border border-white/15 bg-white/[0.05]"
+                                : "border-2 border-zinc-950 bg-[#f6f5f2]"
                         }`}
                       >
                         <p className={`text-[10px] font-black uppercase tracking-[0.3em] ${t.muted}`}>
@@ -666,7 +749,7 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                           <Link
                             href={`${registerHref}?ticket=${tk.id}`}
                             className={`py-3.5 text-center text-sm font-black text-white hover:opacity-85 ${t.radius}`}
-                            style={{ backgroundColor: t.id === "aurora" ? color : "#09090b" }}
+                            style={{ backgroundColor: t.button === "accent" ? color : "#09090b" }}
                           >
                             このチケットで申し込む →
                           </Link>
@@ -773,14 +856,14 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
             <Reveal>
               <p
                 className={`text-[11px] font-black uppercase tracking-[0.4em] ${
-                  dark || t.id === "spectrum" ? "text-white/60" : "text-zinc-950/50"
+                  t.heroLight ? "text-white/60" : "text-zinc-950/50"
                 }`}
               >
                 Join us
               </p>
               <p
                 className={`mt-4 text-4xl font-black tracking-tighter sm:text-6xl ${
-                  t.id === "spectrum" ? "text-white" : ""
+                  t.heroLight ? "text-white" : ""
                 }`}
               >
                 会場でお会いしましょう。
@@ -788,13 +871,13 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
               <Link
                 href={registerHref}
                 className={`mt-10 inline-block rounded-full px-10 py-4 text-base font-black transition-transform hover:scale-[1.02] ${
-                  t.id === "spectrum" ? "bg-white text-zinc-950 shadow-2xl shadow-black/20" : "text-white"
+                  t.button === "paper" ? "bg-white text-zinc-950 shadow-2xl shadow-black/20" : "text-white"
                 }`}
                 style={
-                  t.id === "spectrum"
+                  t.button === "paper"
                     ? undefined
                     : {
-                        backgroundColor: dark || t.id === "aurora" ? color : "#09090b",
+                        backgroundColor: t.button === "accent" ? color : "#09090b",
                         boxShadow: dark ? `0 8px 40px ${color}66` : undefined,
                       }
                 }

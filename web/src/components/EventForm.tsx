@@ -45,6 +45,34 @@ const TEMPLATES: { id: EventTemplate; name: string; desc: string; swatch: string
     swatch:
       "radial-gradient(circle at 20% 30%, #22d3ee 0%, transparent 55%), radial-gradient(circle at 80% 20%, #6366f1 0%, transparent 55%), radial-gradient(circle at 60% 90%, #34d399 0%, transparent 55%), #eef2ff",
   },
+  {
+    id: "neon-cyber",
+    name: "Neon Cyber",
+    desc: "漆黒 × ネオン発光 × グリッド",
+    swatch:
+      "radial-gradient(circle at 82% 12%, #a855f7cc 0%, transparent 50%), radial-gradient(circle at 20% 40%, #22d3eecc 0%, transparent 48%), radial-gradient(circle at 55% 95%, #e0338fcc 0%, transparent 52%), #09090b",
+  },
+  {
+    id: "swiss-minimal",
+    name: "Swiss Minimal",
+    desc: "純白 × 超太字 × 単色アクセント",
+    swatch:
+      "linear-gradient(135deg, #ffffff 0%, #ffffff 62%, #e4002b 62%, #e4002b 100%)",
+  },
+  {
+    id: "editorial-serif",
+    name: "Editorial Serif",
+    desc: "ディープグリーン × 明朝の高級感",
+    swatch:
+      "radial-gradient(ellipse at 78% 8%, #2f6b4a 0%, transparent 58%), linear-gradient(160deg, #123021 0%, #0f2419 60%, #0a1a11 100%)",
+  },
+  {
+    id: "metro-grid",
+    name: "Metro Grid",
+    desc: "太黒枠 × ブロック分割 × ポップ",
+    swatch:
+      "linear-gradient(90deg, #faf7f0 0%, #faf7f0 55%, #fb4f14 55%, #fb4f14 78%, #111 78%, #111 100%)",
+  },
 ];
 
 function toLocalInput(date: Date): string {
