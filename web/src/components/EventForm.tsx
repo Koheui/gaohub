@@ -14,7 +14,7 @@ export interface EventFormValues {
   ghostText: string;
   showGhostText: boolean;
   showMarquee: boolean;
-  statsStyle: "classic" | "poster";
+  statsStyle: "classic" | "poster" | "none";
   loungeEnabled: boolean;
   loungeAccess: "all" | "paid";
   loungeCategories: string[];
@@ -262,7 +262,7 @@ export function EventForm({
         </label>
         <div>
           <label className={label}>統計・カウントダウンの見せ方</label>
-          <div className="mt-2 grid grid-cols-2 gap-3">
+          <div className="mt-2 grid grid-cols-3 gap-3">
             <button
               type="button"
               onClick={() => set("statsStyle", "classic")}
@@ -271,7 +271,7 @@ export function EventForm({
               }`}
             >
               <p className="text-sm font-black">クラシック {values.statsStyle === "classic" && "✓"}</p>
-              <p className="mt-0.5 text-xs text-zinc-500">枠付きストリップ+黒帯カウントダウン</p>
+              <p className="mt-0.5 text-xs text-zinc-500">枠付きストリップ</p>
             </button>
             <button
               type="button"
@@ -281,7 +281,17 @@ export function EventForm({
               }`}
             >
               <p className="text-sm font-black">ポスター数字 {values.statsStyle === "poster" && "✓"}</p>
-              <p className="mt-0.5 text-xs text-zinc-500">枠なし特大数字(塗り/アウトライン混合)</p>
+              <p className="mt-0.5 text-xs text-zinc-500">枠なし特大数字</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => set("statsStyle", "none")}
+              className={`border-2 p-3 text-left transition-colors ${
+                values.statsStyle === "none" ? "border-zinc-900" : "border-zinc-200 hover:border-zinc-400"
+              }`}
+            >
+              <p className="text-sm font-black">非表示 {values.statsStyle === "none" && "✓"}</p>
+              <p className="mt-0.5 text-xs text-zinc-500">数字を表示しない</p>
             </button>
           </div>
         </div>

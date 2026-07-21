@@ -42,7 +42,7 @@ export interface EventDoc {
   /** イベント名が流れるマーキー帯を表示するか */
   showMarquee: boolean;
   /** 統計+カウントダウンの見せ方。classic=枠付きストリップ / poster=枠なし特大数字 */
-  statsStyle: "classic" | "poster";
+  statsStyle: "classic" | "poster" | "none";
   venueName: string;
   venueAddress: string;
   startsAt: Timestamp;

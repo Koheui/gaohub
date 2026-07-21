@@ -439,7 +439,7 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
         {event.showMarquee && <Marquee event={event} t={t} />}
 
         {/* ─── 統計 + カウントダウン ─── */}
-        {event.statsStyle === "poster" ? (
+        {event.statsStyle === "none" || (event.statsStyle as string) === "hidden" ? null : event.statsStyle === "poster" ? (
           /* ポスター数字: 枠なしで塗り/アウトラインの特大数字をキャンバスに直置き */
           <section className="mx-auto max-w-6xl px-6">
             {sessions.length > 0 && (
