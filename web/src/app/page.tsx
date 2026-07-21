@@ -41,9 +41,10 @@ export default function Home() {
 
       <section className="mx-auto max-w-5xl px-6 py-24 text-center">
         <h1 className="text-4xl sm:text-5xl font-bold leading-tight tracking-tight">
-          イベント開催から決済まで、
+          <span className="inline-block whitespace-nowrap">イベント開催から</span>
+          <span className="inline-block whitespace-nowrap">決済まで、</span>
           <br />
-          ぜんぶこれひとつ。
+          <span className="inline-block whitespace-nowrap">ぜんぶこれひとつ。</span>
         </h1>
         <p className="mt-6 text-lg text-zinc-600 max-w-2xl mx-auto">
           カンファレンス・セミナーの集客ページ作成、チケット販売、QR受付までをセルフサーブで。
