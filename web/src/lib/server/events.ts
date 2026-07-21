@@ -80,11 +80,22 @@ export interface PublicSession {
   customBannerUrl: string | null;
 }
 
+function safeToDate(val: any): Date {
+  if (!val) return new Date();
+  if (typeof val.toDate === "function") return val.toDate();
+  if (val instanceof Date) return val;
+  if (typeof val === "string" || typeof val === "number") {
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) return d;
+  }
+  return new Date();
+}
+
 function toPublicEvent(id: string, d: FirebaseFirestore.DocumentData): PublicEvent {
   return {
     id,
-    slug: d.slug,
-    title: d.title,
+    slug: d.slug ?? id,
+    title: d.title ?? "Untitled Event",
     tagline: d.tagline ?? "",
     description: d.description ?? "",
     coverImageUrl: d.coverImageUrl ?? null,
@@ -96,8 +107,8 @@ function toPublicEvent(id: string, d: FirebaseFirestore.DocumentData): PublicEve
     statsStyle: (d.statsStyle as "classic" | "poster") ?? "classic",
     venueName: d.venueName ?? "",
     venueAddress: d.venueAddress ?? "",
-    startsAt: d.startsAt.toDate(),
-    endsAt: d.endsAt.toDate(),
+    startsAt: safeToDate(d.startsAt),
+    endsAt: safeToDate(d.endsAt),
     loungeEnabled: d.loungeEnabled ?? false,
     loungeAccess: (d.loungeAccess as "all" | "paid") ?? "all",
     loungeCategories: d.loungeCategories ?? [],
@@ -201,11 +212,11 @@ export async function getPublicSponsors(eventId: string): Promise<PublicSponsor[
 function toPublicSession(id: string, d: FirebaseFirestore.DocumentData): PublicSession {
   return {
     id,
-    title: d.title,
+    title: d.title ?? "Untitled Session",
     description: d.description ?? "",
     track: d.track ?? "",
-    startsAt: d.startsAt.toDate(),
-    endsAt: d.endsAt.toDate(),
+    startsAt: safeToDate(d.startsAt),
+    endsAt: safeToDate(d.endsAt),
     speakerIds: d.speakerIds ?? [],
     isComingSoon: d.isComingSoon ?? false,
     capacity: d.capacity ?? null,
