@@ -27,15 +27,6 @@ const dayFmt = new Intl.DateTimeFormat("ja-JP", {
   timeZone: "Asia/Tokyo",
 });
 
-// 各ステージに割り当てるフェス風ビビッドカラー
-const TRACK_COLORS = [
-  { bg: "bg-indigo-600", text: "text-white", border: "border-indigo-500", lightBg: "bg-indigo-50 dark:bg-indigo-950/30" },
-  { bg: "bg-pink-600", text: "text-white", border: "border-pink-500", lightBg: "bg-pink-50 dark:bg-pink-950/30" },
-  { bg: "bg-amber-500", text: "text-zinc-950", border: "border-amber-400", lightBg: "bg-amber-50 dark:bg-amber-950/30" },
-  { bg: "bg-emerald-600", text: "text-white", border: "border-emerald-500", lightBg: "bg-emerald-50 dark:bg-emerald-950/30" },
-  { bg: "bg-cyan-600", text: "text-white", border: "border-cyan-500", lightBg: "bg-cyan-50 dark:bg-cyan-950/30" },
-];
-
 export function TimetableSection({
   event,
   sessions,
@@ -60,7 +51,7 @@ export function TimetableSection({
     return set.size > 0 ? Array.from(set) : ["Main Stage"];
   }, [event.tracks, sessions]);
 
-  // デフォルトはフェス風本格タイムテーブル ('matrix')、リスト ('timeline')
+  // デフォルトはタイムスケジュール表 ('matrix')、リスト ('timeline')
   const [viewMode, setViewMode] = useState<"matrix" | "timeline">("matrix");
 
   // 日付ごとのグループ化
@@ -123,8 +114,8 @@ export function TimetableSection({
     };
   }, [currentDaySessions]);
 
-  // 1時間あたりの固定高さ (フェス風デザイン: 180px)
-  const HOUR_HEIGHT = 180;
+  // 1時間あたりの固定高さ (ピクセル)
+  const HOUR_HEIGHT = 220;
 
   // 1時間単位の目盛りラベル一覧
   const hourLabels = useMemo(() => {
@@ -159,7 +150,7 @@ export function TimetableSection({
           </div>
         ) : (
           <div className="text-xs font-bold uppercase tracking-widest text-zinc-400">
-            Fes-Style Timetable Grid
+            Timetable & Schedule Grid
           </div>
         )}
 
@@ -173,7 +164,7 @@ export function TimetableSection({
                 : `${t.muted} hover:text-zinc-900 dark:hover:text-white`
             }`}
           >
-            <span>ステージ別フェス表 📅</span>
+            <span>ステージ別スケジュール表 📊</span>
           </button>
           <button
             onClick={() => setViewMode("timeline")}
@@ -188,62 +179,69 @@ export function TimetableSection({
         </div>
       </div>
 
-      {/* ─── モード 1: 本格フェス風 タイムテーブル (FM802 Radio Crazy スタイル) ─── */}
+      {/* ─── モード 1: GAO HUB モダン・テイスト タイムスケジュール表 ─── */}
       {viewMode === "matrix" && (
-        <div className="mt-8 overflow-x-auto rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-white/15 dark:bg-zinc-950">
+        <div className="mt-8 overflow-x-auto rounded-3xl border border-zinc-200/80 bg-white/80 shadow-xl dark:border-white/10 dark:bg-zinc-950/80">
           <div className="min-w-[960px]">
-            {/* 1. ステージヘッダー行 (カラフルフェスタグ) */}
+            {/* 1. ヘッダー行 (ステージ一覧) */}
             <div
-              className="sticky top-0 z-20 grid border-b-2 border-zinc-950 bg-zinc-900 shadow-md dark:border-white"
+              className="sticky top-0 z-20 grid border-b border-zinc-200/80 bg-zinc-100/90 backdrop-blur dark:border-white/10 dark:bg-zinc-900/90"
               style={{
                 gridTemplateColumns: `80px repeat(${tracks.length}, minmax(0, 1fr)) 80px`,
               }}
             >
-              <div className="flex items-center justify-center p-3 font-mono text-xs font-black text-zinc-400">
+              <div className="flex items-center justify-center p-4 font-mono text-xs font-black uppercase tracking-widest text-zinc-400">
                 TIME
               </div>
-
-              {tracks.map((trackName, tIdx) => {
-                const colorConfig = TRACK_COLORS[tIdx % TRACK_COLORS.length];
-                return (
-                  <div
-                    key={trackName}
-                    className={`flex items-center justify-center p-3 text-center border-r border-zinc-800 last:border-r-0 ${colorConfig.bg} ${colorConfig.text}`}
-                  >
-                    <span className="text-sm font-black uppercase tracking-wider">
-                      {trackName}
-                    </span>
+              {tracks.map((trackName, tIdx) => (
+                <div
+                  key={trackName}
+                  className="flex items-center justify-between border-r px-6 py-4 border-zinc-200 dark:border-white/10 last:border-r-0"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className="h-3 w-3 rounded-full shadow-sm"
+                      style={{
+                        backgroundColor:
+                          tIdx === 0 ? color : tIdx === 1 ? "#3b82f6" : "#10b981",
+                      }}
+                    />
+                    <span className="text-base font-black tracking-tight">{trackName}</span>
                   </div>
-                );
-              })}
-
-              <div className="flex items-center justify-center p-3 font-mono text-xs font-black text-zinc-400">
+                  <span className="rounded-full bg-zinc-200/70 px-2.5 py-0.5 text-[10px] font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                    STAGE {tIdx + 1}
+                  </span>
+                </div>
+              ))}
+              <div className="flex items-center justify-center p-4 font-mono text-xs font-black uppercase tracking-widest text-zinc-400">
                 TIME
               </div>
             </div>
 
-            {/* 2. メイン・タイムラインキャンバス (左右両端に時間目盛り + 30分点線 + フェスカード配置) */}
+            {/* 2. メイン・キャンバス (左右両端に時間目盛り + 30分点線 + 告知バナー付きセッションカード配置) */}
             <div
               className="relative"
               style={{
                 height: `${timelineRange.totalHours * HOUR_HEIGHT}px`,
               }}
             >
-              {/* 1時間ごとの固定背景グリッドライン (太線) & 30分補助ライン (点線) */}
+              {/* 1時間ごとの固定背景グリッドライン & 30分点線 */}
               {hourLabels.map((hl, i) => {
                 const topPx = i * HOUR_HEIGHT;
                 return (
                   <div
                     key={hl.hour}
-                    className="absolute inset-x-0 flex pointer-events-none border-b-2 border-cyan-400/40 dark:border-cyan-500/30"
+                    className="absolute inset-x-0 flex pointer-events-none border-b border-zinc-200/80 dark:border-white/10"
                     style={{ top: `${topPx}px`, height: `${HOUR_HEIGHT}px` }}
                   >
                     {/* 左端時間目盛り */}
-                    <div className="w-[80px] shrink-0 flex items-start justify-center pt-2 font-mono text-lg font-black tabular-nums tracking-tighter text-zinc-800 dark:text-zinc-200">
-                      {hl.label}
+                    <div className="w-[80px] shrink-0 border-r border-zinc-200/80 p-3 text-center dark:border-white/10">
+                      <span className="font-mono text-base font-black tabular-nums tracking-tight">
+                        {hl.label}
+                      </span>
                     </div>
 
-                    {/* 中央ステージ別背景カラム & 30分点線 */}
+                    {/* 各ステージ背景カラム + 30分中間の補助点線 */}
                     <div
                       className="grid flex-1 relative"
                       style={{
@@ -252,24 +250,23 @@ export function TimetableSection({
                     >
                       {/* 30分間隔の点線ライン */}
                       <div
-                        className="absolute inset-x-0 border-b border-dashed border-cyan-300/40 dark:border-cyan-600/30"
+                        className="absolute inset-x-0 border-b border-dashed border-zinc-200/50 dark:border-white/10"
                         style={{ top: `${HOUR_HEIGHT / 2}px` }}
                       />
 
-                      {tracks.map((tr, idx) => {
-                        const colorConfig = TRACK_COLORS[idx % TRACK_COLORS.length];
-                        return (
-                          <div
-                            key={tr}
-                            className={`border-r border-cyan-200/50 dark:border-zinc-800 last:border-r-0 h-full ${colorConfig.lightBg}`}
-                          />
-                        );
-                      })}
+                      {tracks.map((tr) => (
+                        <div
+                          key={tr}
+                          className="border-r border-zinc-100 dark:border-white/5 last:border-r-0 h-full"
+                        />
+                      ))}
                     </div>
 
                     {/* 右端時間目盛り */}
-                    <div className="w-[80px] shrink-0 flex items-start justify-center pt-2 font-mono text-lg font-black tabular-nums tracking-tighter text-zinc-800 dark:text-zinc-200">
-                      {hl.label}
+                    <div className="w-[80px] shrink-0 border-l border-zinc-200/80 p-3 text-center dark:border-white/10">
+                      <span className="font-mono text-base font-black tabular-nums tracking-tight">
+                        {hl.label}
+                      </span>
                     </div>
                   </div>
                 );
@@ -282,7 +279,7 @@ export function TimetableSection({
                   gridTemplateColumns: `repeat(${tracks.length}, minmax(0, 1fr))`,
                 }}
               >
-                {tracks.map((trackName, tIdx) => {
+                {tracks.map((trackName) => {
                   const trackSessions = currentDaySessions.filter(
                     (s) =>
                       (s.track && tracks.includes(s.track) ? s.track : tracks[0]) ===
@@ -290,7 +287,7 @@ export function TimetableSection({
                   );
 
                   return (
-                    <div key={trackName} className="relative h-full px-2">
+                    <div key={trackName} className="relative h-full px-2.5">
                       {trackSessions.map((s) => {
                         const startMs = s.startsAt.getTime();
                         const endMs = s.endsAt.getTime();
@@ -313,56 +310,93 @@ export function TimetableSection({
                           s.customBannerUrl ||
                           `/api/banner/${event.id}/sessions/${s.id}?size=wide`;
 
+                        const isShort = durationMins <= 30;
+
                         return (
                           <div
                             key={s.id}
                             style={{
-                              top: `${topPx + 4}px`,
-                              height: `${Math.max(heightPx - 8, 88)}px`,
+                              top: `${topPx + 6}px`,
+                              height: `${Math.max(heightPx - 12, 110)}px`,
                             }}
-                            className="group absolute inset-x-1.5 z-10 flex flex-col overflow-hidden rounded-xl border-2 border-amber-300 bg-amber-100 shadow-md transition-all duration-300 hover:z-30 hover:scale-[1.03] hover:shadow-2xl dark:border-amber-400 dark:bg-amber-950/90 text-zinc-950 dark:text-amber-100"
+                            className="group absolute inset-x-2 z-10 flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-md transition-all duration-300 hover:z-30 hover:scale-[1.02] hover:shadow-2xl dark:border-white/15 dark:bg-zinc-900"
                           >
                             <Link
                               href={`/e/${event.slug}/sessions/${s.id}`}
-                              className="flex h-full flex-col min-h-0 p-2.5"
+                              className="flex h-full flex-col min-h-0"
                             >
-                              {/* 時間ラベル (12:05 >> スタイル) */}
-                              <div className="flex items-center justify-between border-b pb-1 border-amber-300/80 dark:border-amber-800">
-                                <span className="font-mono text-xs font-black tracking-tight text-amber-900 dark:text-amber-300">
-                                  {timeFmt.format(s.startsAt)} &gt;&gt;
-                                </span>
-                                <span className="font-mono text-[10px] font-bold opacity-75">
-                                  {durationMins}分
-                                </span>
-                              </div>
-
-                              {/* セッション名 (大迫力中央表記) */}
-                              <div className="my-auto text-center py-1">
-                                <h4 className="text-sm font-black leading-tight tracking-tight line-clamp-2 group-hover:underline">
-                                  {s.title}
-                                </h4>
-                              </div>
-
-                              {/* セッション告知バナーサムネイル + 登壇者 */}
-                              <div className="flex items-center gap-2 pt-1 border-t border-amber-300/60 dark:border-amber-800 shrink-0">
-                                <div className="h-7 w-12 shrink-0 overflow-hidden rounded border border-amber-400 bg-zinc-950">
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    src={bannerUrl}
-                                    alt=""
-                                    className="h-full w-full object-cover"
-                                    loading="lazy"
-                                  />
+                              {/* 大迫力告知バナー画像エリア (16:9) */}
+                              <div
+                                className={`relative w-full overflow-hidden bg-zinc-950 shrink-0 ${
+                                  isShort ? "h-16" : "aspect-[16/9]"
+                                }`}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={bannerUrl}
+                                  alt={s.title}
+                                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                  loading="lazy"
+                                />
+                                {/* 時間帯バッジ */}
+                                <div className="absolute top-2 left-2 rounded-full bg-black/75 px-2.5 py-0.5 font-mono text-[11px] font-bold text-white backdrop-blur-md">
+                                  {timeFmt.format(s.startsAt)} – {timeFmt.format(s.endsAt)} ({durationMins}分)
                                 </div>
+                                {s.capacity != null && (
+                                  <div className="absolute top-2 right-2">
+                                    <span
+                                      className={`rounded-full px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider ${
+                                        s.reservedCount >= s.capacity
+                                          ? "bg-red-600 text-white"
+                                          : "bg-black/75 text-white backdrop-blur-md"
+                                      }`}
+                                    >
+                                      {s.reservedCount >= s.capacity
+                                        ? "満席"
+                                        : `残り${s.capacity - s.reservedCount}席`}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* セッションテキスト */}
+                              <div className="flex flex-1 flex-col justify-between p-3.5 min-h-0">
+                                <div>
+                                  <h4 className="text-sm font-black leading-snug tracking-tight text-zinc-900 group-hover:underline dark:text-white line-clamp-2">
+                                    {s.title}
+                                  </h4>
+
+                                  {!isShort && s.description && (
+                                    <p
+                                      className={`mt-1 text-[11px] leading-relaxed line-clamp-2 ${t.muted}`}
+                                    >
+                                      {s.description}
+                                    </p>
+                                  )}
+                                </div>
+
+                                {/* 登壇者表示 */}
                                 {sessionSpeakers.length > 0 && (
-                                  <div className="flex items-center gap-1 overflow-hidden">
-                                    {sessionSpeakers.slice(0, 2).map((sp) => (
-                                      <span
+                                  <div className="mt-2 flex flex-wrap gap-1.5 pt-2 border-t border-zinc-100 dark:border-white/10">
+                                    {sessionSpeakers.map((sp) => (
+                                      <div
                                         key={sp.id}
-                                        className="truncate text-[10px] font-bold text-amber-900 dark:text-amber-200"
+                                        className="flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 py-0.5 pr-2 pl-0.5 text-[10px] font-bold dark:border-white/10 dark:bg-zinc-800"
                                       >
-                                        {sp.name}
-                                      </span>
+                                        {sp.photoUrl ? (
+                                          // eslint-disable-next-line @next/next/no-img-element
+                                          <img
+                                            src={sp.photoUrl}
+                                            alt={sp.name}
+                                            className="h-4 w-4 rounded-full object-cover"
+                                          />
+                                        ) : (
+                                          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-zinc-300 text-[8px] font-black">
+                                            {sp.name.charAt(0)}
+                                          </span>
+                                        )}
+                                        <span>{sp.name}</span>
+                                      </div>
                                     ))}
                                   </div>
                                 )}
