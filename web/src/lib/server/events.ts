@@ -30,6 +30,7 @@ export interface PublicEvent {
   startsAt: Date;
   endsAt: Date;
   loungeEnabled: boolean;
+  loungeAccess: "all" | "paid";
   loungeCategories: string[];
   registrationFields: RegistrationFieldDef[];
   sponsorTiers: string[];
@@ -98,6 +99,7 @@ function toPublicEvent(id: string, d: FirebaseFirestore.DocumentData): PublicEve
     startsAt: d.startsAt.toDate(),
     endsAt: d.endsAt.toDate(),
     loungeEnabled: d.loungeEnabled ?? false,
+    loungeAccess: (d.loungeAccess as "all" | "paid") ?? "all",
     loungeCategories: d.loungeCategories ?? [],
     registrationFields: d.registrationFields ?? [],
     sponsorTiers: d.sponsorTiers ?? [],

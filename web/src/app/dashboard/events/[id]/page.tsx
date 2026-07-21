@@ -82,6 +82,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
       showMarquee: values.showMarquee,
       statsStyle: values.statsStyle,
       loungeEnabled: values.loungeEnabled,
+      loungeAccess: values.loungeAccess,
       loungeCategories: values.loungeCategories,
       venueName: values.venueName,
       venueAddress: values.venueAddress,

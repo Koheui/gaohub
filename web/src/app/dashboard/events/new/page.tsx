@@ -43,6 +43,7 @@ export default function NewEventPage() {
       showMarquee: values.showMarquee,
       statsStyle: values.statsStyle,
       loungeEnabled: values.loungeEnabled,
+      loungeAccess: values.loungeAccess,
       loungeCategories: values.loungeCategories,
       venueName: values.venueName,
       venueAddress: values.venueAddress,

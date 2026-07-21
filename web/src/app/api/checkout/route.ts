@@ -105,6 +105,10 @@ export async function POST(req: NextRequest) {
   if (priceJpy > 0 && priceJpy < 50) {
     return bad("このチケットの価格設定に問題があります。主催者にお問い合わせください");
   }
+  // ラウンジ参加可否(グレード制限)。paid の場合は有料チケットのみ
+  const loungeEnabled: boolean = eventSnap.get("loungeEnabled") ?? false;
+  const loungeAccess: string = eventSnap.get("loungeAccess") ?? "all";
+  const loungeEligible = loungeEnabled && (loungeAccess !== "paid" || priceJpy > 0);
   const orgId: string = eventSnap.get("orgId");
   const qrToken = crypto.randomBytes(16).toString("hex");
 
@@ -136,7 +140,7 @@ export async function POST(req: NextRequest) {
     verificationStatus: requiresVerification ? ("pending" as const) : null,
     reservedSessionIds: [] as string[],
     customAnswers,
-    joinLounge: joinLoungeRequested && (eventSnap.get("loungeEnabled") ?? false),
+    joinLounge: joinLoungeRequested && loungeEligible,
     createdAt: FieldValue.serverTimestamp(),
   };
 

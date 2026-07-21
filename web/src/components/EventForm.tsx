@@ -16,6 +16,7 @@ export interface EventFormValues {
   showMarquee: boolean;
   statsStyle: "classic" | "poster";
   loungeEnabled: boolean;
+  loungeAccess: "all" | "paid";
   loungeCategories: string[];
   venueName: string;
   venueAddress: string;
@@ -66,6 +67,7 @@ export function eventToFormValues(ev?: EventDoc): EventFormValues {
     showMarquee: ev?.showMarquee ?? true,
     statsStyle: ev?.statsStyle ?? "classic",
     loungeEnabled: ev?.loungeEnabled ?? false,
+    loungeAccess: ev?.loungeAccess ?? "all",
     loungeCategories: ev?.loungeCategories ?? [],
     venueName: ev?.venueName ?? "",
     venueAddress: ev?.venueAddress ?? "",
@@ -301,6 +303,35 @@ export function EventForm({
           有効にすると、確定済みチケットを持つ参加者がチケットページから参加者一覧を閲覧し、
           メッセージを送れるようになります(自己申告制・任意参加)。
         </p>
+        {values.loungeEnabled && (
+          <div>
+            <label className={label}>参加できる人</label>
+            <div className="mt-2 grid grid-cols-2 gap-3">
+              {(
+                [
+                  ["all", "全参加者", "無料・有料を問わず参加できます"],
+                  ["paid", "有料チケットのみ", "有料チケットの購入者だけが参加できます"],
+                ] as const
+              ).map(([val, title, desc]) => (
+                <button
+                  type="button"
+                  key={val}
+                  onClick={() => set("loungeAccess", val)}
+                  className={`border-2 p-3 text-left transition-colors ${
+                    values.loungeAccess === val
+                      ? "border-zinc-900"
+                      : "border-zinc-200 hover:border-zinc-400"
+                  }`}
+                >
+                  <p className="text-sm font-black">
+                    {title} {values.loungeAccess === val && "✓"}
+                  </p>
+                  <p className="mt-0.5 text-xs text-zinc-500">{desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {values.loungeEnabled && (
           <div>
             <label className={label}>参加者カテゴリ</label>

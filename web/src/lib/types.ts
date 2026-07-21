@@ -50,6 +50,8 @@ export interface EventDoc {
   status: EventStatus;
   /** チケット購入者向けコミュニティラウンジを有効化するか */
   loungeEnabled: boolean;
+  /** ラウンジに参加できる対象。all=全参加者 / paid=有料チケットの参加者のみ */
+  loungeAccess: "all" | "paid";
   /** 主催者が定義する参加者カテゴリ(例: 運営者/投資家/支援者/スタートアップ) */
   loungeCategories: string[];
   /** セッションの「会場」欄で選択できる会場名の一覧(主催者が管理) */

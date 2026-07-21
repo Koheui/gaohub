@@ -62,6 +62,7 @@ export default async function RegisterPage(props: {
           jobTitleFieldType={event.jobTitleFieldType}
           jobTitleFieldOptions={event.jobTitleFieldOptions}
           loungeEnabled={event.loungeEnabled}
+          loungeAccess={event.loungeAccess}
         />
       </div>
     </main>

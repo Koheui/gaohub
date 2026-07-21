@@ -24,6 +24,7 @@ const FALLBACK_EVENT = {
   startsAt: new Date(),
   endsAt: new Date(),
   loungeEnabled: false,
+  loungeAccess: "all" as const,
   loungeCategories: [] as string[],
   registrationFields: [] as RegistrationFieldDef[],
   sponsorTiers: [] as string[],

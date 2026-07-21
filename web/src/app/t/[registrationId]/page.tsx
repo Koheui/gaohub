@@ -71,7 +71,10 @@ export default async function TicketPage(props: {
     }));
   const reservedSessionIds: string[] = regSnap.get("reservedSessionIds") ?? [];
 
-  const loungeEnabled: boolean = eventSnap.get("loungeEnabled") ?? false;
+  const loungeAccess: string = eventSnap.get("loungeAccess") ?? "all";
+  const loungeEnabled: boolean =
+    (eventSnap.get("loungeEnabled") ?? false) &&
+    (loungeAccess !== "paid" || (regSnap.get("amountJpy") ?? 0) > 0);
   let loungeSelfProfile: LoungeDirectoryEntry | null = null;
   if (loungeEnabled) {
     const profileSnap = await db

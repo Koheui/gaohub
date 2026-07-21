@@ -27,6 +27,9 @@ export default async function LoungePage(props: {
   const eventId = regSnap.get("eventId") as string;
   const eventSnap = await db.doc(`events/${eventId}`).get();
   if (!eventSnap.exists || !eventSnap.get("loungeEnabled")) notFound();
+  // グレード制限: paid の場合は有料チケットの参加者のみ
+  const loungeAccess = (eventSnap.get("loungeAccess") as "all" | "paid") ?? "all";
+  if (loungeAccess === "paid" && (regSnap.get("amountJpy") ?? 0) <= 0) notFound();
 
   const attendee = regSnap.get("attendee") as {
     name: string;

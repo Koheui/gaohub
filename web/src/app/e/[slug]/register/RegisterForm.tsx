@@ -23,6 +23,7 @@ export function RegisterForm({
   jobTitleFieldType,
   jobTitleFieldOptions,
   loungeEnabled,
+  loungeAccess,
 }: {
   eventId: string;
   slug: string;
@@ -39,6 +40,7 @@ export function RegisterForm({
   jobTitleFieldType: "text" | "select";
   jobTitleFieldOptions: string[];
   loungeEnabled: boolean;
+  loungeAccess: "all" | "paid";
 }) {
   const [ticketTypeId, setTicketTypeId] = useState(initialTicketId);
   const [name, setName] = useState("");
@@ -52,6 +54,8 @@ export function RegisterForm({
   const [error, setError] = useState<string | null>(null);
 
   const selected = tickets.find((t) => t.id === ticketTypeId)!;
+  const loungeAvailable =
+    loungeEnabled && (loungeAccess !== "paid" || selected.priceJpy > 0);
 
   function setAnswer(id: string, value: string) {
     setCustomAnswers((prev) => ({ ...prev, [id]: value }));
@@ -278,7 +282,7 @@ export function RegisterForm({
         </div>
       ))}
 
-      {loungeEnabled && (
+      {loungeAvailable && (
         <label className="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4">
           <input
             type="checkbox"

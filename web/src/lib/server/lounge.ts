@@ -108,6 +108,12 @@ export async function verifyLoungeAccess(
     return { error: "このイベントのコミュニティラウンジは利用できません", status: 404 };
   }
 
+  // グレード制限: paid の場合は有料チケット(amountJpy > 0)の参加者のみ
+  const loungeAccess = (eventSnap.get("loungeAccess") as "all" | "paid") ?? "all";
+  if (loungeAccess === "paid" && (regSnap.get("amountJpy") ?? 0) <= 0) {
+    return { error: "このラウンジは有料チケットの参加者のみご利用いただけます", status: 403 };
+  }
+
   const attendee = regSnap.get("attendee") as { name: string };
   return {
     ok: true,
