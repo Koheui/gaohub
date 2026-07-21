@@ -386,7 +386,7 @@ export async function renderBannerImage(
           position: "relative",
           backgroundColor: PAPER,
           backgroundImage: computeBackground(event),
-          fontFamily: "NotoSansJP",
+          fontFamily: fontData ? "NotoSansJP" : "sans-serif",
         }}
       >
         <BannerBackdrop event={event} dim={dim} scale={scale} />
@@ -505,7 +505,7 @@ export async function renderSessionBannerImage(
           position: "relative",
           backgroundColor: PAPER,
           backgroundImage: computeBackground(event),
-          fontFamily: "NotoSansJP",
+          fontFamily: fontData ? "NotoSansJP" : "sans-serif",
         }}
       >
         <BannerBackdrop event={event} dim={dim} scale={scale} />
@@ -609,7 +609,7 @@ function renderSessionDuotone(args: SessionBannerArgs): ImageResponse {
           alignItems: "center",
           position: "relative",
           backgroundColor: PAPER,
-          fontFamily: "NotoSansJP",
+          fontFamily: fonts ? "NotoSansJP" : "sans-serif",
           padding: `${40 * scale}px ${64 * scale}px`,
         }}
       >
@@ -798,7 +798,7 @@ function renderSessionGeo(args: SessionBannerArgs): ImageResponse {
           display: "flex",
           position: "relative",
           backgroundColor: INK,
-          fontFamily: "NotoSansJP",
+          fontFamily: fonts ? "NotoSansJP" : "sans-serif",
         }}
       >
         {/* 登壇者写真を全面のカラムとして敷く */}
@@ -1013,7 +1013,7 @@ export async function renderTimetableBannerImage(
           flexDirection: "column",
           position: "relative",
           backgroundColor: PAPER,
-          fontFamily: "NotoSansJP",
+          fontFamily: fontData ? "NotoSansJP" : "sans-serif",
         }}
       >
         {/* アクセントの淡色地 */}

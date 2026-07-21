@@ -5,17 +5,21 @@ import "server-only";
 export async function loadNotoSansJpBlack(text: string): Promise<ArrayBuffer | null> {
   try {
     const unique = [...new Set(text)].join("");
+    if (!unique) return null;
     const cssUrl = `https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@900&text=${encodeURIComponent(unique)}`;
     const cssRes = await fetch(cssUrl, {
-      // 古いUAを名乗ると woff2 ではなく TTF が返る(Satori は woff2 非対応)
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 6.1; rv:20.0) Gecko/20100101 Firefox/20.0" },
-      cache: "no-store",
+      headers: {
+        // TTF フォントを取得するための旧 Firefox User-Agent
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+      },
+      cache: "force-cache",
     });
     if (!cssRes.ok) return null;
     const css = await cssRes.text();
-    const match = css.match(/src:\s*url\(([^)]+)\)/);
+    const match = css.match(/url\(([^)]+)\)/);
     if (!match) return null;
-    const fontRes = await fetch(match[1]);
+    const fontUrl = match[1].replace(/["']/g, "");
+    const fontRes = await fetch(fontUrl, { cache: "force-cache" });
     if (!fontRes.ok) return null;
     return await fontRes.arrayBuffer();
   } catch {
