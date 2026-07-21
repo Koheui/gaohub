@@ -42,6 +42,7 @@ export interface PublicEvent {
   companyFieldOptions: string[];
   jobTitleFieldType: "text" | "select";
   jobTitleFieldOptions: string[];
+  tracks?: string[];
 }
 
 export interface PublicSponsor {
@@ -122,6 +123,7 @@ function toPublicEvent(id: string, d: FirebaseFirestore.DocumentData): PublicEve
     companyFieldOptions: d.companyFieldOptions ?? [],
     jobTitleFieldType: (d.jobTitleFieldType as "text" | "select") ?? "text",
     jobTitleFieldOptions: d.jobTitleFieldOptions ?? [],
+    tracks: d.tracks ?? [],
   };
 }
 
