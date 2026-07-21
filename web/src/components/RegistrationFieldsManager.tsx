@@ -154,6 +154,10 @@ export function RegistrationFieldsManager({
   async function addField() {
     const l = labelText.trim();
     if (!l) return;
+    if (/^(メール|メールアドレス|email|e-mail|氏名|お名前|名前)$/i.test(l)) {
+      alert("氏名とメールアドレスは標準で必須項目のため、カスタム質問として追加する必要はありません。");
+      return;
+    }
     const newField: RegistrationFieldDef = {
       id: randomId(),
       label: l,

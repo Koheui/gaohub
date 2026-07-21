@@ -226,7 +226,9 @@ export function RegisterForm({
         </div>
       )}
 
-      {registrationFields.map((field) => (
+      {registrationFields
+        .filter((field) => !/^(メール|メールアドレス|email|e-mail|氏名|お名前|名前)$/i.test(field.label.trim()))
+        .map((field) => (
         <div key={field.id}>
           {field.type === "checkbox" ? (
             <label className="flex items-center gap-3">

@@ -56,6 +56,8 @@ export interface EventDoc {
   loungeCategories: string[];
   /** セッションの「会場」欄で選択できる会場名の一覧(主催者が管理) */
   tracks: string[];
+  /** 各会場(トラック)のテーマカラー設定 (会場名 -> カラーコードHex) */
+  trackColors?: Record<string, string>;
   /** 申込フォームに追加する主催者定義のカスタム質問項目 */
   registrationFields: RegistrationFieldDef[];
   /** 申込フォームで「会社名」欄を表示するか(氏名・メールアドレスは常時必須のため対象外) */

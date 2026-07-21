@@ -27,6 +27,17 @@ const dayFmt = new Intl.DateTimeFormat("ja-JP", {
   timeZone: "Asia/Tokyo",
 });
 
+// デフォルトのステージ別カラーパレット (主催者未指定時のプリセット)
+const DEFAULT_TRACK_COLORS = [
+  "#e11d48", // 赤・ローズ (Main Stage等)
+  "#2563eb", // 青・ロイヤルブルー (Sub1 Stage等)
+  "#059669", // 緑・エメラルド (Sub2 Stage等)
+  "#7c3aed", // 紫・バイオレット
+  "#d97706", // オレンジ・アンバー
+  "#0891b2", // シアン
+  "#db2777", // ピンク
+];
+
 export function TimetableSection({
   event,
   sessions,
@@ -50,6 +61,17 @@ export function TimetableSection({
     });
     return set.size > 0 ? Array.from(set) : ["Main Stage"];
   }, [event.tracks, sessions]);
+
+  // ステージ名 -> カラーコード (Hex) のマップを取得
+  const getTrackColor = useMemo(() => {
+    const trackColorMap = event.trackColors ?? {};
+    return (trackName: string) => {
+      if (trackColorMap[trackName]) return trackColorMap[trackName];
+      const idx = tracks.indexOf(trackName);
+      const safeIdx = idx >= 0 ? idx : 0;
+      return DEFAULT_TRACK_COLORS[safeIdx % DEFAULT_TRACK_COLORS.length];
+    };
+  }, [event.trackColors, tracks]);
 
   // デフォルトはタイムスケジュール表 ('matrix')、リスト ('timeline')
   const [viewMode, setViewMode] = useState<"matrix" | "timeline">("matrix");
@@ -179,11 +201,11 @@ export function TimetableSection({
         </div>
       </div>
 
-      {/* ─── モード 1: GAO HUB モダン・テイスト タイムスケジュール表 ─── */}
+      {/* ─── モード 1: ステージ別スケジュール表 ─── */}
       {viewMode === "matrix" && (
         <div className="mt-8 overflow-x-auto rounded-3xl border border-zinc-200/80 bg-white/80 shadow-xl dark:border-white/10 dark:bg-zinc-950/80">
           <div className="min-w-[960px]">
-            {/* 1. ヘッダー行 (ステージ一覧) */}
+            {/* 1. ヘッダー行 (ステージ一覧 & ステージカラータグ) */}
             <div
               className="sticky top-0 z-20 grid border-b border-zinc-200/80 bg-zinc-100/90 backdrop-blur dark:border-white/10 dark:bg-zinc-900/90"
               style={{
@@ -193,32 +215,35 @@ export function TimetableSection({
               <div className="flex items-center justify-center p-4 font-mono text-xs font-black uppercase tracking-widest text-zinc-400">
                 TIME
               </div>
-              {tracks.map((trackName, tIdx) => (
-                <div
-                  key={trackName}
-                  className="flex items-center justify-between border-r px-6 py-4 border-zinc-200 dark:border-white/10 last:border-r-0"
-                >
-                  <div className="flex items-center gap-2.5">
+              {tracks.map((trackName, tIdx) => {
+                const trackColor = getTrackColor(trackName);
+                return (
+                  <div
+                    key={trackName}
+                    className="flex items-center justify-between border-r px-6 py-4 border-zinc-200 dark:border-white/10 last:border-r-0"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className="h-3.5 w-3.5 rounded-full shadow-sm shrink-0"
+                        style={{ backgroundColor: trackColor }}
+                      />
+                      <span className="text-base font-black tracking-tight">{trackName}</span>
+                    </div>
                     <span
-                      className="h-3 w-3 rounded-full shadow-sm"
-                      style={{
-                        backgroundColor:
-                          tIdx === 0 ? color : tIdx === 1 ? "#3b82f6" : "#10b981",
-                      }}
-                    />
-                    <span className="text-base font-black tracking-tight">{trackName}</span>
+                      className="rounded-full px-2 py-0.5 text-[10px] font-black uppercase text-white shadow-sm"
+                      style={{ backgroundColor: trackColor }}
+                    >
+                      STAGE {tIdx + 1}
+                    </span>
                   </div>
-                  <span className="rounded-full bg-zinc-200/70 px-2.5 py-0.5 text-[10px] font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-                    STAGE {tIdx + 1}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
               <div className="flex items-center justify-center p-4 font-mono text-xs font-black uppercase tracking-widest text-zinc-400">
                 TIME
               </div>
             </div>
 
-            {/* 2. メイン・キャンバス (左右両端に時間目盛り + 30分点線 + 告知バナー付きセッションカード配置) */}
+            {/* 2. メイン・キャンバス */}
             <div
               className="relative"
               style={{
@@ -234,21 +259,18 @@ export function TimetableSection({
                     className="absolute inset-x-0 flex pointer-events-none border-b border-zinc-200/80 dark:border-white/10"
                     style={{ top: `${topPx}px`, height: `${HOUR_HEIGHT}px` }}
                   >
-                    {/* 左端時間目盛り */}
                     <div className="w-[80px] shrink-0 border-r border-zinc-200/80 p-3 text-center dark:border-white/10">
                       <span className="font-mono text-base font-black tabular-nums tracking-tight">
                         {hl.label}
                       </span>
                     </div>
 
-                    {/* 各ステージ背景カラム + 30分中間の補助点線 */}
                     <div
                       className="grid flex-1 relative"
                       style={{
                         gridTemplateColumns: `repeat(${tracks.length}, minmax(0, 1fr))`,
                       }}
                     >
-                      {/* 30分間隔の点線ライン */}
                       <div
                         className="absolute inset-x-0 border-b border-dashed border-zinc-200/50 dark:border-white/10"
                         style={{ top: `${HOUR_HEIGHT / 2}px` }}
@@ -262,7 +284,6 @@ export function TimetableSection({
                       ))}
                     </div>
 
-                    {/* 右端時間目盛り */}
                     <div className="w-[80px] shrink-0 border-l border-zinc-200/80 p-3 text-center dark:border-white/10">
                       <span className="font-mono text-base font-black tabular-nums tracking-tight">
                         {hl.label}
@@ -272,7 +293,7 @@ export function TimetableSection({
                 );
               })}
 
-              {/* 各ステージのセッションカード配置 (絶対位置 top & height) */}
+              {/* 各ステージのセッションカード配置 */}
               <div
                 className="absolute inset-y-0 grid left-[80px] right-[80px]"
                 style={{
@@ -325,7 +346,7 @@ export function TimetableSection({
                               href={`/e/${event.slug}/sessions/${s.id}`}
                               className="flex h-full flex-col min-h-0"
                             >
-                              {/* 大迫力告知バナー画像エリア (16:9) */}
+                              {/* 告知バナー画像エリア */}
                               <div
                                 className={`relative w-full overflow-hidden bg-zinc-950 shrink-0 ${
                                   isShort ? "h-16" : "aspect-[16/9]"
@@ -338,7 +359,6 @@ export function TimetableSection({
                                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                   loading="lazy"
                                 />
-                                {/* 時間帯バッジ */}
                                 <div className="absolute top-2 left-2 rounded-full bg-black/75 px-2.5 py-0.5 font-mono text-[11px] font-bold text-white backdrop-blur-md">
                                   {timeFmt.format(s.startsAt)} – {timeFmt.format(s.endsAt)} ({durationMins}分)
                                 </div>
@@ -375,7 +395,6 @@ export function TimetableSection({
                                   )}
                                 </div>
 
-                                {/* 登壇者表示 */}
                                 {sessionSpeakers.length > 0 && (
                                   <div className="mt-2 flex flex-wrap gap-1.5 pt-2 border-t border-zinc-100 dark:border-white/10">
                                     {sessionSpeakers.map((sp) => (
@@ -424,10 +443,13 @@ export function TimetableSection({
             const bannerUrl =
               s.customBannerUrl || `/api/banner/${event.id}/sessions/${s.id}?size=wide`;
 
+            const trackName = s.track || tracks[0];
+            const trackColor = getTrackColor(trackName);
+
             return (
               <li key={s.id} className="group py-8">
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
-                  {/* 時間・トラック情報 */}
+                  {/* 時間・トラック情報 (ステージごとに割り当てられたカラーのバッジ) */}
                   <div className="w-36 shrink-0">
                     <p className="font-mono text-xl font-black tabular-nums leading-none">
                       {timeFmt.format(s.startsAt)}
@@ -435,12 +457,12 @@ export function TimetableSection({
                     <p className={`mt-1 font-mono text-xs font-bold tabular-nums ${t.muted}`}>
                       – {timeFmt.format(s.endsAt)}
                     </p>
-                    {s.track && (
+                    {trackName && (
                       <span
-                        className="mt-3 inline-block rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-sm"
-                        style={{ backgroundColor: color }}
+                        className="mt-3 inline-block rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.15em] text-white shadow-sm"
+                        style={{ backgroundColor: trackColor }}
                       >
-                        {s.track}
+                        {trackName}
                       </span>
                     )}
                   </div>
@@ -509,7 +531,7 @@ export function TimetableSection({
                     )}
                   </div>
 
-                  {/* セッションバナー画像 (アイキャッチ) */}
+                  {/* セッションバナー画像 */}
                   <div className="w-full shrink-0 lg:w-72">
                     <Link
                       href={`/e/${event.slug}/sessions/${s.id}`}
