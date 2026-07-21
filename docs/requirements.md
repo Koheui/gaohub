@@ -184,6 +184,9 @@ registrations/{registrationId}          … コレクショングループで横
 /dashboard/events/[id]/banner   … 告知バナー自動生成(Wide/Square/Story・ダウンロード)
 /dashboard/events/[id]/tickets  … チケット種別管理・申込フォームのカスタム質問管理
 /dashboard/events/[id]/attendees … 申込者一覧・CSV
+/dashboard/events/[id]/report   … 参加者データレポート(属性分布・人気コンテンツ・
+                          チェックイン率・ラウンジ参加率・日別推移)。集計は
+                          /api/events/[id]/report(ID トークン+org メンバー検証)
 /dashboard/events/[id]/checkin  … PWA QRスキャナー
 /dashboard/settings/payments    … Stripe Connect オンボーディング
 /admin                          … マスター管理: プラットフォーム全体サマリー

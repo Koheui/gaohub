@@ -128,6 +128,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
           ["banner", "バナー"],
           ["tickets", "チケット"],
           ["attendees", "申込者"],
+          ["report", "レポート"],
           ["checkin", "受付 QR"],
         ].map(([path, label]) => (
           <Link
