@@ -1163,14 +1163,13 @@ function renderSessionWorkAndRole(args: SessionBannerArgs): ImageResponse {
   const shownSpeakers = speakers.slice(0, 5);
 
   const speakerCount = shownSpeakers.length;
-  // 人物の顔を巨大化(高さ480px〜580px)して画面いっぱいに配置
-  const speakerHeight = (speakerCount <= 1 ? (isTall ? 600 : 500) : speakerCount <= 3 ? (isTall ? 500 : 420) : (isTall ? 420 : 350)) * scale;
-  const speakerWidth = (speakerCount <= 1 ? (isTall ? 460 : 380) : speakerCount <= 3 ? (isTall ? 340 : 270) : (isTall ? 260 : 210)) * scale;
-  const archRadius = (speakerCount <= 1 ? 260 : 180) * scale;
+  const speakerHeight = (speakerCount <= 1 ? (isTall ? 540 : 440) : speakerCount <= 3 ? (isTall ? 440 : 360) : (isTall ? 360 : 300)) * scale;
+  const speakerWidth = (speakerCount <= 1 ? (isTall ? 400 : 320) : speakerCount <= 3 ? (isTall ? 280 : 220) : (isTall ? 220 : 180)) * scale;
+  const archRadius = (speakerCount <= 1 ? 200 : 140) * scale;
 
   const titleLen = session.title.length;
-  const titleSize = (titleLen <= 14 ? 54 : titleLen <= 28 ? 42 : 32) * scale;
-  const descSize = ((session.description?.length ?? 0) <= 40 ? 20 : 16) * scale;
+  const titleSize = (titleLen <= 14 ? 48 : titleLen <= 24 ? 36 : 28) * scale;
+  const descSize = 14 * scale;
 
   return new ImageResponse(
     (
@@ -1179,7 +1178,7 @@ function renderSessionWorkAndRole(args: SessionBannerArgs): ImageResponse {
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
+          flexDirection: "row", // 左右非対称の黄金スプリットレイアウト
           position: "relative",
           backgroundColor: PAPER,
           backgroundImage: computeBackground(event),
@@ -1189,67 +1188,30 @@ function renderSessionWorkAndRole(args: SessionBannerArgs): ImageResponse {
       >
         <BannerBackdrop event={event} dim={dim} scale={scale} />
 
-        {/* 超・激しいフィルム粒子ノイズ (ざらざら感 MAX) */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={NOISE_PNG_DATA_URI}
-          alt=""
-          width={dim.width}
-          height={dim.height}
+        {/* 緻密で粒子の荒いノイズグラデーション (リピート描画で絶対ボケない高解像度テクスチャ) */}
+        <div
           style={{
             position: "absolute",
             inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            opacity: 0.9,
+            backgroundImage: `url(${NOISE_PNG_DATA_URI})`,
+            backgroundRepeat: "repeat",
+            backgroundSize: `${128 * scale}px ${128 * scale}px`,
+            opacity: 0.65,
             mixBlendMode: "overlay",
           }}
         />
 
-        {/* ヘッダーエリア (イベント名 & 開催日時) */}
+        {/* 左半分：ドカンと大迫力かつクリーンな登壇者切り抜き人物像 (底辺へ接地) */}
         <div
           style={{
             display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: `${28 * scale}px ${44 * scale}px`,
-            zIndex: 30,
-          }}
-        >
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: 20 * scale, fontWeight: 900, letterSpacing: "0.15em", color: INK }}>
-              {truncate(event.title, 26)}
-            </span>
-            <span style={{ fontSize: 14 * scale, fontWeight: 700, color: "rgba(24,24,27,0.7)", marginTop: 4 * scale }}>
-              {dateText} {session.track ? `| ${session.track}` : ""}
-            </span>
-          </div>
-          <div
-            style={{
-              fontSize: 28 * scale,
-              fontWeight: 900,
-              color: INK,
-              letterSpacing: "0.1em",
-              padding: `${6 * scale}px ${20 * scale}px`,
-              border: `${3 * scale}px solid ${INK}`,
-              borderRadius: 8 * scale,
-              backgroundColor: "rgba(255,255,255,0.9)",
-            }}
-          >
-            SESSION
-          </div>
-        </div>
-
-        {/* キャンバス中央〜下部：画面いっぱいにドカンと浮き立つ超巨大切り抜き人物像 */}
-        <div
-          style={{
-            display: "flex",
-            position: "absolute",
-            inset: 0,
+            width: "46%",
+            height: "100%",
             alignItems: "flex-end",
             justifyContent: "center",
+            position: "relative",
             zIndex: 10,
+            paddingLeft: 32 * scale,
           }}
         >
           {shownSpeakers.map((sp, idx) => (
@@ -1259,7 +1221,7 @@ function renderSessionWorkAndRole(args: SessionBannerArgs): ImageResponse {
                 display: "flex",
                 alignItems: "flex-end",
                 position: "relative",
-                margin: `0 ${speakerCount <= 1 ? 0 : -24 * scale}px`,
+                margin: `0 ${speakerCount <= 1 ? 0 : -28 * scale}px`,
               }}
             >
               {sp.photoUrl ? (
@@ -1297,36 +1259,36 @@ function renderSessionWorkAndRole(args: SessionBannerArgs): ImageResponse {
                     justifyContent: "center",
                     borderRadius: `${archRadius}px ${archRadius}px 0 0`,
                     color: "#ffffff",
-                    fontSize: 72 * scale,
+                    fontSize: 64 * scale,
                     fontWeight: 900,
                   }}
                 >
                   {sp.name.charAt(0)}
                 </div>
               )}
-              {/* プロフィールネームプレート (スタイリッシュな浮遊タグ) */}
+              {/* プロフィールネームプレート (被らないように配置) */}
               <div
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  padding: `${10 * scale}px ${16 * scale}px`,
+                  padding: `${8 * scale}px ${12 * scale}px`,
                   backgroundColor: "rgba(24,24,27,0.95)",
                   color: "#ffffff",
-                  borderRadius: 8 * scale,
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-                  marginLeft: speakerCount <= 1 ? -80 * scale : -32 * scale,
-                  marginBottom: 40 * scale,
-                  zIndex: 30,
-                  maxWidth: 200 * scale,
-                  border: "1.5px solid rgba(255,255,255,0.3)",
+                  borderRadius: 6 * scale,
+                  boxShadow: "0 6px 18px rgba(0,0,0,0.35)",
+                  marginLeft: -32 * scale,
+                  marginBottom: 32 * scale,
+                  zIndex: 20,
+                  maxWidth: 160 * scale,
+                  border: "1.5px solid rgba(255,255,255,0.25)",
                 }}
               >
-                <span style={{ fontSize: (speakerCount <= 1 ? 17 : 14) * scale, fontWeight: 900, color: "#ffffff" }}>
+                <span style={{ fontSize: (speakerCount <= 1 ? 14 : 12) * scale, fontWeight: 900, color: "#ffffff" }}>
                   {truncate(sp.name, 10)}
                 </span>
                 {(sp.company || sp.title) && (
-                  <span style={{ fontSize: 11 * scale, fontWeight: 700, color: "rgba(255,255,255,0.8)", marginTop: 3 * scale }}>
-                    {truncate(sp.company || sp.title, 16)}
+                  <span style={{ fontSize: 9 * scale, fontWeight: 700, color: "rgba(255,255,255,0.75)", marginTop: 2 * scale }}>
+                    {truncate(sp.company || sp.title, 14)}
                   </span>
                 )}
               </div>
@@ -1334,46 +1296,65 @@ function renderSessionWorkAndRole(args: SessionBannerArgs): ImageResponse {
           ))}
         </div>
 
-        {/* 黒帯なし！画像・グラデーションの上に直接ダイナミックに文字を浮かび上がらせるオーバーレイレイヤー */}
+        {/* 右半分：テキスト・詳細エリア (写真と重ならず完璧に読める！) */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            position: "absolute",
-            inset: 0,
-            padding: `${28 * scale}px ${48 * scale}px ${36 * scale}px ${48 * scale}px`,
-            backgroundImage: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 45%, rgba(0,0,0,0) 100%)",
-            zIndex: 40,
+            width: "54%",
+            height: "100%",
+            justifyContent: "center",
+            padding: `40px ${48 * scale}px 40px ${24 * scale}px`,
+            zIndex: 30,
+            position: "relative",
           }}
         >
+          {/* イベント名 & カテゴリバッジ */}
+          <div style={{ display: "flex", alignItems: "center", gap: 14 * scale, marginBottom: 20 * scale }}>
+            <span
+              style={{
+                fontSize: 14 * scale,
+                fontWeight: 900,
+                color: INK,
+                letterSpacing: "0.08em",
+                padding: `${5 * scale}px ${14 * scale}px`,
+                border: `${2 * scale}px solid ${INK}`,
+                borderRadius: 6 * scale,
+                backgroundColor: "rgba(255,255,255,0.9)",
+              }}
+            >
+              SESSION
+            </span>
+            <span style={{ fontSize: 13 * scale, fontWeight: 800, color: "rgba(24,24,27,0.6)" }}>
+              {dateText} {session.track ? `| ${session.track}` : ""}
+            </span>
+          </div>
+
+          {/* セッションタイトル (左揃えで大きく整然と配置) */}
           <div
             style={{
               fontSize: titleSize,
               fontWeight: 900,
-              color: "#ffffff",
-              textAlign: "center",
+              color: INK,
               letterSpacing: "-0.02em",
               lineHeight: 1.15,
-              textShadow: "0 4px 16px rgba(0,0,0,0.8)",
+              marginBottom: 16 * scale,
             }}
           >
             {session.title}
           </div>
+
+          {/* セッション概要 (説明文) */}
           {session.description && (
             <div
               style={{
                 fontSize: descSize,
                 fontWeight: 700,
-                color: "rgba(255,255,255,0.85)",
-                marginTop: 8 * scale,
-                textAlign: "center",
-                lineHeight: 1.3,
-                textShadow: "0 2px 8px rgba(0,0,0,0.8)",
+                color: "rgba(24,24,27,0.75)",
+                lineHeight: 1.4,
               }}
             >
-              {truncate(session.description, 80)}
+              {truncate(session.description, 100)}
             </div>
           )}
         </div>
