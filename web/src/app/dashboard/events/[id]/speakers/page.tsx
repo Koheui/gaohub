@@ -76,6 +76,58 @@ async function processMonochromeImage(file: File): Promise<File> {
     img.src = URL.createObjectURL(file);
   });
 }
+async function processRemoveBackground(file: File, isMonochrome: boolean): Promise<File> {
+  const imgly = await import("@imgly/background-removal");
+  const removeFn = imgly.removeBackground || imgly.default;
+  const transparentBlob = await removeFn(file);
+
+  if (!isMonochrome) {
+    return new File([transparentBlob], file.name.replace(/\.[^/.]+$/, "") + "_nobg.png", {
+      type: "image/png",
+    });
+  }
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        return resolve(
+          new File([transparentBlob], file.name.replace(/\.[^/.]+$/, "") + "_nobg.png", {
+            type: "image/png",
+          })
+        );
+      }
+      ctx.filter = "grayscale(100%) contrast(115%) brightness(102%)";
+      ctx.drawImage(img, 0, 0);
+
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          return resolve(
+            new File([transparentBlob], file.name.replace(/\.[^/.]+$/, "") + "_nobg.png", {
+              type: "image/png",
+            })
+          );
+        }
+        resolve(
+          new File([blob], file.name.replace(/\.[^/.]+$/, "") + "_nobg_mono.png", {
+            type: "image/png",
+          })
+        );
+      }, "image/png");
+    };
+    img.onerror = () =>
+      resolve(
+        new File([transparentBlob], file.name.replace(/\.[^/.]+$/, "") + "_nobg.png", {
+          type: "image/png",
+        })
+      );
+    img.src = URL.createObjectURL(transparentBlob);
+  });
+}
 
 function SpeakerForm({
   eventId,
@@ -100,6 +152,7 @@ function SpeakerForm({
   }
 
   const [applyMonochrome, setApplyMonochrome] = useState(true);
+  const [removeBg, setRemoveBg] = useState(true);
 
   async function handlePhoto(file: File | undefined) {
     if (!file) return;
@@ -107,12 +160,14 @@ function SpeakerForm({
     setError(null);
     try {
       let finalFile = file;
-      if (applyMonochrome) {
+      if (removeBg) {
+        finalFile = await processRemoveBackground(file, applyMonochrome);
+      } else if (applyMonochrome) {
         finalFile = await processMonochromeImage(file);
       }
       set("photoUrl", await uploadEventImage(eventId, finalFile, "speaker"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "アップロードに失敗しました");
+      setError(err instanceof Error ? err.message : "アップロード・AI切り抜き処理に失敗しました");
     } finally {
       setUploading(false);
     }
@@ -160,6 +215,15 @@ function SpeakerForm({
               className="hidden"
               onChange={(e) => handlePhoto(e.target.files?.[0])}
             />
+          </label>
+          <label className="flex items-center gap-1.5 text-xs font-medium text-purple-700 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={removeBg}
+              onChange={(e) => setRemoveBg(e.target.checked)}
+              className="h-3.5 w-3.5"
+            />
+            <span>✨ AI背景削除 (透過PNG)</span>
           </label>
           <label className="flex items-center gap-1.5 text-xs text-zinc-600 cursor-pointer">
             <input
