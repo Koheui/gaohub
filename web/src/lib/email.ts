@@ -130,6 +130,45 @@ export async function sendLoungeContactEmail(params: {
   });
 }
 
+export async function sendSurveyEmail(params: {
+  to: string;
+  attendeeName: string;
+  eventTitle: string;
+  surveyTitle: string;
+  surveyUrl: string;
+}) {
+  const client = getResend();
+  if (!client) {
+    console.warn(
+      "[email] RESEND_API_KEY not set — skipping survey email to",
+      params.to,
+      `(${params.surveyTitle}: ${params.surveyUrl})`
+    );
+    return;
+  }
+  const from = process.env.EMAIL_FROM ?? "onboarding@resend.dev";
+  await client.emails.send({
+    from,
+    to: params.to,
+    subject: `【アンケート】${params.eventTitle}「${params.surveyTitle}」`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
+        <h2>${escapeHtml(params.surveyTitle)}</h2>
+        <p>${escapeHtml(params.attendeeName)} 様</p>
+        <p>${escapeHtml(params.eventTitle)} へのご参加ありがとうございました。
+          今後のイベント改善のため、以下のアンケートにご協力ください。</p>
+        <p style="margin: 24px 0;">
+          <a href="${params.surveyUrl}"
+             style="background:#111;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">
+            アンケートに回答する
+          </a>
+        </p>
+        <p style="color:#888;font-size:12px;">回答は主催者にのみ共有されます。</p>
+      </div>
+    `,
+  });
+}
+
 function escapeHtml(s: string): string {
   return s
     .replaceAll("&", "&amp;")

@@ -68,6 +68,19 @@ service cloud.firestore {
           get(/databases/$(database)/documents/events/$(eventId)).data.orgId
         );
       }
+
+      match /surveys/{surveyId} {
+        allow read, write: if isOrgMember(
+          get(/databases/$(database)/documents/events/$(eventId)).data.orgId
+        );
+        // 回答は org メンバーが閲覧のみ。作成はサーバー(Admin SDK)経由
+        match /responses/{responseId} {
+          allow read: if isOrgMember(
+            get(/databases/$(database)/documents/events/$(eventId)).data.orgId
+          );
+          allow write: if false;
+        }
+      }
     }
 
     match /registrations/{registrationId} {

@@ -191,6 +191,36 @@ export interface SponsorDoc {
   createdAt: Timestamp;
 }
 
+export type SurveyStatus = "draft" | "scheduled" | "sent";
+/** 送付対象。all=確定者全員 / paid=有料チケット / checkedIn=当日チェックイン済み */
+export type SurveyAudience = "all" | "paid" | "checkedIn";
+
+/** アンケート(イベント配下のコレクション)。events/{id}/surveys/{surveyId} */
+export interface SurveyDoc {
+  id: string;
+  title: string;
+  description: string;
+  /** 質問項目(申込フォームのカスタム質問と同じ形式) */
+  questions: RegistrationFieldDef[];
+  audience: SurveyAudience;
+  status: SurveyStatus;
+  /** 予約送信の日時。status=scheduled のとき cron が拾って送信する */
+  scheduledAt: Timestamp | null;
+  sentAt: Timestamp | null;
+  sentCount: number;
+  responseCount: number;
+  createdAt: Timestamp;
+}
+
+/** アンケート回答。events/{id}/surveys/{surveyId}/responses/{registrationId} */
+export interface SurveyResponseDoc {
+  id: string; // == registrationId
+  registrationId: string;
+  attendeeName: string;
+  answers: Record<string, string>;
+  submittedAt: Timestamp;
+}
+
 /** コミュニティラウンジのカテゴリ別参加者プロフィール。events/{id}/loungeProfiles/{registrationId} */
 export interface LoungeProfileDoc {
   id: string; // == registrationId
