@@ -1138,16 +1138,16 @@ export async function renderTimetableBannerImage(
 
 /**
  * WORK AND ROLE スタイル (決定版):
- * 右上のアクセントグラフィック、中央にモノクロ切り抜き人物像が並び、
- * 下部に黒背景の大迫力タイトル帯を配した決定版コンテンツバナー。
+ * LP共通の洗練された斜めグラデーション背景に、背景透過切り抜き人物像がダイナミックに並び、
+ * スタイリッシュなネームタグと大迫力セッションタイトルを配した決定版バナー。
  */
 function renderSessionWorkAndRole(args: SessionBannerArgs): ImageResponse {
   const { event, session, speakers, dim, isTall, scale, dateText, timeText, fonts } = args;
-  const accentColor = event.themeColor || "#ff4500";
+  const accentColor = accentRgba(event, 1);
   const shownSpeakers = speakers.slice(0, 5);
 
   const titleLen = session.title.length;
-  const titleSize = (titleLen <= 16 ? 42 : titleLen <= 32 ? 32 : 24) * scale;
+  const titleSize = (titleLen <= 16 ? 48 : titleLen <= 32 ? 36 : 26) * scale;
   const descSize = (session.description.length <= 40 ? 18 : 14) * scale;
 
   return new ImageResponse(
@@ -1159,23 +1159,13 @@ function renderSessionWorkAndRole(args: SessionBannerArgs): ImageResponse {
           display: "flex",
           flexDirection: "column",
           position: "relative",
-          backgroundColor: "#f4f4f5",
+          backgroundColor: PAPER,
+          backgroundImage: computeBackground(event),
           fontFamily: fonts ? "NotoSansJP" : "sans-serif",
           overflow: "hidden",
         }}
       >
-        {/* 右上の巨大アクセント斜めシェイプ */}
-        <div
-          style={{
-            position: "absolute",
-            top: -50 * scale,
-            right: -80 * scale,
-            width: 500 * scale,
-            height: 400 * scale,
-            backgroundColor: accentColor,
-            transform: "rotate(-15deg)",
-          }}
-        />
+        <BannerBackdrop event={event} dim={dim} scale={scale} />
 
         {/* ヘッダーエリア */}
         <div
@@ -1188,23 +1178,26 @@ function renderSessionWorkAndRole(args: SessionBannerArgs): ImageResponse {
           }}
         >
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: 16 * scale, fontWeight: 900, letterSpacing: "0.15em", color: "#18181b" }}>
-              {truncate(event.title, 24)}
+            <span style={{ fontSize: 18 * scale, fontWeight: 900, letterSpacing: "0.15em", color: INK }}>
+              {truncate(event.title, 26)}
             </span>
-            <span style={{ fontSize: 14 * scale, fontWeight: 700, color: "#52525b", marginTop: 4 * scale }}>
+            <span style={{ fontSize: 14 * scale, fontWeight: 700, color: "rgba(24,24,27,0.65)", marginTop: 4 * scale }}>
               {dateText} {session.track ? `| ${session.track}` : ""}
             </span>
           </div>
           <div
             style={{
-              fontSize: 36 * scale,
+              fontSize: 32 * scale,
               fontWeight: 900,
-              color: "#ffffff",
-              letterSpacing: "-0.02em",
-              textShadow: "0 2px 8px rgba(0,0,0,0.3)",
+              color: INK,
+              letterSpacing: "0.08em",
+              padding: `${6 * scale}px ${20 * scale}px`,
+              border: `${3 * scale}px solid ${INK}`,
+              borderRadius: 8 * scale,
+              backgroundColor: "rgba(255,255,255,0.85)",
             }}
           >
-            Session
+            SESSION
           </div>
         </div>
 
@@ -1227,7 +1220,7 @@ function renderSessionWorkAndRole(args: SessionBannerArgs): ImageResponse {
                 display: "flex",
                 alignItems: "flex-end",
                 position: "relative",
-                margin: `0 ${-12 * scale}px`,
+                margin: `0 ${-16 * scale}px`,
               }}
             >
               {sp.photoUrl ? (
@@ -1236,7 +1229,7 @@ function renderSessionWorkAndRole(args: SessionBannerArgs): ImageResponse {
                   src={sp.photoUrl}
                   alt=""
                   style={{
-                    height: `${(isTall ? 340 : 280) * scale}px`,
+                    height: `${(isTall ? 360 : 300) * scale}px`,
                     objectFit: "contain",
                     filter: "grayscale(100%) contrast(110%)",
                   }}
@@ -1264,21 +1257,23 @@ function renderSessionWorkAndRole(args: SessionBannerArgs): ImageResponse {
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  padding: `${6 * scale}px ${10 * scale}px`,
-                  backgroundColor: "rgba(255,255,255,0.92)",
+                  padding: `${8 * scale}px ${12 * scale}px`,
+                  backgroundColor: "rgba(24,24,27,0.92)",
+                  color: "#ffffff",
                   borderRadius: 6 * scale,
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                  marginLeft: -20 * scale,
-                  marginBottom: 20 * scale,
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+                  marginLeft: -24 * scale,
+                  marginBottom: 24 * scale,
                   zIndex: 20,
-                  maxWidth: 140 * scale,
+                  maxWidth: 150 * scale,
+                  border: "1px solid rgba(255,255,255,0.2)",
                 }}
               >
-                <span style={{ fontSize: 13 * scale, fontWeight: 900, color: "#09090b" }}>
+                <span style={{ fontSize: 13 * scale, fontWeight: 900, color: "#ffffff" }}>
                   {truncate(sp.name, 10)}
                 </span>
                 {(sp.company || sp.title) && (
-                  <span style={{ fontSize: 10 * scale, fontWeight: 700, color: "#52525b", marginTop: 2 * scale }}>
+                  <span style={{ fontSize: 10 * scale, fontWeight: 700, color: "rgba(255,255,255,0.75)", marginTop: 2 * scale }}>
                     {truncate(sp.company || sp.title, 14)}
                   </span>
                 )}
@@ -1294,8 +1289,8 @@ function renderSessionWorkAndRole(args: SessionBannerArgs): ImageResponse {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: "#000000",
-            padding: `${22 * scale}px ${40 * scale}px`,
+            backgroundColor: INK,
+            padding: `${24 * scale}px ${48 * scale}px`,
             zIndex: 30,
           }}
         >
@@ -1303,7 +1298,7 @@ function renderSessionWorkAndRole(args: SessionBannerArgs): ImageResponse {
             style={{
               fontSize: titleSize,
               fontWeight: 900,
-              color: accentColor,
+              color: "#ffffff",
               textAlign: "center",
               letterSpacing: "-0.02em",
               lineHeight: 1.15,
@@ -1316,11 +1311,10 @@ function renderSessionWorkAndRole(args: SessionBannerArgs): ImageResponse {
               style={{
                 fontSize: descSize,
                 fontWeight: 700,
-                color: "#e4e4e7",
+                color: "rgba(255,255,255,0.75)",
                 marginTop: 6 * scale,
                 textAlign: "center",
                 lineHeight: 1.3,
-                opacity: 0.9,
               }}
             >
               {truncate(session.description, 80)}

@@ -101,6 +101,7 @@ async function processRemoveBackground(file: File, isMonochrome: boolean): Promi
           })
         );
       }
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.filter = "grayscale(100%) contrast(115%) brightness(102%)";
       ctx.drawImage(img, 0, 0);
 
