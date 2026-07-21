@@ -7,6 +7,8 @@ import {
 } from "@/lib/server/bannerImage";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const VALID_SIZES: BannerSize[] = ["wide", "square", "story"];
 const VALID_STYLES: SessionBannerStyle[] = ["classic", "duotone", "geo"];
