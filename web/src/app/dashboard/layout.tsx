@@ -8,11 +8,15 @@ import { auth } from "@/lib/firebase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { isPlatformAdminEmail } from "@/lib/platformAdmin";
 import { Grain } from "@/components/Grain";
+import { ViewPublicPageButton } from "@/components/ViewPublicPageButton";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+
+  const eventMatch = pathname.match(/^\/dashboard\/events\/([^/]+)/);
+  const currentEventId = eventMatch && eventMatch[1] !== "new" ? eventMatch[1] : null;
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -59,6 +63,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </nav>
           </div>
           <div className="flex items-center gap-4">
+            {currentEventId && <ViewPublicPageButton eventId={currentEventId} />}
             {isPlatformAdminEmail(user.email) && (
               <Link
                 href="/admin"

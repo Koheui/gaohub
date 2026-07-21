@@ -98,15 +98,12 @@ export default function TicketsPage({ params }: { params: Promise<{ id: string }
       </Link>
       <div className="mt-2 flex items-center justify-between">
         <h1 className={ui.h1}>チケット</h1>
-        <div className="flex items-center gap-3">
-          <ViewPublicPageButton eventId={id} />
-          <button
-            onClick={() => setShowForm((v) => !v)}
-            className={ui.btn}
-          >
-            {showForm ? "閉じる" : "+ チケット種別を追加"}
-          </button>
-        </div>
+        <button
+          onClick={() => setShowForm((v) => !v)}
+          className={ui.btn}
+        >
+          {showForm ? "閉じる" : "+ チケット種別を追加"}
+        </button>
       </div>
 
       {event && (

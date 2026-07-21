@@ -129,11 +129,10 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
             主催者へのフィードバック資料としてご活用ください。
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div>
           <Link href={`/dashboard/events/${id}/attendees`} className={ui.btnGhost}>
             申込者一覧・CSV
           </Link>
-          <ViewPublicPageButton eventId={id} />
         </div>
       </div>
 

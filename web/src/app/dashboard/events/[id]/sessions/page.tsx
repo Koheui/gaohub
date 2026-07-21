@@ -511,15 +511,12 @@ export default function SessionsPage({ params }: { params: Promise<{ id: string 
           </p>
         </div>
         {!adding && (
-          <div className="flex items-center gap-3">
-            <ViewPublicPageButton eventId={id} />
-            <button
-              onClick={() => setAdding(true)}
-              className={ui.btn}
-            >
-              + セッションを追加
-            </button>
-          </div>
+          <button
+            onClick={() => setAdding(true)}
+            className={ui.btn}
+          >
+            + セッションを追加
+          </button>
         )}
       </div>
 

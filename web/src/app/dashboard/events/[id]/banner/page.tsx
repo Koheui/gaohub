@@ -118,7 +118,7 @@ export default function BannerPage({ params }: { params: Promise<{ id: string }>
             登壇者の顔写真は登壇者ページでアップロードすると、そのままバナーに反映されます。
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div>
           <button
             onClick={() => setRefreshKey((k) => k + 1)}
             className={ui.btnText}
@@ -126,7 +126,6 @@ export default function BannerPage({ params }: { params: Promise<{ id: string }>
           >
             再読み込み
           </button>
-          <ViewPublicPageButton eventId={id} />
         </div>
       </div>
 

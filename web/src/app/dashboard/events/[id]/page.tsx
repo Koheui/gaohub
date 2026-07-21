@@ -107,7 +107,6 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
           )}
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <ViewPublicPageButton eventId={id} />
           <button
             onClick={togglePublish}
             className={event.status === "published" ? ui.btnGhost : ui.btn}
