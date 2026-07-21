@@ -77,26 +77,8 @@ function accentRgba(event: PublicEvent, alpha: number): string {
 
 /** テンプレート(kodak/spectrum/aurora)に応じた背景グラデーションを作る。バナー共通ロジック */
 function computeBackground(event: PublicEvent): string {
-  const color = event.themeColor;
-  if (event.template === "spectrum") {
-    const [c1, c2, c3, c4] = spectrumStopsRgba(color, 0.8);
-    return `
-      radial-gradient(ellipse 60% 40% at 85% 10%, ${c1}, transparent 62%),
-      radial-gradient(ellipse 55% 38% at 55% 40%, ${c2}, transparent 62%),
-      radial-gradient(ellipse 55% 38% at 25% 70%, ${c3}, transparent 62%),
-      radial-gradient(ellipse 60% 40% at 0% 100%, ${c4}, transparent 66%),
-      #a1a19c
-    `;
-  }
-  if (event.template === "aurora") {
-    return `
-      radial-gradient(ellipse 45% 35% at 10% 8%, ${color}88, transparent 60%),
-      radial-gradient(ellipse 40% 32% at 90% 25%, ${color}55, transparent 60%),
-      radial-gradient(ellipse 42% 34% at 40% 95%, ${color}44, transparent 62%),
-      #f7f8fd
-    `;
-  }
-  return `linear-gradient(150deg, ${PAPER} 0%, ${PAPER} 30%, ${color} 92%)`;
+  const color = event.themeColor || "#18181b";
+  return `linear-gradient(150deg, ${PAPER} 0%, ${PAPER} 35%, ${color} 95%)`;
 }
 
 /** バナー共通の背景レイヤー(テンプレート背景 + カバー画像 + フィルムグレイン) */
@@ -140,19 +122,7 @@ function BannerBackdrop({
           />
         </>
       )}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-          backgroundImage: `url(${NOISE_PNG_DATA_URI})`,
-          backgroundRepeat: "repeat",
-          backgroundSize: `${96 * scale}px ${96 * scale}px`,
-          opacity: 0.5,
-        }}
-      />
+
     </>
   );
 }
@@ -415,7 +385,7 @@ export async function renderBannerImage(
                 letterSpacing: "-0.03em",
                 color: INK,
                 maxWidth: dim.width - 144 * scale,
-                textWrap: "balance" as never,
+
               }}
             >
               {event.title}
@@ -534,7 +504,7 @@ export async function renderSessionBannerImage(
                 letterSpacing: "-0.02em",
                 color: INK,
                 maxWidth: dim.width - 144 * scale,
-                textWrap: "balance" as never,
+
               }}
             >
               {session.title}
@@ -613,20 +583,7 @@ function renderSessionDuotone(args: SessionBannerArgs): ImageResponse {
           padding: `${40 * scale}px ${64 * scale}px`,
         }}
       >
-        {/* フィルムグレイン */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundImage: `url(${NOISE_PNG_DATA_URI})`,
-            backgroundRepeat: "repeat",
-            backgroundSize: `${96 * scale}px ${96 * scale}px`,
-            opacity: 0.5,
-          }}
-        />
+
 
         {/* イベント名チップ */}
         <div
@@ -653,7 +610,7 @@ function renderSessionDuotone(args: SessionBannerArgs): ImageResponse {
             color: INK,
             textAlign: "center",
             maxWidth: dim.width - 128 * scale,
-            textWrap: "balance" as never,
+
           }}
         >
           {session.title}
@@ -867,20 +824,7 @@ function renderSessionGeo(args: SessionBannerArgs): ImageResponse {
             backgroundImage: "linear-gradient(0deg, rgba(24,24,27,0.88) 0%, rgba(24,24,27,0.35) 32%, transparent 55%)",
           }}
         />
-        {/* フィルムグレイン */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundImage: `url(${NOISE_PNG_DATA_URI})`,
-            backgroundRepeat: "repeat",
-            backgroundSize: `${96 * scale}px ${96 * scale}px`,
-            opacity: 0.35,
-          }}
-        />
+
 
         {/* テキストブロック(左下) */}
         <div
@@ -912,7 +856,7 @@ function renderSessionGeo(args: SessionBannerArgs): ImageResponse {
               letterSpacing: "-0.02em",
               color: "#ffffff",
               maxWidth: dim.width - (isTall ? 112 : 260) * scale,
-              textWrap: "balance" as never,
+  
             }}
           >
             {session.title}
@@ -1027,19 +971,7 @@ export async function renderTimetableBannerImage(
             backgroundColor: accentRgba(event, 0.34),
           }}
         />
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundImage: `url(${NOISE_PNG_DATA_URI})`,
-            backgroundRepeat: "repeat",
-            backgroundSize: `${96 * scale}px ${96 * scale}px`,
-            opacity: 0.45,
-          }}
-        />
+
 
         <div
           style={{
