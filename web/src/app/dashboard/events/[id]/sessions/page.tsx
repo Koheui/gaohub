@@ -425,6 +425,37 @@ function SessionForm({
         )}
       </div>
 
+      {sessionId && (
+        <div className="border-t border-zinc-200 pt-4">
+          <label className={label}>セッション告知バナー (自動生成 / カスタム)</label>
+          <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="aspect-[16/9] w-full max-w-xs overflow-hidden rounded-xl border border-zinc-200 bg-zinc-950 shadow-md">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/api/banner/${eventId}/sessions/${sessionId}?size=wide`}
+                alt={draft.title}
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <a
+                href={`/api/banner/${eventId}/sessions/${sessionId}?size=wide&download=1`}
+                download
+                className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2 text-xs font-bold text-white hover:bg-zinc-800"
+              >
+                バナー画像を保存 📥
+              </a>
+              <Link
+                href={`/dashboard/events/${eventId}/banner`}
+                className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-zinc-50 px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-100"
+              >
+                バナーをデザイン・生成 🎨
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-3">
         <button
@@ -614,33 +645,46 @@ export default function SessionsPage({ params }: { params: Promise<{ id: string 
             ) : (
               <li
                 key={s.id}
-                className="flex items-start justify-between border-2 border-zinc-950 bg-white p-5"
+                className="flex flex-col gap-4 border-2 border-zinc-950 bg-white p-5 lg:flex-row lg:items-center lg:justify-between"
               >
-                <div className="flex gap-4">
-                  <div className="w-28 shrink-0 text-sm tabular-nums text-zinc-500">
-                    {s.isComingSoon ? (
-                      <span className="inline-block rounded-full bg-zinc-900 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
-                        Coming Soon
-                      </span>
-                    ) : (
-                      timeLabel(s)
-                    )}
-                    {s.track && !s.isComingSoon && (
-                      <span className="mt-1 block rounded-full bg-zinc-100 px-2 py-0.5 text-center text-xs text-zinc-600">
-                        {s.track}
-                      </span>
-                    )}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start flex-1 min-w-0">
+                  {/* バナーサムネイル */}
+                  <div className="w-full shrink-0 sm:w-44">
+                    <div className="group relative aspect-[16/9] w-full overflow-hidden rounded-lg border border-zinc-200 bg-zinc-950 shadow-sm">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={s.customBannerUrl || `/api/banner/${id}/sessions/${s.id}?size=wide`}
+                        alt={s.title}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold">{s.title}</p>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 text-sm tabular-nums text-zinc-500">
+                      {s.isComingSoon ? (
+                        <span className="inline-block rounded-full bg-zinc-900 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
+                          Coming Soon
+                        </span>
+                      ) : (
+                        <span className="font-mono font-bold text-zinc-800">{timeLabel(s)}</span>
+                      )}
+                      {s.track && (
+                        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-bold text-zinc-700">
+                          {s.track}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-base font-black leading-tight text-zinc-900">{s.title}</p>
                     {s.description && (
-                      <p className="mt-1 line-clamp-2 text-sm text-zinc-500">{s.description}</p>
+                      <p className="mt-1 line-clamp-2 text-xs text-zinc-500">{s.description}</p>
                     )}
                     {!s.isComingSoon && s.capacity != null && (
                       <p className="mt-1 text-xs text-zinc-500">予約定員 {s.capacity} 名</p>
                     )}
                     {(s.speakerIds ?? []).length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
+                      <div className="mt-2.5 flex flex-wrap gap-1.5">
                         {(s.speakerIds ?? []).map((sid) => {
                           const sp = speakerById.get(sid);
                           return sp ? <SpeakerChip key={sid} speaker={sp} /> : null;
@@ -649,16 +693,30 @@ export default function SessionsPage({ params }: { params: Promise<{ id: string 
                     )}
                   </div>
                 </div>
-                <div className="flex shrink-0 gap-3 text-sm">
+
+                <div className="flex flex-wrap items-center gap-2 shrink-0 border-t pt-3 border-zinc-100 lg:border-t-0 lg:pt-0">
+                  <a
+                    href={`/api/banner/${id}/sessions/${s.id}?size=wide&download=1`}
+                    download
+                    className="inline-flex items-center rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-100"
+                  >
+                    バナー保存 📥
+                  </a>
+                  <Link
+                    href={`/dashboard/events/${id}/banner?target=${s.id}`}
+                    className="inline-flex items-center rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-100"
+                  >
+                    バナー作成 🎨
+                  </Link>
                   <button
                     onClick={() => setEditingId(s.id)}
-                    className="text-zinc-600 underline hover:text-zinc-900"
+                    className="ml-1 text-xs font-bold text-zinc-600 underline hover:text-zinc-900"
                   >
                     編集
                   </button>
                   <button
                     onClick={() => handleDelete(s.id)}
-                    className="text-zinc-400 hover:text-red-600"
+                    className="text-xs font-bold text-zinc-400 hover:text-red-600"
                   >
                     削除
                   </button>
