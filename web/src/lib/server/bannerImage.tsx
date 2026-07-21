@@ -791,7 +791,7 @@ function renderSessionGeo(args: SessionBannerArgs): ImageResponse {
           ))}
         </div>
 
-        {/* 斜めのカラーブロック(右下: アクセント帯 + ダークコーナー) */}
+        {/* 下部グラデーション(文字の可読性) */}
         <div
           style={{
             position: "absolute",
@@ -799,29 +799,7 @@ function renderSessionGeo(args: SessionBannerArgs): ImageResponse {
             left: 0,
             width: "100%",
             height: "100%",
-            backgroundImage: `linear-gradient(115deg, transparent 55%, ${accentRgba(event, 0.85)} 55%, ${accentRgba(event, 0.85)} 76%, rgba(24,24,27,0.94) 76%)`,
-          }}
-        />
-        {/* 左上の薄いアクセント */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundImage: `linear-gradient(295deg, transparent 84%, ${accentRgba(event, 0.45)} 84%)`,
-          }}
-        />
-        {/* 下部スクリーム(文字の可読性) */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundImage: "linear-gradient(0deg, rgba(24,24,27,0.88) 0%, rgba(24,24,27,0.35) 32%, transparent 55%)",
+            backgroundImage: `linear-gradient(180deg, transparent 0%, ${INK} 90%)`,
           }}
         />
 
