@@ -110,44 +110,67 @@ export default async function SessionDetailPage(props: {
         />
         {event.template !== "aurora" && <Grain opacity={0.3} />}
 
-        <div className="relative mx-auto max-w-5xl px-6 py-16 sm:py-20">
-          <p className="lp-fade-up text-[11px] font-black uppercase tracking-[0.35em] opacity-50">
-            Session
-          </p>
-          <div className="lp-fade-up mt-6 flex flex-wrap items-center gap-3" style={{ animationDelay: "120ms" }}>
-            {session.isComingSoon ? (
-              <span className="rounded-full bg-zinc-950 px-4 py-1.5 font-mono text-xs font-black uppercase tracking-[0.2em] text-white">
-                Coming Soon
-              </span>
-            ) : (
-              <span className="font-mono text-lg font-black tabular-nums">
-                {dayFmt.format(session.startsAt)} {timeFmt.format(session.startsAt)} –{" "}
-                {timeFmt.format(session.endsAt)}
-              </span>
-            )}
-            {session.track && !session.isComingSoon && (
-              <span
-                className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white"
-                style={{ backgroundColor: color }}
-              >
-                {session.track}
-              </span>
-            )}
-            {remaining != null && !session.isComingSoon && (
-              <span
-                className={`rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.1em] ${
-                  remaining <= 0
-                    ? "bg-red-600/90 text-white"
-                    : `${t.muted} ${dark ? "bg-white/10" : "bg-zinc-950/10"}`
-                }`}
-              >
-                {remaining <= 0 ? "満席" : `残り${remaining}席`}
-              </span>
-            )}
+        <div className="relative mx-auto max-w-5xl px-6 py-12 sm:py-16">
+          <div className="grid gap-10 lg:grid-cols-12 lg:items-center">
+            <div className="lg:col-span-7">
+              <p className="lp-fade-up text-[11px] font-black uppercase tracking-[0.35em] opacity-50">
+                Session
+              </p>
+              <div className="lp-fade-up mt-6 flex flex-wrap items-center gap-3" style={{ animationDelay: "120ms" }}>
+                {session.isComingSoon ? (
+                  <span className="rounded-full bg-zinc-950 px-4 py-1.5 font-mono text-xs font-black uppercase tracking-[0.2em] text-white">
+                    Coming Soon
+                  </span>
+                ) : (
+                  <span className="font-mono text-lg font-black tabular-nums">
+                    {dayFmt.format(session.startsAt)} {timeFmt.format(session.startsAt)} –{" "}
+                    {timeFmt.format(session.endsAt)}
+                  </span>
+                )}
+                {session.track && !session.isComingSoon && (
+                  <span
+                    className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white"
+                    style={{ backgroundColor: color }}
+                  >
+                    {session.track}
+                  </span>
+                )}
+                {remaining != null && !session.isComingSoon && (
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.1em] ${
+                      remaining <= 0
+                        ? "bg-red-600/90 text-white"
+                        : `${t.muted} ${dark ? "bg-white/10" : "bg-zinc-950/10"}`
+                    }`}
+                  >
+                    {remaining <= 0 ? "満席" : `残り${remaining}席`}
+                  </span>
+                )}
+              </div>
+              <h1 className="mt-6 text-3xl font-black leading-tight tracking-tighter sm:text-5xl">
+                <AnimatedTitle text={session.title} baseDelayMs={250} />
+              </h1>
+            </div>
+
+            {/* 告知バナー（アイキャッチ） */}
+            <div className="lg:col-span-5">
+              <div className="group relative overflow-hidden rounded-3xl border border-zinc-200/80 bg-zinc-900 shadow-2xl transition-all duration-300 dark:border-white/15">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={session.customBannerUrl || `/api/banner/${event.id}/sessions/${session.id}?size=wide`}
+                  alt={session.title}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <a
+                  href={`/api/banner/${event.id}/sessions/${session.id}?size=wide&download=1`}
+                  download
+                  className="absolute bottom-3 right-3 rounded-full bg-black/70 px-4 py-1.5 text-xs font-black text-white backdrop-blur-md transition-all hover:bg-black hover:scale-105"
+                >
+                  バナーを保存 📥
+                </a>
+              </div>
+            </div>
           </div>
-          <h1 className="mt-6 max-w-4xl text-4xl font-black leading-tight tracking-tighter sm:text-6xl">
-            <AnimatedTitle text={session.title} baseDelayMs={250} />
-          </h1>
         </div>
       </section>
 

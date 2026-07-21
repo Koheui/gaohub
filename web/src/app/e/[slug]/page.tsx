@@ -563,74 +563,102 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                       const sessionSpeakers = s.speakerIds
                         .map((sid) => speakerById.get(sid))
                         .filter((sp): sp is PublicSpeaker => !!sp);
+                      const bannerUrl =
+                        s.customBannerUrl || `/api/banner/${event.id}/sessions/${s.id}?size=wide`;
                       return (
-                        <li key={s.id} className="py-7 sm:flex sm:gap-10">
-                          <div className="w-36 shrink-0">
-                            <p className="font-mono text-lg font-black tabular-nums leading-none">
-                              {timeFmt.format(s.startsAt)}
-                            </p>
-                            <p className={`mt-1 font-mono text-xs font-bold tabular-nums ${t.muted}`}>
-                              – {timeFmt.format(s.endsAt)}
-                            </p>
-                            {s.track && (
-                              <span
-                                className="mt-3 inline-block rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white"
-                                style={{ backgroundColor: color }}
-                              >
-                                {s.track}
-                              </span>
-                            )}
-                          </div>
-                          <div className="mt-4 flex-1 sm:mt-0">
-                            <div className="flex flex-wrap items-center gap-3">
-                              <Link
-                                href={`/e/${event.slug}/sessions/${s.id}`}
-                                className="hover:underline"
-                              >
-                                <h4 className="text-2xl font-black leading-tight tracking-tight">
-                                  {s.title}
-                                </h4>
-                              </Link>
-                              {s.capacity != null && (
+                        <li key={s.id} className="group py-8">
+                          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
+                            {/* 時間・トラック情報 */}
+                            <div className="w-36 shrink-0">
+                              <p className="font-mono text-xl font-black tabular-nums leading-none">
+                                {timeFmt.format(s.startsAt)}
+                              </p>
+                              <p className={`mt-1 font-mono text-xs font-bold tabular-nums ${t.muted}`}>
+                                – {timeFmt.format(s.endsAt)}
+                              </p>
+                              {s.track && (
                                 <span
-                                  className={`inline-block rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.1em] ${
-                                    s.reservedCount >= s.capacity
-                                      ? "bg-red-600/90 text-white"
-                                      : `${t.muted} ${dark ? "bg-white/10" : "bg-zinc-100"}`
-                                  }`}
+                                  className="mt-3 inline-block rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-sm"
+                                  style={{ backgroundColor: color }}
                                 >
-                                  {s.reservedCount >= s.capacity
-                                    ? "満席"
-                                    : `残り${s.capacity - s.reservedCount}席`}
+                                  {s.track}
                                 </span>
                               )}
                             </div>
-                            {s.description && (
-                              <p className={`mt-3 text-sm leading-relaxed ${t.muted}`}>
-                                {s.description}
-                              </p>
-                            )}
-                            {sessionSpeakers.length > 0 && (
-                              <div className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
-                                {sessionSpeakers.map((sp) => (
-                                  <Link
-                                    key={sp.id}
-                                    href={`/e/${event.slug}/speakers/${sp.id}`}
-                                    className="group flex items-center gap-2.5"
+
+                            {/* セッション情報 */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-3">
+                                <Link
+                                  href={`/e/${event.slug}/sessions/${s.id}`}
+                                  className="hover:underline"
+                                >
+                                  <h4 className="text-2xl font-black leading-tight tracking-tight sm:text-3xl">
+                                    {s.title}
+                                  </h4>
+                                </Link>
+                                {s.capacity != null && (
+                                  <span
+                                    className={`inline-block rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.1em] ${
+                                      s.reservedCount >= s.capacity
+                                        ? "bg-red-600/90 text-white"
+                                        : `${t.muted} ${dark ? "bg-white/10" : "bg-zinc-100"}`
+                                    }`}
                                   >
-                                    <SmallAvatar speaker={sp} dark={dark} />
-                                    <span className="leading-tight">
-                                      <span className="block text-sm font-black group-hover:underline">
-                                        {sp.name}
-                                      </span>
-                                      <span className={`block text-[11px] font-bold uppercase tracking-wider ${t.muted}`}>
-                                        {[sp.company, sp.title].filter(Boolean).join(" / ")}
-                                      </span>
-                                    </span>
-                                  </Link>
-                                ))}
+                                    {s.reservedCount >= s.capacity
+                                      ? "満席"
+                                      : `残り${s.capacity - s.reservedCount}席`}
+                                  </span>
+                                )}
                               </div>
-                            )}
+                              {s.description && (
+                                <p className={`mt-3 text-sm leading-relaxed ${t.muted}`}>
+                                  {s.description}
+                                </p>
+                              )}
+                              {sessionSpeakers.length > 0 && (
+                                <div className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
+                                  {sessionSpeakers.map((sp) => (
+                                    <Link
+                                      key={sp.id}
+                                      href={`/e/${event.slug}/speakers/${sp.id}`}
+                                      className="group/sp flex items-center gap-2.5"
+                                    >
+                                      <SmallAvatar speaker={sp} dark={dark} />
+                                      <span className="leading-tight">
+                                        <span className="block text-sm font-black group-hover/sp:underline">
+                                          {sp.name}
+                                        </span>
+                                        <span className={`block text-[11px] font-bold uppercase tracking-wider ${t.muted}`}>
+                                          {[sp.company, sp.title].filter(Boolean).join(" / ")}
+                                        </span>
+                                      </span>
+                                    </Link>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* セッションバナー画像 (アイキャッチ) */}
+                            <div className="w-full shrink-0 lg:w-72">
+                              <Link
+                                href={`/e/${event.slug}/sessions/${s.id}`}
+                                className="group/banner relative block aspect-[16/9] w-full overflow-hidden rounded-2xl border border-zinc-200/80 bg-zinc-100 shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-xl dark:border-white/10 dark:bg-zinc-900"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={bannerUrl}
+                                  alt={s.title}
+                                  className="h-full w-full object-cover transition-transform duration-500 group-hover/banner:scale-105"
+                                  loading="lazy"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover/banner:opacity-100 flex items-end p-4">
+                                  <span className="text-xs font-black tracking-wider text-white">
+                                    セッション詳細を見る →
+                                  </span>
+                                </div>
+                              </Link>
+                            </div>
                           </div>
                         </li>
                       );
@@ -644,35 +672,40 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
                   <h3 className={`text-sm font-black uppercase tracking-[0.25em] ${t.muted}`}>
                     Coming Soon
                   </h3>
-                  <ul className="mt-5 grid gap-3 sm:grid-cols-2">
-                    {comingSoonSessions.map((s) => (
-                      <li
-                        key={s.id}
-                        className={`border-2 border-dashed p-5 ${
-                          dark ? "border-white/20" : "border-zinc-300"
-                        }`}
-                      >
-                        <span
-                          className="inline-block rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white"
-                          style={{ backgroundColor: color }}
+                  <ul className="mt-5 grid gap-6 sm:grid-cols-2">
+                    {comingSoonSessions.map((s) => {
+                      const bannerUrl =
+                        s.customBannerUrl || `/api/banner/${event.id}/sessions/${s.id}?size=wide`;
+                      return (
+                        <li
+                          key={s.id}
+                          className="group/cs relative overflow-hidden rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/50 p-5 dark:border-white/20 dark:bg-zinc-900/50"
                         >
-                          Coming Soon
-                        </span>
-                        <Link
-                          href={`/e/${event.slug}/sessions/${s.id}`}
-                          className="hover:underline"
-                        >
-                          <h4 className="mt-3 text-xl font-black leading-tight tracking-tight">
-                            {s.title}
-                          </h4>
-                        </Link>
-                        {s.description && (
-                          <p className={`mt-2 text-sm leading-relaxed ${t.muted}`}>
-                            {s.description}
-                          </p>
-                        )}
-                      </li>
-                    ))}
+                          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                            <div className="aspect-[16/9] w-full shrink-0 overflow-hidden rounded-xl border border-zinc-200 shadow-sm sm:w-40 dark:border-white/10">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={bannerUrl}
+                                alt={s.title}
+                                className="h-full w-full object-cover opacity-90 transition-transform duration-500 group-hover/cs:scale-105"
+                                loading="lazy"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <span className="inline-block rounded-full bg-zinc-900 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-[0.15em] text-white dark:bg-white dark:text-zinc-900">
+                                Coming Soon
+                              </span>
+                              <h4 className="mt-2 text-lg font-black leading-snug">{s.title}</h4>
+                              {s.description && (
+                                <p className={`mt-1 text-xs line-clamp-2 ${t.muted}`}>
+                                  {s.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}
