@@ -63,8 +63,10 @@ export function ShopCartDrawer({
   }
 
   const discountJpy = appliedCoupon ? appliedCoupon.discountJpy : 0;
-  const shippingJpy = subtotal > 0 ? 500 : 0;
+  const isFreeShipping = subtotal >= 5000;
+  const shippingJpy = subtotal > 0 ? (isFreeShipping ? 0 : 500) : 0;
   const totalJpy = Math.max(0, subtotal - discountJpy + shippingJpy);
+  const remainingForFreeShipping = Math.max(0, 5000 - subtotal);
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm transition-opacity">
@@ -192,10 +194,24 @@ export function ShopCartDrawer({
                   <span className="font-mono">-¥{discountJpy.toLocaleString()}</span>
                 </div>
               )}
-              <div className="flex justify-between">
-                <span>配送料 (一律)</span>
-                <span className="font-bold font-mono">¥{shippingJpy.toLocaleString()}</span>
+              <div className="flex justify-between items-center">
+                <span>配送料</span>
+                {isFreeShipping ? (
+                  <span className="font-bold text-emerald-600 flex items-center gap-1">
+                    <span>¥0</span>
+                    <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[9px] font-black text-emerald-800">
+                      送料無料適用 ✓
+                    </span>
+                  </span>
+                ) : (
+                  <span className="font-bold font-mono">¥{shippingJpy.toLocaleString()}</span>
+                )}
               </div>
+              {!isFreeShipping && subtotal > 0 && (
+                <p className="text-[10px] text-zinc-400 text-right">
+                  あと <span className="font-bold text-zinc-900 font-mono">¥{remainingForFreeShipping.toLocaleString()}</span> のご購入で送料無料
+                </p>
+              )}
             </div>
 
             <div className="flex items-center justify-between border-t border-zinc-200 pt-3 text-base font-black text-zinc-950">

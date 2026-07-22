@@ -11,10 +11,21 @@ import type {
 } from "@/lib/types";
 import { ui } from "@/lib/ui";
 
-type TabType = "products" | "categories" | "stock" | "coupons" | "orders";
+type TabType = "products" | "categories" | "stock" | "coupons" | "shipping" | "orders";
 
 export default function ShopDashboardPage() {
   const [activeTab, setActiveTab] = useState<TabType>("products");
+
+  // 5. 送料・配送設定データ
+  const [shippingConfig, setShippingConfig] = useState({
+    flatShippingJpy: 500,
+    freeShippingThresholdJpy: 5000,
+    carrierName: "ヤマト運輸 / 宅急便・ネコポス",
+    leadTimeText: "ご注文完了後 2〜3 営業日以内に発送いたします",
+    isFreeShippingEnabled: true,
+  });
+
+  const [savedShippingNotice, setSavedShippingNotice] = useState(false);
 
   // 1. 初期アイテムデータ
   const [products, setProducts] = useState<ShopProduct[]>([
@@ -207,12 +218,13 @@ export default function ShopDashboardPage() {
       </div>
 
       {/* 🏛️ STORES風 機能グリッド・ナビゲーションタブ */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
         {[
           { id: "products", label: "アイテム", icon: "👕", count: products.length },
           { id: "categories", label: "カテゴリ", icon: "📖", count: categories.length },
           { id: "stock", label: "在庫", icon: "📦", count: products.reduce((acc, p) => acc + p.stock, 0) },
           { id: "coupons", label: "クーポン", icon: "🎟️", count: coupons.filter((c) => c.isActive).length },
+          { id: "shipping", label: "送料・配送", icon: "🚚", count: `¥${shippingConfig.flatShippingJpy}` },
           { id: "orders", label: "オーダー", icon: "🛒", count: orders.length },
         ].map((tab) => (
           <button
@@ -485,7 +497,144 @@ export default function ShopDashboardPage() {
         </div>
       )}
 
-      {/* ─── 5. オーダー・受注管理タブ ─── */}
+      {/* ─── 5. 送料・配送設定タブ ─── */}
+      {activeTab === "shipping" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-black text-zinc-950">🚚 送料・配送設定</h2>
+              <p className="mt-0.5 text-xs text-zinc-500">
+                全国一律の送料金額、条件付き送料無料ライン、配送手段と発送目安日数を指定します。
+              </p>
+            </div>
+            {savedShippingNotice && (
+              <span className="rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-bold text-emerald-800">
+                ✓ 設定を保存しました
+              </span>
+            )}
+          </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              setSavedShippingNotice(true);
+              setTimeout(() => setSavedShippingNotice(false), 3000);
+            }}
+            className="rounded-3xl border border-zinc-200 bg-white p-7 shadow-sm space-y-6 text-xs"
+          >
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="font-bold text-zinc-900">全国一律配送料 (税込)</label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-2.5 font-bold text-zinc-400">¥</span>
+                  <input
+                    type="number"
+                    required
+                    value={shippingConfig.flatShippingJpy}
+                    onChange={(e) =>
+                      setShippingConfig({
+                        ...shippingConfig,
+                        flatShippingJpy: Number(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full rounded-xl border border-zinc-300 pl-8 pr-3.5 py-2 font-mono font-bold text-zinc-900 focus:outline-none"
+                  />
+                </div>
+                <p className="text-[10px] text-zinc-400">
+                  通常配送の基本送料金額です。カートの合計計算に自動適用されます。
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-zinc-900">送料無料ライン (まとめ買い特典)</label>
+                  <label className="flex items-center gap-1.5 cursor-pointer text-[10px] font-bold text-zinc-600">
+                    <input
+                      type="checkbox"
+                      checked={shippingConfig.isFreeShippingEnabled}
+                      onChange={(e) =>
+                        setShippingConfig({
+                          ...shippingConfig,
+                          isFreeShippingEnabled: e.target.checked,
+                        })
+                      }
+                      className="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <span>有効化</span>
+                  </label>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-2.5 font-bold text-zinc-400">¥</span>
+                  <input
+                    type="number"
+                    disabled={!shippingConfig.isFreeShippingEnabled}
+                    value={shippingConfig.freeShippingThresholdJpy}
+                    onChange={(e) =>
+                      setShippingConfig({
+                        ...shippingConfig,
+                        freeShippingThresholdJpy: Number(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full rounded-xl border border-zinc-300 pl-8 pr-3.5 py-2 font-mono font-bold text-zinc-900 focus:outline-none disabled:bg-zinc-100 disabled:text-zinc-400"
+                  />
+                </div>
+                <p className="text-[10px] text-zinc-400">
+                  {shippingConfig.isFreeShippingEnabled
+                    ? `小計が ¥${shippingConfig.freeShippingThresholdJpy.toLocaleString()} 以上で自動的に配送料が無料になります。`
+                    : "まとめ買い送料無料ラインは無効です。"}
+                </p>
+              </div>
+            </div>
+
+            <div className="border-t border-zinc-100 pt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="font-bold text-zinc-900">配送業者・配送手段</label>
+                <input
+                  type="text"
+                  required
+                  value={shippingConfig.carrierName}
+                  onChange={(e) =>
+                    setShippingConfig({
+                      ...shippingConfig,
+                      carrierName: e.target.value,
+                    })
+                  }
+                  placeholder="例: ヤマト運輸 / 宅急便・ネコポス"
+                  className="w-full rounded-xl border border-zinc-300 px-3.5 py-2 font-bold text-zinc-900 focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="font-bold text-zinc-900">発送目安日数メッセージ</label>
+                <input
+                  type="text"
+                  required
+                  value={shippingConfig.leadTimeText}
+                  onChange={(e) =>
+                    setShippingConfig({
+                      ...shippingConfig,
+                      leadTimeText: e.target.value,
+                    })
+                  }
+                  placeholder="例: ご注文完了後 2〜3 営業日以内に発送いたします"
+                  className="w-full rounded-xl border border-zinc-300 px-3.5 py-2 font-bold text-zinc-900 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="border-t border-zinc-100 pt-4 flex justify-end">
+              <button
+                type="submit"
+                className="rounded-xl bg-zinc-950 px-6 py-2.5 text-xs font-black text-white shadow-md hover:bg-zinc-800"
+              >
+                送料設定を保存する 💾
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ─── 6. オーダー・受注管理タブ ─── */}
       {activeTab === "orders" && (
         <div className="space-y-6">
           <h2 className="text-lg font-black text-zinc-950">受注入荷・配送先一覧</h2>

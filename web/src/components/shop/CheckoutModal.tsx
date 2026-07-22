@@ -38,7 +38,8 @@ export function CheckoutModal({
     (acc, item) => acc + item.product.priceJpy * item.quantity,
     0
   );
-  const shippingJpy = subtotal > 0 ? 500 : 0;
+  const isFreeShipping = subtotal >= 5000;
+  const shippingJpy = subtotal > 0 ? (isFreeShipping ? 0 : 500) : 0;
   const totalJpy = Math.max(0, subtotal - discountJpy + shippingJpy);
 
   function handleSubmitOrder(e: React.FormEvent) {
