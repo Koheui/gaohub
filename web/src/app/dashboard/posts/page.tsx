@@ -7,6 +7,7 @@ import { ui } from "@/lib/ui";
 export default function PostsDashboardPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("すべて");
+  const [sortBy, setSortBy] = useState<"featured" | "price-desc" | "price-asc" | "latest" | "stock">("featured");
 
   // 初期ダミー出品商品リスト (複数商品 ＆ カテゴリ分類)
   const [products, setProducts] = useState<CreatedProductItem[]>([
@@ -43,13 +44,33 @@ export default function PostsDashboardPage() {
       isDigital: false,
       createdAtText: "2026.07.18",
     },
+    {
+      id: "prod-4",
+      name: "AIエージェント『軍師』構築完全ガイド (PDF)",
+      category: "デジタルコンテンツ",
+      priceJpy: 9800,
+      stock: 99,
+      description: "業務自動化・ナレッジ連動AIシステム構築の実用解説書。",
+      imageUrls: ["https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80"],
+      isDigital: true,
+      createdAtText: "2026.07.22",
+    },
   ]);
 
   const categories = ["すべて", ...Array.from(new Set(products.map((p) => p.category)))];
 
+  // 1. カテゴリフィルタ
   const filteredProducts = selectedCategory === "すべて"
-    ? products
+    ? [...products]
     : products.filter((p) => p.category === selectedCategory);
+
+  // 2. 配置順・価格順ソート処理
+  const sortedProducts = filteredProducts.sort((a, b) => {
+    if (sortBy === "price-desc") return b.priceJpy - a.priceJpy; // 価格が高い順
+    if (sortBy === "price-asc") return a.priceJpy - b.priceJpy;   // 価格が安い順
+    if (sortBy === "stock") return b.stock - a.stock;           // 在庫が多い順
+    return 0; // おすすめ・標準配置順
+  });
 
   return (
     <div className="max-w-6xl">
@@ -69,8 +90,9 @@ export default function PostsDashboardPage() {
         </button>
       </div>
 
-      {/* カテゴリフィルタ切り替えタブ */}
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+      {/* カテゴリフィルタ ＆ 配置順/価格ソートコントローラー */}
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+        {/* カテゴリ切り替え */}
         <div className="flex flex-wrap gap-2">
           {categories.map((cat) => (
             <button
@@ -86,14 +108,29 @@ export default function PostsDashboardPage() {
             </button>
           ))}
         </div>
-        <span className="font-mono text-xs font-bold text-zinc-400">
-          全 {filteredProducts.length} アイテム
-        </span>
+
+        {/* 配置順・価格ソートセレクト */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-bold text-zinc-400">並び順:</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="rounded-xl border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-xs font-black text-zinc-900 focus:border-zinc-950 focus:bg-white focus:outline-none"
+          >
+            <option value="featured">🌟 おすすめ配置順</option>
+            <option value="price-desc">⬇️ 価格が高い順 (高単価)</option>
+            <option value="price-asc">⬆️ 価格が安い順 (手頃)</option>
+            <option value="stock">📦 在庫が多い順</option>
+          </select>
+          <span className="font-mono text-xs font-bold text-zinc-400">
+            ({sortedProducts.length} 点)
+          </span>
+        </div>
       </div>
 
       {/* 出品商品・アイテムグリッド一覧 */}
       <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredProducts.map((item) => (
+        {sortedProducts.map((item) => (
           <div
             key={item.id}
             className="flex flex-col justify-between overflow-hidden rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:shadow-md"
