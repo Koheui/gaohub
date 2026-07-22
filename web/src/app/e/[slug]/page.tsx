@@ -847,7 +847,7 @@ export default async function PublicEventPage(props: { params: Promise<{ slug: s
 
         {/* ─── 主催者フォロー・コミュニティ登録 ─── */}
         <section className="relative mx-auto max-w-4xl px-6 pt-12">
-          <OrganizerFollowCard organizerName="主催者" eventId={event.id} />
+          <OrganizerFollowCard organizerName="主催者" organizerId={event.id} />
         </section>
 
         {/* ─── 締めのCTA ─── */}

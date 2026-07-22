@@ -172,7 +172,7 @@ export async function sendSurveyEmail(params: {
 export async function sendFollowerWelcomeEmail(params: {
   to: string;
   organizerName: string;
-  eventTitle: string;
+  userName?: string;
 }) {
   const client = getResend();
   if (!client) {
@@ -183,12 +183,13 @@ export async function sendFollowerWelcomeEmail(params: {
   await client.emails.send({
     from,
     to: params.to,
-    subject: `【フォロー完了】${params.organizerName} の次回イベント通知を登録しました`,
+    subject: `【フォロー完了】${params.organizerName} の新着通知を登録しました`,
     html: `
       <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #111;">
         <h2>${escapeHtml(params.organizerName)} をフォローしました 🔔</h2>
+        <p>${escapeHtml(params.userName || "ファン")} 様</p>
         <p>ご登録ありがとうございます。</p>
-        <p>今後 ${escapeHtml(params.organizerName)} が新しいイベントやワークショップを開催する際に、優先的に案内メールをお届けいたします。</p>
+        <p>今後 ${escapeHtml(params.organizerName)} が新しい投稿、限定イベント、有料記事を発表した際に、優先的に案内メールをお届けいたします。</p>
         <p style="margin-top:24px;color:#666;font-size:13px;">
           GAO HUB コミュニティプラットフォーム
         </p>

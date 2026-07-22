@@ -1,53 +1,55 @@
-import { NextRequest, NextResponse } from "next/server";
-import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "@/lib/firebase/client";
+import { NextResponse } from "next/server";
+import { adminDb } from "@/lib/firebase/admin";
 import { sendFollowerWelcomeEmail } from "@/lib/email";
-import { getEventById } from "@/lib/server/events";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { email, organizerName, eventId } = body;
+    const {
+      organizerId = "default-org",
+      lastName,
+      firstName,
+      handleName,
+      email,
+      phone,
+      address,
+      company,
+      position,
+    } = await req.json();
 
-    if (!email || typeof email !== "string" || !email.includes("@")) {
-      return NextResponse.json({ error: "有効なメールアドレスを入力してください" }, { status: 400 });
+    if (!email || !lastName || !firstName) {
+      return NextResponse.json({ error: "Email, LastName, and FirstName are required" }, { status: 400 });
     }
 
-    const name = organizerName || "主催者";
+    const db = adminDb();
+    const followerRef = db.collection("organizers").doc(organizerId).collection("followers").doc(email);
 
-    // 重複登録チェック
-    const q = query(
-      collection(db, "organizer_followers"),
-      where("email", "==", email),
-      where("organizerName", "==", name)
-    );
-    const snap = await getDocs(q);
+    const followerData = {
+      email,
+      lastName,
+      firstName,
+      displayName: `${lastName} ${firstName}`,
+      handleName: handleName || email.split("@")[0],
+      phone: phone || "",
+      address: address || "",
+      company: company || "",
+      position: position || "",
+      followedAt: new Date().toISOString(),
+    };
 
-    if (snap.empty) {
-      await addDoc(collection(db, "organizer_followers"), {
-        email,
-        organizerName: name,
-        eventId: eventId || null,
-        createdAt: new Date().toISOString(),
-      });
+    await followerRef.set(followerData, { merge: true });
 
-      // ウェルカムメールの即時送信
-      let eventTitle = "コミュニティイベント";
-      if (eventId) {
-        const ev = await getEventById(eventId);
-        if (ev) eventTitle = ev.title;
-      }
+    // ウェルカムメール通知 (Resend API)
+    await sendFollowerWelcomeEmail({
+      to: email,
+      userName: `${lastName} ${firstName}`,
+      organizerName: "Future Studio 株式会社",
+    });
 
-      await sendFollowerWelcomeEmail({
-        to: email,
-        organizerName: name,
-        eventTitle,
-      });
-    }
+    console.log(`[FollowAPI] Registered new follower: ${email} for organizer: ${organizerId}`);
 
-    return NextResponse.json({ success: true, message: `主催者「${name}」をフォローしました！` });
-  } catch (err: any) {
-    console.error("[organizer follow api] error:", err);
-    return NextResponse.json({ error: err?.message || String(err) }, { status: 500 });
+    return NextResponse.json({ success: true, follower: followerData });
+  } catch (error) {
+    console.error("[FollowAPI Error]:", error);
+    return NextResponse.json({ error: "Failed to process follow" }, { status: 500 });
   }
 }

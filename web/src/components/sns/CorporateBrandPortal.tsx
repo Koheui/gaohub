@@ -89,7 +89,7 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
                 followed ? "bg-emerald-600 text-white" : "bg-zinc-950 text-white"
               }`}
             >
-              {followed ? "✓ 公式フォロー中 🔔" : "公式フォロー 🔔"}
+              {followed ? "✓ フォロー中 🔔" : "フォロー 🔔"}
             </button>
           </div>
         </div>
