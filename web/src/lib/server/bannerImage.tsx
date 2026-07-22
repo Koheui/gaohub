@@ -18,7 +18,17 @@ export type SessionBannerStyle =
   | "split-duotone";
 
 /** イベント全体バナーのデザインパターン */
-export type EventBannerStyle = "classic" | "timetable";
+export type EventBannerStyle =
+  | "classic"
+  | "timetable"
+  | "duotone"
+  | "geo"
+  | "type-heavy"
+  | "monochrome-minimal"
+  | "split-duotone";
+
+/** イベント全体バナーでも使える「アート系」スタイル(セッションレンダラーを流用) */
+export type EventArtisticStyle = Exclude<EventBannerStyle, "classic" | "timetable">;
 
 const SIZES: Record<BannerSize, { width: number; height: number }> = {
   wide: { width: 1200, height: 630 },
@@ -1200,6 +1210,68 @@ function renderSessionSplitDuotone(args: SessionBannerArgs): ImageResponse {
     ),
     { ...dim, fonts }
   );
+}
+
+/**
+ * イベント全体バナーを「アート系」スタイル(タイポポスター/モノクロ/スプリット2色/
+ * デュオトーン/ジオメトリック)で生成する。セッションバナーのレンダラーを流用し、
+ * タイトル=イベント名、会場=venueName、登壇者=全員 の疑似セッションを組んで描画する。
+ */
+export async function renderEventArtisticBanner(
+  event: PublicEvent,
+  speakers: PublicSpeaker[],
+  size: BannerSize,
+  style: EventArtisticStyle
+): Promise<ImageResponse> {
+  const dim = SIZES[size];
+  const isTall = size !== "wide";
+  const scale = size === "story" ? 1.5 : size === "square" ? 1.25 : 1;
+
+  const dateText = dayFmt.format(event.startsAt);
+  const timeText = `${timeFmt.format(event.startsAt)} – ${timeFmt.format(event.endsAt)}`;
+
+  // 疑似セッション(セッションレンダラーが読む項目だけを埋める)
+  const pseudoSession: PublicSession = {
+    id: "event",
+    title: event.title,
+    description: event.tagline ?? "",
+    track: event.venueName || "",
+    startsAt: event.startsAt,
+    endsAt: event.endsAt,
+    speakerIds: [],
+    isComingSoon: false,
+    capacity: null,
+    reservedCount: 0,
+    customBannerUrl: null,
+  };
+
+  const shown = speakers.filter((s) => s.name).slice(0, size === "story" ? 6 : 5);
+  const fontText = `${event.title}${dateText}${timeText}${event.venueName}${shown
+    .map((s) => `${s.name}${s.company}${s.title}`)
+    .join("")}DATE TIME TRACK SPEAKERS GAO HUB0123456789:– /・`;
+  const fontData = await loadNotoSansJpBlack(fontText);
+  const fonts = fontData
+    ? [{ name: "NotoSansJP", data: fontData, weight: 900 as const, style: "normal" as const }]
+    : undefined;
+
+  const args: SessionBannerArgs = {
+    event,
+    session: pseudoSession,
+    speakers: shown,
+    size,
+    dim,
+    isTall,
+    scale,
+    dateText,
+    timeText,
+    fonts,
+  };
+
+  if (style === "duotone") return renderSessionDuotone(args);
+  if (style === "geo") return renderSessionGeo(args);
+  if (style === "monochrome-minimal") return renderSessionMonochrome(args);
+  if (style === "split-duotone") return renderSessionSplitDuotone(args);
+  return renderSessionTypeHeavy(args);
 }
 
 /**

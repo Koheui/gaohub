@@ -1,6 +1,6 @@
 import "server-only";
 import { adminDb } from "@/lib/firebase/admin";
-import type { EventTemplate, RegistrationFieldDef } from "@/lib/types";
+import type { EventBannerStyle, EventTemplate, RegistrationFieldDef } from "@/lib/types";
 
 export interface PublicTicketType {
   id: string;
@@ -20,6 +20,7 @@ export interface PublicEvent {
   coverImageUrl: string | null;
   themeColor: string;
   template: EventTemplate;
+  bannerStyle: EventBannerStyle;
   /** ヒーロー背景の巨大アウトライン文字。空なら開催年を自動表示 */
   ghostText: string;
   showGhostText: boolean;
@@ -103,6 +104,7 @@ function toPublicEvent(id: string, d: FirebaseFirestore.DocumentData): PublicEve
     coverImageUrl: d.coverImageUrl ?? null,
     themeColor: d.themeColor ?? "#18181b",
     template: (d.template as EventTemplate) ?? "kodak",
+    bannerStyle: (d.bannerStyle as EventBannerStyle) ?? "classic",
     ghostText: d.ghostText ?? "",
     showGhostText: d.showGhostText ?? true,
     showMarquee: d.showMarquee ?? true,

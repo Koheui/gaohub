@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getEventById, getPublicSessions, getPublicSpeakers } from "@/lib/server/events";
 import {
   renderBannerImage,
+  renderEventArtisticBanner,
   renderTimetableBannerImage,
   type BannerSize,
+  type EventArtisticStyle,
   type EventBannerStyle,
 } from "@/lib/server/bannerImage";
 
@@ -12,7 +14,15 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const VALID_SIZES: BannerSize[] = ["wide", "square", "story"];
-const VALID_STYLES: EventBannerStyle[] = ["classic", "timetable"];
+const VALID_STYLES: EventBannerStyle[] = [
+  "classic",
+  "timetable",
+  "duotone",
+  "geo",
+  "type-heavy",
+  "monochrome-minimal",
+  "split-duotone",
+];
 
 export async function GET(req: NextRequest, context: any) {
   try {
@@ -45,7 +55,9 @@ export async function GET(req: NextRequest, context: any) {
     const image =
       style === "timetable"
         ? await renderTimetableBannerImage(event, await getPublicSessions(eventId), speakers, size)
-        : await renderBannerImage(event, speakers, size);
+        : style === "classic"
+          ? await renderBannerImage(event, speakers, size)
+          : await renderEventArtisticBanner(event, speakers, size, style as EventArtisticStyle);
 
     const buffer = await image.arrayBuffer();
     const headers = new Headers();

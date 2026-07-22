@@ -29,6 +29,11 @@ const SIZE_OPTIONS: { id: BannerSize; label: string; use: string; width: number;
 const EVENT_STYLE_OPTIONS: { id: BannerStyle; label: string; desc: string }[] = [
   { id: "classic", label: "クラシック", desc: "LPと同じグラデーション地" },
   { id: "timetable", label: "タイムテーブル", desc: "プログラム表(セッション一覧と連動)" },
+  { id: "type-heavy", label: "タイポポスター", desc: "登壇者写真を暗く敷き × 巨大タイトル" },
+  { id: "monochrome-minimal", label: "モノクロ・ミニマル", desc: "白地 × 黒フレーム × 端正なグリッド" },
+  { id: "split-duotone", label: "スプリット2色", desc: "2色分割 × 写真を染める" },
+  { id: "duotone", label: "デュオトーン", desc: "紙地 × 写真にカラーを重ねる" },
+  { id: "geo", label: "ジオメトリック", desc: "全面写真 × 斜めのカラーブロック" },
 ];
 
 const SESSION_STYLE_OPTIONS: { id: BannerStyle; label: string; desc: string }[] = [
@@ -109,6 +114,7 @@ export default function BannerPage({ params }: { params: Promise<{ id: string }>
   const [bannerError, setBannerError] = useState<string | null>(null);
 
   const [processingSpeakerId, setProcessingSpeakerId] = useState<string | null>(null);
+  const [eventBannerStyle, setEventBannerStyle] = useState<BannerStyle>("classic");
 
   useEffect(() => {
     const qSess = query(collection(db, "events", id, "sessions"), orderBy("startsAt", "asc"));
@@ -121,9 +127,14 @@ export default function BannerPage({ params }: { params: Promise<{ id: string }>
       setSpeakers(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as SpeakerDoc));
     });
 
+    const unsubEvent = onSnapshot(doc(db, "events", id), (snap) => {
+      setEventBannerStyle(((snap.data()?.bannerStyle as BannerStyle) ?? "classic"));
+    });
+
     return () => {
       unsubSess();
       unsubSpk();
+      unsubEvent();
     };
   }, [id]);
 
@@ -192,6 +203,21 @@ export default function BannerPage({ params }: { params: Promise<{ id: string }>
       alert("✨ このバナーをセッション告知バナーとして本番保存・連動しました！");
     } catch (err) {
       setBannerError(err instanceof Error ? err.message : "バナー連動保存に失敗しました");
+    } finally {
+      setApplying(false);
+    }
+  }
+
+  // 生成したデザインをイベント既定バナー(OG共有画像)として保存
+  async function handleSetEventDefault() {
+    if (isSessionTarget) return;
+    setApplying(true);
+    setBannerError(null);
+    try {
+      await updateDoc(doc(db, "events", id), { bannerStyle: effectiveStyle });
+      alert("✨ このデザインをイベントのOG共有画像に設定しました！");
+    } catch (err) {
+      setBannerError(err instanceof Error ? err.message : "設定に失敗しました");
     } finally {
       setApplying(false);
     }
@@ -436,6 +462,22 @@ export default function BannerPage({ params }: { params: Promise<{ id: string }>
           >
             {applying ? "本番適用中…" : "このバナーをセッション告知バナーに連動保存 🚀"}
           </button>
+        )}
+
+        {/* イベント全体バナー: 選んだデザインを OG 共有画像の既定に設定 */}
+        {!isSessionTarget && effectiveStyle !== eventBannerStyle && (
+          <button
+            onClick={handleSetEventDefault}
+            disabled={applying}
+            className="rounded-lg bg-purple-600 px-6 py-3 text-sm font-bold text-white shadow-md hover:bg-purple-700 disabled:opacity-50"
+          >
+            {applying ? "設定中…" : "このデザインをOG共有画像に設定 🖼️"}
+          </button>
+        )}
+        {!isSessionTarget && effectiveStyle === eventBannerStyle && (
+          <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-900">
+            OG共有画像に設定中 ✓
+          </span>
         )}
 
         <button onClick={handleDownload} disabled={downloading} className={ui.btn}>

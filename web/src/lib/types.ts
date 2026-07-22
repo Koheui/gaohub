@@ -31,6 +31,16 @@ export type EventTemplate =
   | "editorial-serif"
   | "metro-grid";
 
+/** イベント全体バナー(OG共有画像)のデザイン。bannerImage.tsx の EventBannerStyle と対応 */
+export type EventBannerStyle =
+  | "classic"
+  | "timetable"
+  | "duotone"
+  | "geo"
+  | "type-heavy"
+  | "monochrome-minimal"
+  | "split-duotone";
+
 export interface EventDoc {
   id: string;
   orgId: string;
@@ -42,6 +52,8 @@ export interface EventDoc {
   coverImageUrl: string | null;
   themeColor: string;
   template: EventTemplate;
+  /** イベント全体バナー(OG共有画像)の既定デザイン。未設定は "classic" */
+  bannerStyle?: EventBannerStyle;
   /** ヒーロー背景の巨大アウトライン文字。空なら開催年を自動表示 */
   ghostText: string;
   /** ヒーロー背景の巨大アウトライン文字を表示するか */

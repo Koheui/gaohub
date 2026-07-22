@@ -1,5 +1,14 @@
-import { getPublicSpeakers, getPublishedEventBySlug } from "@/lib/server/events";
-import { renderBannerImage } from "@/lib/server/bannerImage";
+import {
+  getPublicSessions,
+  getPublicSpeakers,
+  getPublishedEventBySlug,
+} from "@/lib/server/events";
+import {
+  renderBannerImage,
+  renderEventArtisticBanner,
+  renderTimetableBannerImage,
+  type EventArtisticStyle,
+} from "@/lib/server/bannerImage";
 import type { RegistrationFieldDef } from "@/lib/types";
 
 export const size = { width: 1200, height: 630 };
@@ -15,6 +24,7 @@ const FALLBACK_EVENT = {
   coverImageUrl: null,
   themeColor: "#6d28d9",
   template: "kodak" as const,
+  bannerStyle: "classic" as const,
   ghostText: "",
   showGhostText: true,
   showMarquee: true,
@@ -41,6 +51,15 @@ const FALLBACK_EVENT = {
 export default async function OgImage(props: { params: Promise<{ slug: string }> }) {
   const { slug } = await props.params;
   const event = await getPublishedEventBySlug(slug);
+  const ev = event ?? FALLBACK_EVENT;
   const speakers = event ? await getPublicSpeakers(event.id) : [];
-  return renderBannerImage(event ?? FALLBACK_EVENT, speakers, "wide");
+  const style = ev.bannerStyle ?? "classic";
+
+  if (event && style === "timetable") {
+    return renderTimetableBannerImage(event, await getPublicSessions(event.id), speakers, "wide");
+  }
+  if (event && style !== "classic") {
+    return renderEventArtisticBanner(event, speakers, "wide", style as EventArtisticStyle);
+  }
+  return renderBannerImage(ev, speakers, "wide");
 }
