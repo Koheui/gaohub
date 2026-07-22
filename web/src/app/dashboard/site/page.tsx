@@ -230,14 +230,21 @@ export default function SiteCmsDashboardPage() {
                     <select
                       value={item.type}
                       onChange={(e) => {
+                        const newType = e.target.value as any;
                         const updated = [...pickups];
-                        updated[idx].type = e.target.value as any;
+                        updated[idx].type = newType;
+                        if (newType === "shop") {
+                          updated[idx].badgeText = "📦 公式ECストア";
+                          updated[idx].title = "Future Studio 公式ECストア";
+                          updated[idx].subtitle = "小倉コーラ原液シロップ、emolink完成品カード、イベント限定グッズ等の公式直販ストア。";
+                          updated[idx].href = "/u/oka";
+                        }
                         setPickups(updated);
                       }}
                       className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-bold focus:outline-none"
                     >
                       <option value="event">🎟️ イベント</option>
-                      <option value="shop">📦 EC物販商品</option>
+                      <option value="shop">📦 公式ECストア (ショップトップ)</option>
                       <option value="journal">📖 ジャーナル記事</option>
                     </select>
                   </div>
@@ -294,6 +301,32 @@ export default function SiteCmsDashboardPage() {
                       <p className="mt-1.5 text-[10px] font-medium text-purple-700">
                         イベントを選択すると、タイトル・キャッチコピー・詳細ページURL (`/e/slug`)・カバー画像が一括で自動セットされます。
                       </p>
+                    </div>
+                  )}
+
+                  {/* 📦 公式ECストアトップページ自動連動案内 */}
+                  {item.type === "shop" && (
+                    <div className="sm:col-span-2 rounded-xl border border-emerald-200 bg-emerald-50/80 p-3.5 shadow-sm flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-black text-emerald-950">📦 公式ECストアのトップページにリンク中</p>
+                        <p className="text-[10px] text-emerald-700">
+                          特定商品単品ではなく、全商品（小倉コーラ原液・emolink・限定グッズ等）が並ぶストアトップ (`/u/oka`) へ誘導します。
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = [...pickups];
+                          updated[idx].badgeText = "📦 公式ECストア";
+                          updated[idx].title = "Future Studio 公式ECストア";
+                          updated[idx].subtitle = "小倉コーラ原液シロップ、emolink完成品カード、イベント限定グッズ等の公式直販ストア。";
+                          updated[idx].href = "/u/oka";
+                          setPickups(updated);
+                        }}
+                        className="shrink-0 rounded-lg bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-800"
+                      >
+                        ストア情報を再一括リセット
+                      </button>
                     </div>
                   )}
 
