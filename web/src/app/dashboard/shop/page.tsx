@@ -761,6 +761,68 @@ export default function ShopDashboardPage() {
                 </select>
               </div>
 
+              {/* 商品写真アップロード ＆ URL指定 */}
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 space-y-3">
+                <label className="font-bold text-zinc-900 block">📸 商品写真・アイキャッチ画像 *</label>
+
+                {/* プレビュー表示 */}
+                {editingProduct.imageUrl ? (
+                  <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-zinc-200 border border-zinc-300">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={editingProduct.imageUrl}
+                      alt="商品写真プレビュー"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-32 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 bg-white text-zinc-400">
+                    <span className="text-2xl">🖼️</span>
+                    <span className="mt-1 text-xs font-bold">写真が未設定です</span>
+                  </div>
+                )}
+
+                {/* ファイル選択 ＆ URL直接入力 */}
+                <div className="space-y-2 pt-1">
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-500 block mb-1">
+                      📁 PC・スマホから写真を選択してアップロード
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const dataUrl = event.target?.result as string;
+                            if (dataUrl) {
+                              setEditingProduct({ ...editingProduct, imageUrl: dataUrl });
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="w-full text-xs text-zinc-600 file:mr-3 file:rounded-xl file:border-0 file:bg-zinc-900 file:px-3.5 file:py-1.5 file:text-xs file:font-bold file:text-white hover:file:bg-zinc-700"
+                    />
+                  </div>
+
+                  <div className="pt-2 border-t border-zinc-200/80">
+                    <label className="text-[10px] font-bold text-zinc-500 block mb-1">
+                      🔗 または画像URLを直接入力
+                    </label>
+                    <input
+                      type="url"
+                      value={editingProduct.imageUrl}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, imageUrl: e.target.value })}
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-1.5 font-mono text-xs font-bold text-zinc-900 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="font-bold text-zinc-500">商品説明文</label>
                 <textarea
@@ -769,6 +831,19 @@ export default function ShopDashboardPage() {
                   onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
                   className="mt-1 w-full rounded-xl border border-zinc-300 p-3 font-medium focus:outline-none"
                 />
+              </div>
+
+              <div className="flex items-center justify-between rounded-xl bg-zinc-100 p-3">
+                <span className="font-bold text-zinc-700">ストアに公開する</span>
+                <label className="flex items-center gap-2 cursor-pointer font-bold text-xs text-zinc-900">
+                  <input
+                    type="checkbox"
+                    checked={editingProduct.isPublished}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, isPublished: e.target.checked })}
+                    className="h-4 w-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <span>{editingProduct.isPublished ? "公開中 ✓" : "非公開"}</span>
+                </label>
               </div>
 
               <div className="flex justify-end gap-3 pt-3">
