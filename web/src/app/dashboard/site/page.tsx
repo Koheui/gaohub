@@ -274,17 +274,36 @@ export default function SiteCmsDashboardPage() {
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-bold text-zinc-500">アイキャッチ画像URL</label>
-                    <input
-                      type="url"
-                      value={item.imageUrl}
-                      onChange={(e) => {
-                        const updated = [...pickups];
-                        updated[idx].imageUrl = e.target.value;
-                        setPickups(updated);
-                      }}
-                      className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium focus:outline-none"
-                    />
+                    <label className="text-[11px] font-bold text-zinc-500">アイキャッチ画像 (直接アップロード)</label>
+                    <div className="mt-1.5 flex items-center gap-3">
+                      {item.imageUrl ? (
+                        <div className="relative h-16 w-28 overflow-hidden rounded-xl border border-zinc-300 bg-zinc-100">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="flex h-16 w-28 items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-zinc-100 text-xs font-bold text-zinc-400">
+                          画像なし
+                        </div>
+                      )}
+                      
+                      <label className="cursor-pointer rounded-xl border border-zinc-300 bg-white px-4 py-2 text-xs font-bold text-zinc-900 shadow-sm transition-transform hover:scale-[1.02] hover:bg-zinc-50">
+                        📷 画像を変更・アップロード
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const objectUrl = URL.createObjectURL(file);
+                            const updated = [...pickups];
+                            updated[idx].imageUrl = objectUrl;
+                            setPickups(updated);
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
                   </div>
 
                   <div>
@@ -331,14 +350,34 @@ export default function SiteCmsDashboardPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-bold text-zinc-500">ヴィジョン代表写真URL</label>
-              <input
-                type="url"
-                required
-                value={aboutImageUrl}
-                onChange={(e) => setAboutImageUrl(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm font-medium focus:border-zinc-950 focus:bg-white focus:outline-none"
-              />
+              <label className="text-xs font-bold text-zinc-500">ヴィジョン代表写真 (直接アップロード)</label>
+              <div className="mt-2 flex items-center gap-4">
+                {aboutImageUrl ? (
+                  <div className="relative h-24 w-36 overflow-hidden rounded-2xl border border-zinc-300 bg-zinc-100 shadow-sm">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={aboutImageUrl} alt="" className="h-full w-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="flex h-24 w-36 items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-zinc-100 text-xs font-bold text-zinc-400">
+                    画像なし
+                  </div>
+                )}
+                
+                <label className="cursor-pointer rounded-xl border border-zinc-300 bg-white px-5 py-2.5 text-xs font-bold text-zinc-900 shadow-sm transition-transform hover:scale-[1.02] hover:bg-zinc-50">
+                  📷 写真を変更・アップロード
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const objectUrl = URL.createObjectURL(file);
+                      setAboutImageUrl(objectUrl);
+                    }}
+                    className="hidden"
+                  />
+                </label>
+              </div>
             </div>
           </div>
         </div>
