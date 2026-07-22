@@ -77,6 +77,12 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
               <a href="#about" className="hover:text-zinc-950">ABOUT</a>
               <a href="#journals" className="hover:text-zinc-950">JOURNAL</a>
             </nav>
+            <Link
+              href="/dashboard"
+              className="hidden font-mono text-xs font-bold text-zinc-500 hover:text-zinc-950 sm:inline"
+            >
+              ダッシュボード ⚙️
+            </Link>
             <button
               onClick={() => setFollowed((v) => !v)}
               className={`rounded-full px-5 py-2 text-xs font-black transition-transform hover:scale-[1.02] ${
