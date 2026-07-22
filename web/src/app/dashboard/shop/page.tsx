@@ -90,13 +90,13 @@ export default function ShopDashboardPage() {
   const [orders, setOrders] = useState<ShopOrder[]>([
     {
       id: "ord-1001",
-      customerName: "福岡 太郎",
-      customerEmail: "fukuoka.t@example.com",
+      customerName: "山田 太郎",
+      customerEmail: "yamada.t@example.com",
       customerPhone: "090-1234-5678",
-      postalCode: "802-0002",
-      prefecture: "福岡県",
-      cityAddress: "北九州市小倉北区京町1丁目4-1",
-      buildingName: "小倉ビル 301号室",
+      postalCode: "100-0001",
+      prefecture: "東京都",
+      cityAddress: "千代田区千代田1-1",
+      buildingName: "丸の内ビル 501号室",
       items: [
         { productId: "prod-1", productName: "小倉コーラ 原液シロップ (500ml)", priceJpy: 2800, quantity: 2 },
       ],

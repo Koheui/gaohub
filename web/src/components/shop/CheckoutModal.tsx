@@ -147,7 +147,7 @@ export function CheckoutModal({
                       required
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="例: 福岡 太郎"
+                      placeholder="例: 山田 太郎"
                       className="mt-1 w-full rounded-xl border border-zinc-300 px-3.5 py-2 font-bold focus:outline-none"
                     />
                   </div>
@@ -190,7 +190,7 @@ export function CheckoutModal({
                       required
                       value={postalCode}
                       onChange={(e) => setPostalCode(e.target.value)}
-                      placeholder="例: 802-0002"
+                      placeholder="例: 100-0001"
                       className="mt-1 w-full rounded-xl border border-zinc-300 px-3.5 py-2 font-mono font-bold focus:outline-none"
                     />
                   </div>
@@ -213,7 +213,7 @@ export function CheckoutModal({
                     required
                     value={cityAddress}
                     onChange={(e) => setCityAddress(e.target.value)}
-                    placeholder="例: 北九州市小倉北区京町1丁目4-1"
+                    placeholder="例: 東京都千代田区千代田1-1"
                     className="mt-1 w-full rounded-xl border border-zinc-300 px-3.5 py-2 font-bold focus:outline-none"
                   />
                 </div>
@@ -224,7 +224,7 @@ export function CheckoutModal({
                     type="text"
                     value={buildingName}
                     onChange={(e) => setBuildingName(e.target.value)}
-                    placeholder="例: 小倉ビル 301号室"
+                    placeholder="例: 丸の内ビル 501号室"
                     className="mt-1 w-full rounded-xl border border-zinc-300 px-3.5 py-2 font-bold focus:outline-none"
                   />
                 </div>
