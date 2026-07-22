@@ -12,6 +12,35 @@ export default function SiteCmsDashboardPage() {
     "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1600&q=80",
   ]);
   const [youtubeUrl, setYoutubeUrl] = useState("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+  const [pickups, setPickups] = useState([
+    {
+      id: "p-1",
+      type: "event" as const,
+      badgeText: "🎟️ 注目イベント",
+      title: "Future Tech Conference 2027",
+      subtitle: "AIエージェントと人間が織りなす次世代開発の最前線。福岡・小倉にてリアル＆オンライン開催。",
+      imageUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80",
+      href: "/e/future-tech-conference-2027",
+    },
+    {
+      id: "p-2",
+      type: "shop" as const,
+      badgeText: "📦 公式ECショップ",
+      title: "小倉コーラ 原液シロップ (500ml)",
+      subtitle: "ハーブと柑橘が織りなす小倉発のクラフトコーラ。炭酸やミルクで割って楽しめます。",
+      imageUrl: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=800&q=80",
+      href: "/u/oka",
+    },
+    {
+      id: "p-3",
+      type: "journal" as const,
+      badgeText: "📖 注目ジャーナル",
+      title: "【購入レビュー】YAMAHA SEQTRAKを選んだ4つの理由",
+      subtitle: "実機音源・トラックメイキングの魅力と現場イベントでの活用展望を徹底レポート。",
+      imageUrl: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80",
+      href: "/j/seqtrak-review-2026",
+    },
+  ]);
   const [aboutTitle, setAboutTitle] = useState("フィジカルとデジタルを繋ぎ、ビジネスの非連続な成長を実現する");
   const [aboutDescription, setAboutDescription] = useState(
     "Future Studio は、AIエージェントシステム「軍師」、実物IPプロダクト「emolink」、小倉の魅力を詰めた「小倉コーラ」などを展開するディープテック＆ブランドカンパニーです。"
@@ -139,26 +168,130 @@ export default function SiteCmsDashboardPage() {
 
         {/* 3. Pick Up コンテンツ管理 */}
         <div className="rounded-3xl border border-zinc-200 bg-white p-7 shadow-sm">
-          <h2 className="text-base font-black text-zinc-900">3. Pick Up グリッドコンテンツ</h2>
-          <p className="mt-1 text-xs text-zinc-500">
-            トップに掲載する「注目イベント」「公式ECストア」「注目ジャーナル」を選択します。
-          </p>
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-              <span className="text-[10px] font-black uppercase text-amber-600">Pick Up 1 (イベント)</span>
-              <p className="mt-1 text-sm font-bold text-zinc-900">Future Tech Conference 2027</p>
-              <p className="mt-2 text-[10px] text-zinc-400">✅ 自動連動中</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-black text-zinc-900">3. Pick Up グリッドコンテンツ (全3枠)</h2>
+              <p className="mt-1 text-xs text-zinc-500">
+                トップページ中央にデンソー型3カラムで強調掲載するコンテンツを設定します。
+              </p>
             </div>
-            <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-              <span className="text-[10px] font-black uppercase text-emerald-600">Pick Up 2 (ECストア)</span>
-              <p className="mt-1 text-sm font-bold text-zinc-900">小倉コーラ 原液シロップ</p>
-              <p className="mt-2 text-[10px] text-zinc-400">✅ 自動連動中</p>
-            </div>
-            <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-              <span className="text-[10px] font-black uppercase text-blue-600">Pick Up 3 (ジャーナル)</span>
-              <p className="mt-1 text-sm font-bold text-zinc-900">SEQTRAK 購入レビュー</p>
-              <p className="mt-2 text-[10px] text-zinc-400">✅ 自動連動中</p>
-            </div>
+            <button
+              type="button"
+              onClick={() => setPickups([...pickups, { id: `p-${Date.now()}`, type: "event", badgeText: "🎟️ 注目イベント", title: "新規Pick Up", subtitle: "詳細説明", imageUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80", href: "/e/future-tech-conference-2027" }])}
+              className="rounded-xl border border-zinc-300 bg-zinc-50 px-3.5 py-1.5 text-xs font-bold text-zinc-900 hover:bg-zinc-100"
+            >
+              ➕ 枠を追加
+            </button>
+          </div>
+
+          <div className="mt-6 space-y-6">
+            {pickups.map((item, idx) => (
+              <div key={item.id} className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-5">
+                <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+                  <span className="font-mono text-xs font-black uppercase text-amber-600">
+                    Pick Up 枠 #{idx + 1}
+                  </span>
+                  {pickups.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setPickups(pickups.filter((p) => p.id !== item.id))}
+                      className="text-xs font-bold text-rose-600 hover:underline"
+                    >
+                      削除
+                    </button>
+                  )}
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="text-[11px] font-bold text-zinc-500">コンテンツタイプ</label>
+                    <select
+                      value={item.type}
+                      onChange={(e) => {
+                        const updated = [...pickups];
+                        updated[idx].type = e.target.value as any;
+                        setPickups(updated);
+                      }}
+                      className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-bold focus:outline-none"
+                    >
+                      <option value="event">🎟️ イベント</option>
+                      <option value="shop">📦 EC物販商品</option>
+                      <option value="journal">📖 ジャーナル記事</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-zinc-500">バッジタグ表記</label>
+                    <input
+                      type="text"
+                      value={item.badgeText}
+                      onChange={(e) => {
+                        const updated = [...pickups];
+                        updated[idx].badgeText = e.target.value;
+                        setPickups(updated);
+                      }}
+                      className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-bold focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="text-[11px] font-bold text-zinc-500">タイトル</label>
+                    <input
+                      type="text"
+                      value={item.title}
+                      onChange={(e) => {
+                        const updated = [...pickups];
+                        updated[idx].title = e.target.value;
+                        setPickups(updated);
+                      }}
+                      className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-bold focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="text-[11px] font-bold text-zinc-500">説明サブタイトル</label>
+                    <input
+                      type="text"
+                      value={item.subtitle}
+                      onChange={(e) => {
+                        const updated = [...pickups];
+                        updated[idx].subtitle = e.target.value;
+                        setPickups(updated);
+                      }}
+                      className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-zinc-500">アイキャッチ画像URL</label>
+                    <input
+                      type="url"
+                      value={item.imageUrl}
+                      onChange={(e) => {
+                        const updated = [...pickups];
+                        updated[idx].imageUrl = e.target.value;
+                        setPickups(updated);
+                      }}
+                      className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-zinc-500">遷移先URL (イベント/記事/外部)</label>
+                    <input
+                      type="text"
+                      value={item.href}
+                      onChange={(e) => {
+                        const updated = [...pickups];
+                        updated[idx].href = e.target.value;
+                        setPickups(updated);
+                      }}
+                      className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
