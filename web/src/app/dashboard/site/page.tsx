@@ -118,7 +118,7 @@ export default function SiteCmsDashboardPage() {
         {/* 2. ヒーローセクション (スライドショー ＆ YouTube) */}
         <div className="rounded-3xl border border-zinc-200 bg-white p-7 shadow-sm">
           <h2 className="text-base font-black text-zinc-900">2. ヒーローセクション (スライドショー ＆ YouTube)</h2>
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 space-y-5">
             <div>
               <label className="text-xs font-bold text-zinc-500">公式PV YouTube 動画URL</label>
               <input
@@ -131,37 +131,48 @@ export default function SiteCmsDashboardPage() {
             </div>
 
             <div>
-              <label className="text-xs font-bold text-zinc-500">ヒーロー背景画像 (スライドショー用画像URL)</label>
-              {heroImages.map((img, i) => (
-                <div key={i} className="mt-2 flex gap-2">
+              <label className="text-xs font-bold text-zinc-500">ヒーロー背景画像スライドショー (直接アップロード / Firebase Storage ➔ R2)</label>
+              
+              {/* サムネイルプレビュー ＆ アップロード済みスライド一覧 */}
+              <div className="mt-3 flex flex-wrap gap-4">
+                {heroImages.map((img, i) => (
+                  <div key={i} className="relative h-28 w-44 overflow-hidden rounded-2xl border border-zinc-300 bg-zinc-100 shadow-sm">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img} alt="" className="h-full w-full object-cover" />
+                    <span className="absolute left-2 top-2 rounded-md bg-black/70 px-2 py-0.5 font-mono text-[9px] font-bold text-white">
+                      Slide #{i + 1}
+                    </span>
+                    {heroImages.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setHeroImages(heroImages.filter((_, idx) => idx !== i))}
+                        className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-xs text-white hover:bg-rose-600"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                {/* 📷 ファイル選択アップロードエリア */}
+                <label className="flex h-28 w-44 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-300 bg-zinc-50 text-zinc-500 transition-colors hover:border-zinc-950 hover:bg-white hover:text-zinc-950">
+                  <span className="text-2xl">➕</span>
+                  <span className="mt-1 text-xs font-bold">画像をアップロード</span>
+                  <span className="text-[9px] text-zinc-400">PNG, JPEG, WebP</span>
                   <input
-                    type="url"
-                    value={img}
+                    type="file"
+                    accept="image/*"
                     onChange={(e) => {
-                      const updated = [...heroImages];
-                      updated[i] = e.target.value;
-                      setHeroImages(updated);
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      // ローカルプレビューURL生成 (将来 Firebase Storage / R2 へ直接アップロード)
+                      const objectUrl = URL.createObjectURL(file);
+                      setHeroImages([...heroImages, objectUrl]);
                     }}
-                    className="w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm font-medium focus:border-zinc-950 focus:bg-white focus:outline-none"
+                    className="hidden"
                   />
-                  {heroImages.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => setHeroImages(heroImages.filter((_, idx) => idx !== i))}
-                      className="rounded-xl border border-rose-200 bg-rose-50 px-3 text-xs font-bold text-rose-600 hover:bg-rose-100"
-                    >
-                      削除
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => setHeroImages([...heroImages, ""])}
-                className="mt-3 text-xs font-bold text-amber-600 hover:underline"
-              >
-                ➕ 画像スライドを追加する
-              </button>
+                </label>
+              </div>
             </div>
           </div>
         </div>
