@@ -2,90 +2,197 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import type {
+  ShopProduct,
+  ShopCategory,
+  ShopCoupon,
+  ShopOrder,
+  OrderFulfillmentStatus,
+} from "@/lib/types";
 import { ui } from "@/lib/ui";
 
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  priceJpy: number;
-  stock: number;
-  imageUrl: string;
-  description: string;
-  isPublished: boolean;
-}
+type TabType = "products" | "categories" | "stock" | "coupons" | "orders";
 
 export default function ShopDashboardPage() {
-  const [products, setProducts] = useState<Product[]>([
+  const [activeTab, setActiveTab] = useState<TabType>("products");
+
+  // 1. 初期アイテムデータ
+  const [products, setProducts] = useState<ShopProduct[]>([
     {
       id: "prod-1",
       name: "小倉コーラ 原液シロップ (500ml)",
-      category: "クラフトドリンク",
+      categoryId: "cat-1",
+      categoryName: "クラフトドリンク",
       priceJpy: 2800,
-      stock: 50,
-      imageUrl: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80",
+      stock: 45,
+      imageUrl:
+        "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80",
       description: "山椒・レモングラス・地元ボタニカルを仕込んだ無添加クラフトコーラシロップ。",
       isPublished: true,
     },
     {
       id: "prod-2",
       name: "emolink 完成品物理NFCカード",
-      category: "フィジカルNFC",
+      categoryId: "cat-2",
+      categoryName: "フィジカルNFC",
       priceJpy: 3080,
       stock: 120,
-      imageUrl: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=600&q=80",
+      imageUrl:
+        "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=600&q=80",
       description: "高精細UVプリント仕上げ。スマホをかざすだけで想い出の動画・写真を即時再生。",
       isPublished: true,
     },
     {
       id: "prod-3",
       name: "WORK AND ROLE 公式限定Tシャツ",
-      category: "アパレル・限定グッズ",
+      categoryId: "cat-3",
+      categoryName: "アパレル",
       priceJpy: 4500,
-      stock: 30,
-      imageUrl: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=600&q=80",
+      stock: 25,
+      imageUrl:
+        "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=600&q=80",
       description: "Rock 'n' Roll マインドを体現する特注厚手オーガニックコットンTシャツ。",
-      isPublished: false,
+      isPublished: true,
     },
   ]);
 
-  const [newProdName, setNewProdName] = useState("");
-  const [newProdPrice, setNewProdPrice] = useState("2800");
-  const [newProdCategory, setNewProdCategory] = useState("クラフトプロダクト");
-  const [showAddModal, setShowAddModal] = useState(false);
+  // 2. 初期カテゴリデータ
+  const [categories, setCategories] = useState<ShopCategory[]>([
+    { id: "cat-1", name: "クラフトドリンク", slug: "craft-drinks", itemCount: 1 },
+    { id: "cat-2", name: "フィジカルNFC", slug: "nfc-cards", itemCount: 1 },
+    { id: "cat-3", name: "アパレル", slug: "apparel", itemCount: 1 },
+    { id: "cat-4", name: "デジタルコンテンツ", slug: "digital", itemCount: 0 },
+  ]);
 
-  function handleAddProduct(e: React.FormEvent) {
+  // 3. 初期クーポンデータ
+  const [coupons, setCoupons] = useState<ShopCoupon[]>([
+    {
+      id: "c-1",
+      code: "SPECIAL10",
+      type: "percent",
+      discountValue: 10,
+      minOrderJpy: 2000,
+      isActive: true,
+      expiresAtText: "2026.12.31",
+    },
+    {
+      id: "c-2",
+      code: "SUMMER500",
+      type: "fixed",
+      discountValue: 500,
+      minOrderJpy: 3000,
+      isActive: true,
+      expiresAtText: "2026.08.31",
+    },
+  ]);
+
+  // 4. 初期受注データ
+  const [orders, setOrders] = useState<ShopOrder[]>([
+    {
+      id: "ord-1001",
+      customerName: "福岡 太郎",
+      customerEmail: "fukuoka.t@example.com",
+      customerPhone: "090-1234-5678",
+      postalCode: "802-0002",
+      prefecture: "福岡県",
+      cityAddress: "北九州市小倉北区京町1丁目4-1",
+      buildingName: "小倉ビル 301号室",
+      items: [
+        { productId: "prod-1", productName: "小倉コーラ 原液シロップ (500ml)", priceJpy: 2800, quantity: 2 },
+      ],
+      subtotalJpy: 5600,
+      couponCode: "SPECIAL10",
+      discountJpy: 560,
+      shippingJpy: 500,
+      totalJpy: 5540,
+      fulfillmentStatus: "unfulfilled",
+      createdAtIso: "2026-07-22 14:30",
+    },
+  ]);
+
+  // モーダル状態
+  const [showItemModal, setShowItemModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<ShopProduct | null>(null);
+
+  const [showCatModal, setShowCatModal] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [newCouponCode, setNewCouponCode] = useState("");
+  const [newCouponType, setNewCouponType] = useState<"percent" | "fixed">("percent");
+  const [newCouponValue, setNewCouponValue] = useState("10");
+
+  // --- アイテム追加/保存 ---
+  function handleSaveProduct(e: React.FormEvent) {
     e.preventDefault();
-    if (!newProdName.trim()) return;
-    const item: Product = {
-      id: `prod-${Date.now()}`,
-      name: newProdName.trim(),
-      category: newProdCategory,
-      priceJpy: Number(newProdPrice) || 0,
-      stock: 100,
-      imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80",
-      description: "新規商品の説明文が入ります。",
-      isPublished: true,
+    if (!editingProduct) return;
+    const cat = categories.find((c) => c.id === editingProduct.categoryId);
+    const itemToSave: ShopProduct = {
+      ...editingProduct,
+      categoryName: cat?.name ?? "未分類",
     };
-    setProducts([item, ...products]);
-    setNewProdName("");
-    setShowAddModal(false);
-    alert("新しいEC商品を登録しました！✨");
+
+    if (products.some((p) => p.id === itemToSave.id)) {
+      setProducts(products.map((p) => (p.id === itemToSave.id ? itemToSave : p)));
+    } else {
+      setProducts([itemToSave, ...products]);
+    }
+    setShowItemModal(false);
+    setEditingProduct(null);
   }
 
-  function togglePublish(id: string) {
-    setProducts(
-      products.map((p) => (p.id === id ? { ...p, isPublished: !p.isPublished } : p))
+  // --- カテゴリ追加 ---
+  function handleAddCategory(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newCatName.trim()) return;
+    const item: ShopCategory = {
+      id: `cat-${Date.now()}`,
+      name: newCatName.trim(),
+      slug: newCatName.trim().toLowerCase().replace(/\s+/g, "-"),
+      itemCount: 0,
+    };
+    setCategories([...categories, item]);
+    setNewCatName("");
+    setShowCatModal(false);
+  }
+
+  // --- クーポン追加 ---
+  function handleAddCoupon(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newCouponCode.trim()) return;
+    const item: ShopCoupon = {
+      id: `c-${Date.now()}`,
+      code: newCouponCode.trim().toUpperCase(),
+      type: newCouponType,
+      discountValue: Number(newCouponValue) || 0,
+      minOrderJpy: 0,
+      isActive: true,
+    };
+    setCoupons([item, ...coupons]);
+    setNewCouponCode("");
+    setShowCouponModal(false);
+  }
+
+  // --- 発送ステータス切り替え ---
+  function toggleFulfillment(orderId: string) {
+    setOrders(
+      orders.map((o) => {
+        if (o.id !== orderId) return o;
+        const next: OrderFulfillmentStatus =
+          o.fulfillmentStatus === "unfulfilled" ? "fulfilled" : "unfulfilled";
+        return { ...o, fulfillmentStatus: next };
+      })
     );
   }
 
   return (
-    <div className="max-w-4xl space-y-8">
+    <div className="max-w-5xl space-y-8">
+      {/* 画面ヘッダー */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 pb-6">
         <div>
-          <h1 className={ui.h1}>ECサイト・商品物販管理 📦</h1>
+          <h1 className={ui.h1}>ネットショップダッシュボード 📦</h1>
           <p className="mt-1 text-sm text-zinc-500">
-            自社商品（小倉コーラ原液、emolinkカード、イベント限定グッズ等）の出品・在庫・受注管理を行います。
+            STORES準拠。アイテム登録、カテゴリ、リアルタイム在庫、クーポン設定、受注配送管理を一元化します。
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -94,68 +201,437 @@ export default function ShopDashboardPage() {
             target="_blank"
             className="rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-xs font-black text-zinc-900 shadow-sm transition-transform hover:scale-[1.02]"
           >
-            ショップ公開画面を確認 ↗️
+            ストア公開画面を確認 ↗️
           </Link>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="rounded-xl bg-zinc-950 px-5 py-2.5 text-xs font-black text-white shadow-md transition-transform hover:scale-[1.02]"
-          >
-            ➕ 新規商品を登録
-          </button>
         </div>
       </div>
 
-      {/* モーダル: 新規商品登録 */}
-      {showAddModal && (
+      {/* 🏛️ STORES風 機能グリッド・ナビゲーションタブ */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        {[
+          { id: "products", label: "アイテム", icon: "👕", count: products.length },
+          { id: "categories", label: "カテゴリ", icon: "📖", count: categories.length },
+          { id: "stock", label: "在庫", icon: "📦", count: products.reduce((acc, p) => acc + p.stock, 0) },
+          { id: "coupons", label: "クーポン", icon: "🎟️", count: coupons.filter((c) => c.isActive).length },
+          { id: "orders", label: "オーダー", icon: "🛒", count: orders.length },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as TabType)}
+            className={`flex flex-col items-center justify-center rounded-2xl border-2 p-4 text-center transition-all ${
+              activeTab === tab.id
+                ? "border-zinc-950 bg-white shadow-md"
+                : "border-zinc-200/80 bg-zinc-50/50 hover:bg-white hover:border-zinc-400"
+            }`}
+          >
+            <span className="text-2xl">{tab.icon}</span>
+            <span className="mt-1.5 text-xs font-black text-zinc-950">{tab.label}</span>
+            <span className="mt-0.5 rounded-full bg-zinc-100 px-2 py-0.5 font-mono text-[10px] font-bold text-zinc-600">
+              {tab.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* ─── 1. アイテムタブ ─── */}
+      {activeTab === "products" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-black text-zinc-950">登録アイテム一覧</h2>
+            <button
+              onClick={() => {
+                setEditingProduct({
+                  id: `prod-${Date.now()}`,
+                  name: "",
+                  categoryId: categories[0]?.id ?? "",
+                  categoryName: categories[0]?.name ?? "",
+                  priceJpy: 2800,
+                  stock: 50,
+                  imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80",
+                  description: "",
+                  isPublished: true,
+                });
+                setShowItemModal(true);
+              }}
+              className="rounded-xl bg-zinc-950 px-5 py-2.5 text-xs font-black text-white shadow-md hover:bg-zinc-800"
+            >
+              ➕ アイテムを追加
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {products.map((p) => (
+              <div
+                key={p.id}
+                className="flex flex-col justify-between overflow-hidden rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div>
+                  <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-zinc-100">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
+                    <span className="absolute left-3 top-3 rounded-full bg-black/70 px-2.5 py-1 text-[10px] font-bold text-white">
+                      {p.categoryName}
+                    </span>
+                    <span
+                      className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-black ${
+                        p.isPublished ? "bg-emerald-500 text-white" : "bg-zinc-400 text-white"
+                      }`}
+                    >
+                      {p.isPublished ? "公開中" : "非公開"}
+                    </span>
+                  </div>
+
+                  <h3 className="mt-4 text-base font-black text-zinc-950">{p.name}</h3>
+                  <p className="mt-1 text-xs text-zinc-500 line-clamp-2">{p.description}</p>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-zinc-100 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-bold text-zinc-400">価格 / 在庫</p>
+                    <p className="text-base font-black text-zinc-950">
+                      ¥{p.priceJpy.toLocaleString()} <span className="text-xs text-zinc-500 font-normal">({p.stock}個)</span>
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditingProduct(p);
+                      setShowItemModal(true);
+                    }}
+                    className="rounded-xl border border-zinc-300 bg-zinc-50 px-3.5 py-1.5 text-xs font-bold text-zinc-900 hover:bg-zinc-100"
+                  >
+                    編集 ✏️
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ─── 2. カテゴリタブ ─── */}
+      {activeTab === "categories" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-black text-zinc-950">カテゴリ設定</h2>
+            <button
+              onClick={() => setShowCatModal(true)}
+              className="rounded-xl bg-zinc-950 px-5 py-2.5 text-xs font-black text-white shadow-md hover:bg-zinc-800"
+            >
+              ➕ カテゴリを追加
+            </button>
+          </div>
+
+          <div className="rounded-3xl border border-zinc-200 bg-white overflow-hidden shadow-sm">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-zinc-200 bg-zinc-50 font-bold uppercase text-zinc-500">
+                <tr>
+                  <th className="p-4">カテゴリ名</th>
+                  <th className="p-4">スラッグ</th>
+                  <th className="p-4">登録アイテム数</th>
+                  <th className="p-4 text-right">操作</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 font-medium">
+                {categories.map((cat) => {
+                  const count = products.filter((p) => p.categoryId === cat.id).length;
+                  return (
+                    <tr key={cat.id} className="hover:bg-zinc-50/50">
+                      <td className="p-4 font-bold text-zinc-950">{cat.name}</td>
+                      <td className="p-4 font-mono text-zinc-500">{cat.slug}</td>
+                      <td className="p-4 font-bold">{count} 個</td>
+                      <td className="p-4 text-right">
+                        <button
+                          onClick={() => setCategories(categories.filter((c) => c.id !== cat.id))}
+                          className="text-rose-600 hover:underline"
+                        >
+                          削除
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ─── 3. 在庫管理タブ ─── */}
+      {activeTab === "stock" && (
+        <div className="space-y-6">
+          <h2 className="text-lg font-black text-zinc-950">リアルタイム在庫管理</h2>
+          <div className="rounded-3xl border border-zinc-200 bg-white overflow-hidden shadow-sm">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-zinc-200 bg-zinc-50 font-bold uppercase text-zinc-500">
+                <tr>
+                  <th className="p-4">アイテム名</th>
+                  <th className="p-4">カテゴリ</th>
+                  <th className="p-4">現在在庫数</th>
+                  <th className="p-4">ステータス</th>
+                  <th className="p-4 text-right">在庫数変更</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 font-medium">
+                {products.map((p) => (
+                  <tr key={p.id} className="hover:bg-zinc-50/50">
+                    <td className="p-4 font-bold text-zinc-950">{p.name}</td>
+                    <td className="p-4 text-zinc-500">{p.categoryName}</td>
+                    <td className="p-4 font-mono text-sm font-black">{p.stock}</td>
+                    <td className="p-4">
+                      {p.stock <= 0 ? (
+                        <span className="rounded-full bg-rose-100 px-2.5 py-1 text-[10px] font-bold text-rose-800">
+                          売り切れ
+                        </span>
+                      ) : p.stock < 10 ? (
+                        <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-800">
+                          残りわずか
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-800">
+                          在庫あり
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="inline-flex items-center gap-2">
+                        <button
+                          onClick={() =>
+                            setProducts(
+                              products.map((item) =>
+                                item.id === p.id ? { ...item, stock: Math.max(0, item.stock - 5) } : item
+                              )
+                            )
+                          }
+                          className="rounded-lg border border-zinc-300 px-2 py-1 hover:bg-zinc-100"
+                        >
+                          -5
+                        </button>
+                        <input
+                          type="number"
+                          value={p.stock}
+                          onChange={(e) => {
+                            const val = Number(e.target.value) || 0;
+                            setProducts(
+                              products.map((item) => (item.id === p.id ? { ...item, stock: val } : item))
+                            );
+                          }}
+                          className="w-16 rounded-lg border border-zinc-300 px-2 py-1 text-center font-bold"
+                        />
+                        <button
+                          onClick={() =>
+                            setProducts(
+                              products.map((item) =>
+                                item.id === p.id ? { ...item, stock: item.stock + 10 } : item
+                              )
+                            )
+                          }
+                          className="rounded-lg border border-zinc-300 px-2 py-1 hover:bg-zinc-100"
+                        >
+                          +10
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ─── 4. クーポンタブ ─── */}
+      {activeTab === "coupons" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-black text-zinc-950">割引クーポン設定</h2>
+            <button
+              onClick={() => setShowCouponModal(true)}
+              className="rounded-xl bg-zinc-950 px-5 py-2.5 text-xs font-black text-white shadow-md hover:bg-zinc-800"
+            >
+              ➕ クーポンを発行
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {coupons.map((c) => (
+              <div
+                key={c.id}
+                className="flex items-center justify-between rounded-3xl border border-amber-200 bg-amber-50/60 p-6 shadow-sm"
+              >
+                <div>
+                  <span className="rounded-md bg-amber-600 px-2.5 py-1 font-mono text-xs font-black text-white">
+                    {c.code}
+                  </span>
+                  <p className="mt-3 text-lg font-black text-zinc-950">
+                    {c.type === "percent" ? `${c.discountValue}% OFF` : `¥${c.discountValue.toLocaleString()} 引き`}
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    {c.minOrderJpy > 0 ? `¥${c.minOrderJpy.toLocaleString()}以上の購入で適用` : "条件なし"}
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    setCoupons(coupons.map((item) => (item.id === c.id ? { ...item, isActive: !item.isActive } : item)))
+                  }
+                  className={`rounded-xl border px-3.5 py-2 text-xs font-bold ${
+                    c.isActive ? "border-amber-600 bg-white text-amber-900" : "border-zinc-300 bg-zinc-100 text-zinc-400"
+                  }`}
+                >
+                  {c.isActive ? "有効中 ✓" : "無効"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ─── 5. オーダー・受注管理タブ ─── */}
+      {activeTab === "orders" && (
+        <div className="space-y-6">
+          <h2 className="text-lg font-black text-zinc-950">受注入荷・配送先一覧</h2>
+          <div className="space-y-4">
+            {orders.map((o) => (
+              <div
+                key={o.id}
+                className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 pb-3">
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-xs font-black text-zinc-950">#{o.id}</span>
+                    <span className="text-xs font-bold text-zinc-400">{o.createdAtIso}</span>
+                  </div>
+                  <button
+                    onClick={() => toggleFulfillment(o.id)}
+                    className={`rounded-full px-4 py-1.5 text-xs font-black transition-transform hover:scale-[1.02] ${
+                      o.fulfillmentStatus === "fulfilled"
+                        ? "bg-emerald-600 text-white"
+                        : "bg-amber-500 text-white"
+                    }`}
+                  >
+                    {o.fulfillmentStatus === "fulfilled" ? "✓ 発送完了" : "未発送 (発送する)"}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 text-xs">
+                  <div>
+                    <p className="font-bold text-zinc-400">購入者様情報</p>
+                    <p className="mt-1 font-black text-zinc-900 text-sm">{o.customerName} 様</p>
+                    <p className="text-zinc-600">{o.customerEmail}</p>
+                    <p className="text-zinc-600">{o.customerPhone}</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-zinc-400">🚚 配送先住所</p>
+                    <p className="mt-1 font-bold text-zinc-900">〒{o.postalCode}</p>
+                    <p className="text-zinc-800">
+                      {o.prefecture} {o.cityAddress} {o.buildingName}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-zinc-50 p-4 text-xs">
+                  <p className="font-bold text-zinc-500">注文内容</p>
+                  <ul className="mt-2 space-y-1">
+                    {o.items.map((it, idx) => (
+                      <li key={idx} className="flex justify-between font-medium">
+                        <span>
+                          {it.productName} × {it.quantity}
+                        </span>
+                        <span className="font-bold">¥{(it.priceJpy * it.quantity).toLocaleString()}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-3 pt-2 border-t border-zinc-200 flex justify-between font-black text-sm text-zinc-950">
+                    <span>合計金額 (税込・送料込)</span>
+                    <span>¥{o.totalJpy.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ─── モーダル: アイテム登録・編集 ─── */}
+      {showItemModal && editingProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl bg-white p-7 shadow-2xl space-y-5">
-            <h2 className="text-lg font-black text-zinc-950">新規EC商品の追加 📦</h2>
-            <form onSubmit={handleAddProduct} className="space-y-4">
+          <div className="w-full max-w-lg rounded-3xl bg-white p-7 shadow-2xl space-y-4">
+            <h2 className="text-lg font-black text-zinc-950">アイテムの編集 / 新規登録 👕</h2>
+            <form onSubmit={handleSaveProduct} className="space-y-4 text-xs">
               <div>
-                <label className="text-xs font-bold text-zinc-500">商品名 *</label>
+                <label className="font-bold text-zinc-500">アイテム名 *</label>
                 <input
                   type="text"
                   required
-                  value={newProdName}
-                  onChange={(e) => setNewProdName(e.target.value)}
-                  placeholder="例: 小倉コーラ原液シロップ 500ml"
-                  className="mt-1 w-full rounded-xl border border-zinc-300 px-3.5 py-2 text-sm font-bold focus:outline-none"
+                  value={editingProduct.name}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                  className="mt-1 w-full rounded-xl border border-zinc-300 px-3.5 py-2 font-bold focus:outline-none"
                 />
               </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-zinc-500">販売価格 (円・税込)</label>
+                  <label className="font-bold text-zinc-500">価格 (円・税込)</label>
                   <input
                     type="number"
                     required
-                    value={newProdPrice}
-                    onChange={(e) => setNewProdPrice(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-zinc-300 px-3.5 py-2 text-sm font-bold focus:outline-none"
+                    value={editingProduct.priceJpy}
+                    onChange={(e) =>
+                      setEditingProduct({ ...editingProduct, priceJpy: Number(e.target.value) || 0 })
+                    }
+                    className="mt-1 w-full rounded-xl border border-zinc-300 px-3.5 py-2 font-bold focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-zinc-500">カテゴリ</label>
+                  <label className="font-bold text-zinc-500">初期在庫数</label>
                   <input
-                    type="text"
-                    value={newProdCategory}
-                    onChange={(e) => setNewProdCategory(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-zinc-300 px-3.5 py-2 text-sm font-bold focus:outline-none"
+                    type="number"
+                    required
+                    value={editingProduct.stock}
+                    onChange={(e) =>
+                      setEditingProduct({ ...editingProduct, stock: Number(e.target.value) || 0 })
+                    }
+                    className="mt-1 w-full rounded-xl border border-zinc-300 px-3.5 py-2 font-bold focus:outline-none"
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="font-bold text-zinc-500">カテゴリ</label>
+                <select
+                  value={editingProduct.categoryId}
+                  onChange={(e) =>
+                    setEditingProduct({ ...editingProduct, categoryId: e.target.value })
+                  }
+                  className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2 font-bold focus:outline-none"
+                >
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-zinc-500">商品説明文</label>
+                <textarea
+                  rows={3}
+                  value={editingProduct.description}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                  className="mt-1 w-full rounded-xl border border-zinc-300 p-3 font-medium focus:outline-none"
+                />
+              </div>
+
               <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="rounded-xl border border-zinc-300 px-4 py-2 text-xs font-bold text-zinc-600 hover:bg-zinc-100"
+                  onClick={() => setShowItemModal(false)}
+                  className="rounded-xl border border-zinc-300 px-4 py-2 font-bold text-zinc-600 hover:bg-zinc-100"
                 >
                   キャンセル
                 </button>
-                <button
-                  type="submit"
-                  className="rounded-xl bg-zinc-950 px-5 py-2 text-xs font-black text-white hover:bg-zinc-800"
-                >
-                  登録を確定
+                <button type="submit" className="rounded-xl bg-zinc-950 px-5 py-2 font-black text-white hover:bg-zinc-800">
+                  保存を確定
                 </button>
               </div>
             </form>
@@ -163,52 +639,97 @@ export default function ShopDashboardPage() {
         </div>
       )}
 
-      {/* 商品一覧 */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {products.map((p) => (
-          <div
-            key={p.id}
-            className="flex flex-col justify-between overflow-hidden rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
-          >
-            <div>
-              <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-zinc-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
-                <span className="absolute left-3 top-3 rounded-full bg-black/70 px-2.5 py-1 text-[10px] font-bold text-white">
-                  {p.category}
-                </span>
-                <span
-                  className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-black ${
-                    p.isPublished ? "bg-emerald-500 text-white" : "bg-zinc-400 text-white"
-                  }`}
-                >
-                  {p.isPublished ? "公開中" : "非公開"}
-                </span>
-              </div>
-
-              <h3 className="mt-4 text-base font-black text-zinc-950">{p.name}</h3>
-              <p className="mt-1 text-xs text-zinc-500 line-clamp-2">{p.description}</p>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-zinc-100 flex items-center justify-between">
+      {/* ─── モーダル: カテゴリ追加 ─── */}
+      {showCatModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl bg-white p-7 shadow-2xl space-y-4">
+            <h2 className="text-lg font-black text-zinc-950">新規カテゴリの追加 📖</h2>
+            <form onSubmit={handleAddCategory} className="space-y-4 text-xs">
               <div>
-                <p className="text-xs font-bold text-zinc-400">価格</p>
-                <p className="text-lg font-black text-zinc-950">¥{p.priceJpy.toLocaleString()}</p>
+                <label className="font-bold text-zinc-500">カテゴリ名称 *</label>
+                <input
+                  type="text"
+                  required
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  placeholder="例: デジタルコンテンツ"
+                  className="mt-1 w-full rounded-xl border border-zinc-300 px-3.5 py-2 font-bold focus:outline-none"
+                />
               </div>
-              <button
-                onClick={() => togglePublish(p.id)}
-                className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition-colors ${
-                  p.isPublished
-                    ? "border-zinc-300 text-zinc-600 hover:bg-zinc-100"
-                    : "border-emerald-600 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
-                }`}
-              >
-                {p.isPublished ? "非公開にする" : "公開する"}
-              </button>
-            </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCatModal(false)}
+                  className="rounded-xl border border-zinc-300 px-4 py-2 font-bold text-zinc-600 hover:bg-zinc-100"
+                >
+                  キャンセル
+                </button>
+                <button type="submit" className="rounded-xl bg-zinc-950 px-5 py-2 font-black text-white hover:bg-zinc-800">
+                  追加
+                </button>
+              </div>
+            </form>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+
+      {/* ─── モーダル: クーポン発行 ─── */}
+      {showCouponModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl bg-white p-7 shadow-2xl space-y-4">
+            <h2 className="text-lg font-black text-zinc-950">新規割引クーポンの発行 🎟️</h2>
+            <form onSubmit={handleAddCoupon} className="space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-zinc-500">クーポンコード (英数字) *</label>
+                <input
+                  type="text"
+                  required
+                  value={newCouponCode}
+                  onChange={(e) => setNewCouponCode(e.target.value.toUpperCase())}
+                  placeholder="例: WELCOME10"
+                  className="mt-1 w-full rounded-xl border border-zinc-300 px-3.5 py-2 font-mono font-bold uppercase focus:outline-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-zinc-500">割引タイプ</label>
+                  <select
+                    value={newCouponType}
+                    onChange={(e) => setNewCouponType(e.target.value as any)}
+                    className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 font-bold focus:outline-none"
+                  >
+                    <option value="percent">% 割合割引</option>
+                    <option value="fixed">¥ 定額値引き</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-bold text-zinc-500">割引値</label>
+                  <input
+                    type="number"
+                    required
+                    value={newCouponValue}
+                    onChange={(e) => setNewCouponValue(e.target.value)}
+                    placeholder={newCouponType === "percent" ? "10" : "500"}
+                    className="mt-1 w-full rounded-xl border border-zinc-300 px-3.5 py-2 font-bold focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCouponModal(false)}
+                  className="rounded-xl border border-zinc-300 px-4 py-2 font-bold text-zinc-600 hover:bg-zinc-100"
+                >
+                  キャンセル
+                </button>
+                <button type="submit" className="rounded-xl bg-zinc-950 px-5 py-2 font-black text-white hover:bg-zinc-800">
+                  クーポンを発行
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,6 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { Grain } from "@/components/Grain";
 import { OrganizerFollowCard } from "@/components/lp/OrganizerFollowCard";
+import { ShopCartDrawer } from "@/components/shop/ShopCartDrawer";
+import { CheckoutModal } from "@/components/shop/CheckoutModal";
+import type { CartItem, ShopProduct, ShopOrder } from "@/lib/types";
 
 export interface CorporateProfileData {
   username: string;
@@ -38,6 +41,86 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
   const [followed, setFollowed] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showVideoModal, setShowVideoModal] = useState(false);
+
+  // ─── ECカート ＆ チェックアウト状態 ───
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [appliedCouponCode, setAppliedCouponCode] = useState<string>("");
+  const [discountJpy, setDiscountJpy] = useState<number>(0);
+
+  // 公開商品サンプル
+  const shopProducts: ShopProduct[] = [
+    {
+      id: "prod-1",
+      name: "小倉コーラ 原液シロップ (500ml)",
+      categoryId: "cat-1",
+      categoryName: "クラフトドリンク",
+      priceJpy: 2800,
+      stock: 45,
+      imageUrl: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80",
+      description: "山椒・レモングラス・地元ボタニカルを仕込んだ無添加クラフトコーラシロップ。",
+      isPublished: true,
+    },
+    {
+      id: "prod-2",
+      name: "emolink 完成品物理NFCカード",
+      categoryId: "cat-2",
+      categoryName: "フィジカルNFC",
+      priceJpy: 3080,
+      stock: 120,
+      imageUrl: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=600&q=80",
+      description: "高精細UVプリント仕上げ。スマホをかざすだけで想い出の動画・写真を即時再生。",
+      isPublished: true,
+    },
+    {
+      id: "prod-3",
+      name: "WORK AND ROLE 公式限定Tシャツ",
+      categoryId: "cat-3",
+      categoryName: "アパレル",
+      priceJpy: 4500,
+      stock: 25,
+      imageUrl: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=600&q=80",
+      description: "Rock 'n' Roll マインドを体現する特注厚手オーガニックコットンTシャツ。",
+      isPublished: true,
+    },
+  ];
+
+  function addToCart(product: ShopProduct) {
+    setCartItems((prev) => {
+      const existing = prev.find((item) => item.product.id === product.id);
+      if (existing) {
+        return prev.map((item) =>
+          item.product.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prev, { product, quantity: 1 }];
+    });
+    setIsCartOpen(true);
+  }
+
+  function updateQuantity(productId: string, quantity: number) {
+    setCartItems((prev) =>
+      prev.map((item) => (item.product.id === productId ? { ...item, quantity } : item))
+    );
+  }
+
+  function removeFromCart(productId: string) {
+    setCartItems((prev) => prev.filter((item) => item.product.id !== productId));
+  }
+
+  function handleProceedCheckout(couponCode: string, discount: number) {
+    setAppliedCouponCode(couponCode);
+    setDiscountJpy(discount);
+    setIsCartOpen(false);
+    setIsCheckoutOpen(true);
+  }
+
+  function handleOrderCompleted(order: ShopOrder) {
+    setCartItems([]);
+  }
 
   const images = profile.heroImages && profile.heroImages.length > 0 ? profile.heroImages : ["https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=1600&q=80"];
 
@@ -74,6 +157,7 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
           <div className="flex items-center gap-6">
             <nav className="hidden items-center gap-6 text-xs font-bold tracking-wider text-zinc-600 md:flex">
               <a href="#pickups" className="hover:text-zinc-950">PICK UP</a>
+              <a href="#shop" className="hover:text-zinc-950">OFFICIAL STORE 📦</a>
               <a href="#about" className="hover:text-zinc-950">ABOUT</a>
               <a href="#journals" className="hover:text-zinc-950">JOURNAL</a>
             </nav>
@@ -233,6 +317,69 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
         </div>
       </section>
 
+      {/* 📦 OFFICIAL STORE / 直営ECストアセクション */}
+      <section id="shop" className="border-t border-zinc-100 bg-zinc-900 py-24 text-white">
+        <div className="mx-auto max-w-7xl px-8">
+          <div className="flex flex-wrap items-end justify-between border-b border-zinc-800 pb-6">
+            <div>
+              <span className="font-mono text-xs font-bold tracking-widest text-amber-500 uppercase">
+                Official Direct Store
+              </span>
+              <h2 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">
+                公式直営ECストア 📦
+              </h2>
+            </div>
+            <p className="text-xs text-zinc-400 font-medium max-w-md">
+              クラフトドリンク「小倉コーラ」、想い出を奏でる「emolink物理カード」、限定グッズを直接ご購入いただけます。
+            </p>
+          </div>
+
+          <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {shopProducts.map((p) => (
+              <div
+                key={p.id}
+                className="group flex flex-col justify-between overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl transition-transform hover:-translate-y-1"
+              >
+                <div>
+                  <div className="relative aspect-video overflow-hidden rounded-2xl bg-zinc-900">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={p.imageUrl}
+                      alt={p.name}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <span className="absolute left-3 top-3 rounded-full bg-amber-600 px-3 py-1 font-mono text-[10px] font-black text-white shadow-md">
+                      {p.categoryName}
+                    </span>
+                  </div>
+
+                  <h3 className="mt-5 text-xl font-black text-white">{p.name}</h3>
+                  <p className="mt-2 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+                    {p.description}
+                  </p>
+                </div>
+
+                <div className="mt-6 border-t border-zinc-800 pt-5 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase">価格 (税込)</span>
+                    <p className="text-2xl font-black font-mono text-amber-400">
+                      ¥{p.priceJpy.toLocaleString()}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => addToCart(p)}
+                    className="rounded-full bg-white px-5 py-2.5 text-xs font-black text-zinc-950 shadow-lg transition-transform hover:scale-[1.05] active:scale-[0.98]"
+                  >
+                    カートに追加 🛒
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* 🏛️ 4. ABOUT / ページ概要セクション (写真 ＋ ヴィジョン文章) */}
       <section id="about" className="border-t border-zinc-100 bg-zinc-50/80 py-24">
         <div className="mx-auto max-w-7xl px-8">
@@ -328,6 +475,38 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
           </div>
         </div>
       </section>
+
+      {/* 🛒 画面右下の常駐フローティングカートボタン */}
+      <button
+        type="button"
+        onClick={() => setIsCartOpen(true)}
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-3 rounded-full bg-zinc-950 px-5 py-3.5 text-xs font-black text-white shadow-2xl transition-transform hover:scale-105 active:scale-95"
+      >
+        <span className="text-base">🛒</span>
+        <span>カート</span>
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 font-mono text-[10px] font-bold text-zinc-950">
+          {cartItems.reduce((acc, i) => acc + i.quantity, 0)}
+        </span>
+      </button>
+
+      {/* 🛒 カートドロワー ＆ チェックアウトモーダル */}
+      <ShopCartDrawer
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        cartItems={cartItems}
+        onUpdateQuantity={updateQuantity}
+        onRemoveItem={removeFromCart}
+        onProceedCheckout={handleProceedCheckout}
+      />
+
+      <CheckoutModal
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        cartItems={cartItems}
+        appliedCouponCode={appliedCouponCode}
+        discountJpy={discountJpy}
+        onOrderCompleted={handleOrderCompleted}
+      />
 
       {/* フッター */}
       <footer className="border-t border-zinc-200 bg-zinc-950 py-12 text-white">

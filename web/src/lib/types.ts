@@ -255,3 +255,68 @@ export interface LoungeProfileDoc {
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
+
+/** ─── ECシステムデータ型 (STORES準拠) ─── */
+
+export interface ShopProduct {
+  id: string;
+  name: string;
+  categoryId: string;
+  categoryName: string;
+  priceJpy: number;
+  stock: number;
+  imageUrl: string;
+  description: string;
+  isPublished: boolean;
+  createdAt?: any;
+}
+
+export interface ShopCategory {
+  id: string;
+  name: string;
+  slug: string;
+  itemCount?: number;
+}
+
+export type CouponType = "percent" | "fixed";
+
+export interface ShopCoupon {
+  id: string;
+  code: string;           // 例: "SPECIAL10", "SUMMER500"
+  type: CouponType;       // "percent" (10%OFF) または "fixed" (500円引)
+  discountValue: number;  // 10 または 500
+  minOrderJpy: number;    // 最小利用金額
+  isActive: boolean;
+  expiresAtText?: string;
+}
+
+export interface CartItem {
+  product: ShopProduct;
+  quantity: number;
+}
+
+export type OrderFulfillmentStatus = "unfulfilled" | "fulfilled" | "cancelled";
+
+export interface ShopOrder {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  postalCode: string;
+  prefecture: string;
+  cityAddress: string;
+  buildingName?: string;
+  items: {
+    productId: string;
+    productName: string;
+    priceJpy: number;
+    quantity: number;
+  }[];
+  subtotalJpy: number;
+  couponCode?: string;
+  discountJpy: number;
+  shippingJpy: number;
+  totalJpy: number;
+  fulfillmentStatus: OrderFulfillmentStatus;
+  createdAtIso: string;
+}
