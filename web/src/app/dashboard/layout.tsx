@@ -31,7 +31,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   const navItems = [
-    { href: "/dashboard", label: "イベント", active: !pathname.startsWith("/dashboard/settings") },
+    { href: "/dashboard", label: "イベント", active: pathname === "/dashboard" || pathname.startsWith("/dashboard/events") },
+    { href: "/dashboard/posts", label: "SNS・EC投稿 📸", active: pathname.startsWith("/dashboard/posts") },
     { href: "/dashboard/settings/payments", label: "決済設定", active: pathname.startsWith("/dashboard/settings") },
   ];
 

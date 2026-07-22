@@ -84,6 +84,34 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const { id } = use(params);
   const [report, setReport] = useState<EventReport | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
+
+  async function downloadCsv() {
+    setDownloading(true);
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error("認証が必要です");
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/events/${id}/attendees/csv`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "ダウンロードに失敗しました");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `attendees-${id}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "ダウンロードに失敗しました");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -129,10 +157,13 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
             主催者へのフィードバック資料としてご活用ください。
           </p>
         </div>
-        <div>
+        <div className="flex items-center gap-3">
           <Link href={`/dashboard/events/${id}/attendees`} className={ui.btnGhost}>
-            申込者一覧・CSV
+            申込者一覧
           </Link>
+          <button onClick={downloadCsv} disabled={downloading} className={ui.btn}>
+            {downloading ? "生成中…" : "参加者データCSV 📥"}
+          </button>
         </div>
       </div>
 
