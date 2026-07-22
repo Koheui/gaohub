@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ui } from "@/lib/ui";
 
 export default function SiteCmsDashboardPage() {
-  const [brandName, setBrandName] = useState("株式会社 Future Studio");
+  const [brandName, setBrandName] = useState("Future Studio 株式会社");
   const [tagline, setTagline] = useState("リアルとデジタルの融合。ディープテックとフィジカルプロダクトの未来を構築する。");
   const [heroImages, setHeroImages] = useState([
     "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=1600&q=80",

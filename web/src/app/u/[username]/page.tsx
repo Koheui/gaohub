@@ -6,7 +6,7 @@ export async function generateMetadata(props: {
   params: Promise<{ username: string }>;
 }) {
   const { username } = await props.params;
-  const brandName = username === "oka" ? "株式会社 Future Studio" : `公式ポータル @${username}`;
+  const brandName = username === "oka" ? "Future Studio 株式会社" : `公式ポータル @${username}`;
   return {
     title: `${brandName} | 公式コーポレート＆メディアポータル`,
     description: `${brandName} のGAO HUB公式Webメディアポータル。最新の公式ジャーナル、プロジェクトPick up、イベントおよび直営ECストア情報。`,
@@ -21,7 +21,7 @@ export default async function UserMySpacePage(props: {
   // デンソー型公式コーポレート / ブランドポータルのモックデータ
   const corporateProfile: CorporateProfileData = {
     username,
-    brandName: username === "oka" ? "株式会社 Future Studio" : `公式プロジェクト ${username}`,
+    brandName: username === "oka" ? "Future Studio 株式会社" : `公式プロジェクト ${username}`,
     tagline: "リアルとデジタルの融合。ディープテックとフィジカルプロダクトの未来を構築する。",
     heroImages: [
       "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=1600&q=80",
