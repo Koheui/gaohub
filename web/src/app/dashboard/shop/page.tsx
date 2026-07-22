@@ -7,8 +7,16 @@ import type {
   ShopCategory,
   ShopCoupon,
   ShopOrder,
+  BoxSize,
+  RegionType,
   OrderFulfillmentStatus,
 } from "@/lib/types";
+import {
+  DEFAULT_SHIPPING_MATRIX,
+  REGION_NAMES,
+  ALL_BOX_SIZES,
+  type ShippingMatrixRates,
+} from "@/lib/shipping";
 import { ui } from "@/lib/ui";
 
 type TabType = "products" | "categories" | "stock" | "coupons" | "shipping" | "orders";
@@ -17,8 +25,9 @@ export default function ShopDashboardPage() {
   const [activeTab, setActiveTab] = useState<TabType>("products");
 
   // 5. 送料・配送設定データ
+  const [matrixRates, setMatrixRates] = useState<ShippingMatrixRates>(DEFAULT_SHIPPING_MATRIX);
   const [shippingConfig, setShippingConfig] = useState({
-    flatShippingJpy: 500,
+    flatShippingJpy: 700,
     freeShippingThresholdJpy: 5000,
     carrierName: "ヤマト運輸 / 宅急便・ネコポス",
     leadTimeText: "ご注文完了後 2〜3 営業日以内に発送いたします",
@@ -39,6 +48,7 @@ export default function ShopDashboardPage() {
       imageUrl:
         "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80",
       description: "山椒・レモングラス・地元ボタニカルを仕込んだ無添加クラフトコーラシロップ。",
+      boxSize: "80",
       isPublished: true,
     },
     {
@@ -51,6 +61,7 @@ export default function ShopDashboardPage() {
       imageUrl:
         "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=600&q=80",
       description: "高精細UVプリント仕上げ。スマホをかざすだけで想い出の動画・写真を即時再生。",
+      boxSize: "60",
       isPublished: true,
     },
     {
@@ -63,6 +74,7 @@ export default function ShopDashboardPage() {
       imageUrl:
         "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=600&q=80",
       description: "Rock 'n' Roll マインドを体現する特注厚手オーガニックコットンTシャツ。",
+      boxSize: "80",
       isPublished: true,
     },
   ]);
@@ -261,6 +273,7 @@ export default function ShopDashboardPage() {
                   stock: 50,
                   imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80",
                   description: "",
+                  boxSize: "60",
                   isPublished: true,
                 });
                 setShowItemModal(true);
@@ -586,6 +599,65 @@ export default function ShopDashboardPage() {
               </div>
             </div>
 
+            {/* 🗺️ 地方区分 ✕ 箱サイズ別 マトリックス配送料金表 */}
+            <div className="border-t border-zinc-100 pt-6 space-y-3">
+              <div>
+                <h3 className="font-black text-sm text-zinc-950 flex items-center gap-2">
+                  <span>🗺️ 地方区分 ✕ 梱包サイズ別 送料マトリックス設定</span>
+                </h3>
+                <p className="mt-0.5 text-[11px] text-zinc-500">
+                  配送先地方（北海道・関東・九州・沖縄等）およびカート内最高サイズ（60〜160サイズ）に基づき自動適用される基本料金表です。
+                </p>
+              </div>
+
+              <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
+                <table className="w-full text-left text-xs font-medium border-collapse">
+                  <thead className="border-b border-zinc-200 bg-zinc-50 text-[11px] font-bold text-zinc-500">
+                    <tr>
+                      <th className="p-3 bg-zinc-100/80">地方区分 / 配送地域</th>
+                      {ALL_BOX_SIZES.map((size) => (
+                        <th key={size} className="p-3 text-center min-w-[90px]">
+                          {size}サイズ
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100">
+                    {(Object.keys(REGION_NAMES) as RegionType[]).map((regionKey) => (
+                      <tr key={regionKey} className="hover:bg-zinc-50/50">
+                        <td className="p-3 font-bold text-zinc-900 bg-zinc-50/30">
+                          {REGION_NAMES[regionKey]}
+                        </td>
+                        {ALL_BOX_SIZES.map((sizeKey) => (
+                          <td key={sizeKey} className="p-2 text-center">
+                            <div className="relative inline-block w-full">
+                              <span className="absolute left-2 top-2 font-bold text-zinc-400 text-[10px]">¥</span>
+                              <input
+                                type="number"
+                                required
+                                value={matrixRates[regionKey][sizeKey]}
+                                onChange={(e) => {
+                                  const val = Number(e.target.value) || 0;
+                                  setMatrixRates({
+                                    ...matrixRates,
+                                    [regionKey]: {
+                                      ...matrixRates[regionKey],
+                                      [sizeKey]: val,
+                                    },
+                                  });
+                                }}
+                                className="w-full rounded-lg border border-zinc-300 pl-5 pr-1.5 py-1.5 font-mono font-bold text-xs text-zinc-900 text-right focus:border-zinc-950 focus:outline-none"
+                              />
+                            </div>
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             <div className="border-t border-zinc-100 pt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div className="space-y-2">
                 <label className="font-bold text-zinc-900">配送業者・配送手段</label>
@@ -627,7 +699,7 @@ export default function ShopDashboardPage() {
                 type="submit"
                 className="rounded-xl bg-zinc-950 px-6 py-2.5 text-xs font-black text-white shadow-md hover:bg-zinc-800"
               >
-                送料設定を保存する 💾
+                送料マトリックス設定を保存する 💾
               </button>
             </div>
           </form>
@@ -744,21 +816,41 @@ export default function ShopDashboardPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="font-bold text-zinc-500">カテゴリ</label>
-                <select
-                  value={editingProduct.categoryId}
-                  onChange={(e) =>
-                    setEditingProduct({ ...editingProduct, categoryId: e.target.value })
-                  }
-                  className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2 font-bold focus:outline-none"
-                >
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-zinc-500">カテゴリ</label>
+                  <select
+                    value={editingProduct.categoryId}
+                    onChange={(e) =>
+                      setEditingProduct({ ...editingProduct, categoryId: e.target.value })
+                    }
+                    className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2 font-bold focus:outline-none"
+                  >
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-zinc-500">🚚 梱包サイズ (送料用)</label>
+                  <select
+                    value={editingProduct.boxSize || "60"}
+                    onChange={(e) =>
+                      setEditingProduct({ ...editingProduct, boxSize: e.target.value as BoxSize })
+                    }
+                    className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2 font-bold focus:outline-none font-mono"
+                  >
+                    <option value="60">60サイズ (小物・カード・小型)</option>
+                    <option value="80">80サイズ (標準シロップ・衣類)</option>
+                    <option value="100">100サイズ (複数本パック・中型)</option>
+                    <option value="120">120サイズ (アパレル箱・大型)</option>
+                    <option value="140">140サイズ (特大パッケージ)</option>
+                    <option value="160">160サイズ (最大サイズ)</option>
+                  </select>
+                </div>
               </div>
 
               {/* 商品写真アップロード (ファイル選択のみにシンプル化) */}

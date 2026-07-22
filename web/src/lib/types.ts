@@ -258,6 +258,20 @@ export interface LoungeProfileDoc {
 
 /** ─── ECシステムデータ型 (STORES準拠) ─── */
 
+export type BoxSize = "60" | "80" | "100" | "120" | "140" | "160";
+
+export type RegionType =
+  | "hokkaido"
+  | "tohoku"
+  | "kanto"
+  | "chubu"
+  | "hokuriku"
+  | "kansai"
+  | "chugoku"
+  | "shikoku"
+  | "kyushu"
+  | "okinawa";
+
 export interface ShopProduct {
   id: string;
   name: string;
@@ -267,6 +281,7 @@ export interface ShopProduct {
   stock: number;
   imageUrl: string;
   description: string;
+  boxSize: BoxSize;
   isPublished: boolean;
   createdAt?: any;
 }

@@ -60,6 +60,7 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
       stock: 45,
       imageUrl: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80",
       description: "山椒・レモングラス・地元ボタニカルを仕込んだ無添加クラフトコーラシロップ。",
+      boxSize: "80",
       isPublished: true,
     },
     {
@@ -71,6 +72,7 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
       stock: 120,
       imageUrl: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=600&q=80",
       description: "高精細UVプリント仕上げ。スマホをかざすだけで想い出の動画・写真を即時再生。",
+      boxSize: "60",
       isPublished: true,
     },
     {
@@ -82,6 +84,7 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
       stock: 25,
       imageUrl: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=600&q=80",
       description: "Rock 'n' Roll マインドを体現する特注厚手オーガニックコットンTシャツ。",
+      boxSize: "80",
       isPublished: true,
     },
   ];

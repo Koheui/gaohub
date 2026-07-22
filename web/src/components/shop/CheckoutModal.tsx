@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { CartItem, ShopOrder } from "@/lib/types";
+import { calculateSmartShippingFee } from "@/lib/shipping";
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -38,8 +39,10 @@ export function CheckoutModal({
     (acc, item) => acc + item.product.priceJpy * item.quantity,
     0
   );
-  const isFreeShipping = subtotal >= 5000;
-  const shippingJpy = subtotal > 0 ? (isFreeShipping ? 0 : 500) : 0;
+
+  // 都道府県 ✕ 最高梱包サイズに基づくマトリックス配送料算定
+  const shippingInfo = calculateSmartShippingFee(cartItems, prefecture);
+  const shippingJpy = shippingInfo.shippingFee;
   const totalJpy = Math.max(0, subtotal - discountJpy + shippingJpy);
 
   function handleSubmitOrder(e: React.FormEvent) {
@@ -123,9 +126,20 @@ export function CheckoutModal({
                       <span className="font-mono">-¥{discountJpy.toLocaleString()}</span>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <span>送料 (全国一律)</span>
-                    <span className="font-mono">¥{shippingJpy.toLocaleString()}</span>
+                  <div className="flex justify-between items-center">
+                    <span>
+                      配送料 ({shippingInfo.regionName} / {shippingInfo.maxBoxSize}サイズ同梱)
+                    </span>
+                    {shippingInfo.isFreeShippingApplied ? (
+                      <span className="font-bold text-emerald-600 flex items-center gap-1">
+                        <span>¥0</span>
+                        <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[9px] font-black text-emerald-800">
+                          送料無料適用 ✓
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="font-mono font-bold">¥{shippingJpy.toLocaleString()}</span>
+                    )}
                   </div>
                 </div>
 
