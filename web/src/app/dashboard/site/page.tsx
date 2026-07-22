@@ -29,20 +29,20 @@ export default function SiteCmsDashboardPage() {
     {
       id: "p-2",
       type: "shop" as const,
-      badgeText: "📦 公式ECショップ",
-      title: "小倉コーラ 原液シロップ (500ml)",
-      subtitle: "ハーブと柑橘が織りなす小倉発のクラフトコーラ。炭酸やミルクで割って楽しめます。",
+      badgeText: "📦 公式ECストア",
+      title: "Future Studio 公式ECストア",
+      subtitle: "小倉コーラ原液シロップ、emolink完成品カード、イベント限定グッズ等の公式直販ストア。",
       imageUrl: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=800&q=80",
       href: "/u/oka",
     },
     {
       id: "p-3",
       type: "journal" as const,
-      badgeText: "📖 注目ジャーナル",
-      title: "【購入レビュー】YAMAHA SEQTRAKを選んだ4つの理由",
-      subtitle: "実機音源・トラックメイキングの魅力と現場イベントでの活用展望を徹底レポート。",
+      badgeText: "📖 公式ジャーナル",
+      title: "Future Studio 公式ジャーナル・マガジン",
+      subtitle: "ディープテック、プロダクト開発の裏側、取材記事、思考のプロセスを届ける公式メディア。",
       imageUrl: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80",
-      href: "/j/seqtrak-review-2026",
+      href: "/dashboard/posts",
     },
   ]);
   const [aboutTitle, setAboutTitle] = useState("フィジカルとデジタルを繋ぎ、ビジネスの非連続な成長を実現する");
@@ -238,6 +238,11 @@ export default function SiteCmsDashboardPage() {
                           updated[idx].title = "Future Studio 公式ECストア";
                           updated[idx].subtitle = "小倉コーラ原液シロップ、emolink完成品カード、イベント限定グッズ等の公式直販ストア。";
                           updated[idx].href = "/u/oka";
+                        } else if (newType === "journal") {
+                          updated[idx].badgeText = "📖 公式ジャーナル";
+                          updated[idx].title = "Future Studio 公式ジャーナル・マガジン";
+                          updated[idx].subtitle = "ディープテック、プロダクト開発の裏側、取材記事、思考のプロセスを届ける公式メディア。";
+                          updated[idx].href = "/dashboard/posts";
                         }
                         setPickups(updated);
                       }}
@@ -245,7 +250,7 @@ export default function SiteCmsDashboardPage() {
                     >
                       <option value="event">🎟️ イベント</option>
                       <option value="shop">📦 公式ECストア (ショップトップ)</option>
-                      <option value="journal">📖 ジャーナル記事</option>
+                      <option value="journal">📖 公式ジャーナル (記事一覧トップ)</option>
                     </select>
                   </div>
 
@@ -326,6 +331,32 @@ export default function SiteCmsDashboardPage() {
                         className="shrink-0 rounded-lg bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-800"
                       >
                         ストア情報を再一括リセット
+                      </button>
+                    </div>
+                  )}
+
+                  {/* 📖 公式ジャーナルトップページ自動連動案内 */}
+                  {item.type === "journal" && (
+                    <div className="sm:col-span-2 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 shadow-sm flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-black text-amber-950">📖 公式ジャーナル・記事一覧トップにリンク中</p>
+                        <p className="text-[10px] text-amber-700">
+                          単一の個別記事ではなく、最新取材記事やレポートが並ぶジャーナルトップ (`/dashboard/posts`) へ誘導します。
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = [...pickups];
+                          updated[idx].badgeText = "📖 公式ジャーナル";
+                          updated[idx].title = "Future Studio 公式ジャーナル・マガジン";
+                          updated[idx].subtitle = "ディープテック、プロダクト開発の裏側、取材記事、思考のプロセスを届ける公式メディア。";
+                          updated[idx].href = "/dashboard/posts";
+                          setPickups(updated);
+                        }}
+                        className="shrink-0 rounded-lg bg-amber-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-amber-800"
+                      >
+                        ジャーナル情報を再一括リセット
                       </button>
                     </div>
                   )}
