@@ -761,9 +761,20 @@ export default function ShopDashboardPage() {
                 </select>
               </div>
 
-              {/* 商品写真アップロード ＆ URL指定 */}
+              {/* 商品写真アップロード (ファイル選択のみにシンプル化) */}
               <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 space-y-3">
-                <label className="font-bold text-zinc-900 block">📸 商品写真・アイキャッチ画像 *</label>
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-zinc-900 block">📸 商品写真 *</label>
+                  {editingProduct.imageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setEditingProduct({ ...editingProduct, imageUrl: "" })}
+                      className="text-xs font-bold text-rose-600 hover:underline"
+                    >
+                      写真を削除
+                    </button>
+                  )}
+                </div>
 
                 {/* プレビュー表示 */}
                 {editingProduct.imageUrl ? (
@@ -782,44 +793,26 @@ export default function ShopDashboardPage() {
                   </div>
                 )}
 
-                {/* ファイル選択 ＆ URL直接入力 */}
-                <div className="space-y-2 pt-1">
-                  <div>
-                    <label className="text-[10px] font-bold text-zinc-500 block mb-1">
-                      📁 PC・スマホから写真を選択してアップロード
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (event) => {
-                            const dataUrl = event.target?.result as string;
-                            if (dataUrl) {
-                              setEditingProduct({ ...editingProduct, imageUrl: dataUrl });
-                            }
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                      className="w-full text-xs text-zinc-600 file:mr-3 file:rounded-xl file:border-0 file:bg-zinc-900 file:px-3.5 file:py-1.5 file:text-xs file:font-bold file:text-white hover:file:bg-zinc-700"
-                    />
-                  </div>
-
-                  <div className="pt-2 border-t border-zinc-200/80">
-                    <label className="text-[10px] font-bold text-zinc-500 block mb-1">
-                      🔗 または画像URLを直接入力
-                    </label>
-                    <input
-                      type="url"
-                      value={editingProduct.imageUrl}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, imageUrl: e.target.value })}
-                      placeholder="https://images.unsplash.com/..."
-                      className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-1.5 font-mono text-xs font-bold text-zinc-900 focus:outline-none"
-                    />
-                  </div>
+                {/* ファイル選択のみ */}
+                <div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const dataUrl = event.target?.result as string;
+                          if (dataUrl) {
+                            setEditingProduct({ ...editingProduct, imageUrl: dataUrl });
+                          }
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="w-full text-xs text-zinc-600 file:mr-3 file:rounded-xl file:border-0 file:bg-zinc-900 file:px-4 file:py-2 file:text-xs file:font-bold file:text-white hover:file:bg-zinc-700 cursor-pointer"
+                  />
                 </div>
               </div>
 
