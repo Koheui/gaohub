@@ -31,10 +31,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   const navItems = [
-    { href: "/dashboard", label: "イベント", active: pathname === "/dashboard" || pathname.startsWith("/dashboard/events") },
-    { href: "/dashboard/site", label: "公式Webサイト 🏛️", active: pathname.startsWith("/dashboard/site") },
-    { href: "/dashboard/posts", label: "SNS・EC投稿 📸", active: pathname.startsWith("/dashboard/posts") },
-    { href: "/dashboard/settings/payments", label: "決済設定", active: pathname.startsWith("/dashboard/settings") },
+    { href: "/dashboard/site", label: "ウェブページ 🌐", active: pathname.startsWith("/dashboard/site") },
+    { href: "/dashboard/posts", label: "ジャーナル 📖", active: pathname.startsWith("/dashboard/posts") },
+    { href: "/dashboard", label: "イベント 🎟️", active: pathname === "/dashboard" || pathname.startsWith("/dashboard/events") },
+    { href: "/dashboard/shop", label: "ECサイト 📦", active: pathname.startsWith("/dashboard/shop") },
+    { href: "/dashboard/settings", label: "設定 ⚙️", active: pathname.startsWith("/dashboard/settings") },
   ];
 
   return (

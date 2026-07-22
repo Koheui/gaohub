@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase/client";
+import type { EventDoc } from "@/lib/types";
 import { ui } from "@/lib/ui";
 
 export default function SiteCmsDashboardPage() {
+  const [events, setEvents] = useState<EventDoc[]>([]);
   const [brandName, setBrandName] = useState("Future Studio 株式会社");
   const [tagline, setTagline] = useState("リアルとデジタルの融合。ディープテックとフィジカルプロダクトの未来を構築する。");
   const [heroImages, setHeroImages] = useState([
@@ -47,6 +51,13 @@ export default function SiteCmsDashboardPage() {
   );
   const [aboutImageUrl, setAboutImageUrl] = useState("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const q = query(collection(db, "events"), orderBy("createdAt", "desc"));
+    return onSnapshot(q, (snap) => {
+      setEvents(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as EventDoc));
+    });
+  }, []);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -244,6 +255,47 @@ export default function SiteCmsDashboardPage() {
                       className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-bold focus:outline-none"
                     />
                   </div>
+
+                  {/* 🎟️ 作成済みイベントとのワンクリック自動連動プルダウン */}
+                  {item.type === "event" && (
+                    <div className="sm:col-span-2 rounded-xl border border-purple-200 bg-purple-50/80 p-3.5 shadow-sm">
+                      <label className="text-[11px] font-black uppercase tracking-wider text-purple-900 flex items-center gap-1.5">
+                        <span>✨ 作成済みイベントから選択してワンクリック自動連動</span>
+                      </label>
+                      <select
+                        onChange={(e) => {
+                          const evId = e.target.value;
+                          const targetEvent = events.find((ev) => ev.id === evId);
+                          if (!targetEvent) return;
+                          const updated = [...pickups];
+                          updated[idx].title = targetEvent.title;
+                          updated[idx].subtitle = targetEvent.tagline || targetEvent.description.slice(0, 80);
+                          updated[idx].href = `/e/${targetEvent.slug}`;
+                          if (targetEvent.coverImageUrl) {
+                            updated[idx].imageUrl = targetEvent.coverImageUrl;
+                          }
+                          updated[idx].badgeText = "🎟️ 注目イベント";
+                          setPickups(updated);
+                        }}
+                        defaultValue=""
+                        className="mt-1.5 w-full rounded-lg border border-purple-300 bg-white px-3.5 py-2 text-xs font-bold text-zinc-900 focus:border-purple-600 focus:outline-none"
+                      >
+                        <option value="" disabled>
+                          {events.length > 0
+                            ? "-- 作成済みイベントを選択して同期 (1タップ入力) --"
+                            : "作成済みのイベントがまだありません"}
+                        </option>
+                        {events.map((ev) => (
+                          <option key={ev.id} value={ev.id}>
+                            🎟️ {ev.title} (URL: /e/{ev.slug})
+                          </option>
+                        ))}
+                      </select>
+                      <p className="mt-1.5 text-[10px] font-medium text-purple-700">
+                        イベントを選択すると、タイトル・キャッチコピー・詳細ページURL (`/e/slug`)・カバー画像が一括で自動セットされます。
+                      </p>
+                    </div>
+                  )}
 
                   <div className="sm:col-span-2">
                     <label className="text-[11px] font-bold text-zinc-500">タイトル</label>
