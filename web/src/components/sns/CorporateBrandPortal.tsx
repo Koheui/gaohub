@@ -9,7 +9,8 @@ export interface CorporateProfileData {
   username: string;
   brandName: string;          // 例: 株式会社 Future Studio / DENSO JAPAN
   tagline: string;            // 例: Crafting the Core / リアルとデジタルの融合
-  heroImageUrl: string;       // 大迫力ヒーロー写真
+  heroImages: string[];       // スライドショー用画像の配列
+  youtubeUrl?: string;        // YouTube動画URL (例: https://www.youtube.com/watch?v=...)
   aboutTitle: string;         // 例: 将来のビジョンと技術の社会実装
   aboutDescription: string;   // 企業概要・ミッション
   aboutImageUrl: string;      // 企業・現場の代表写真
@@ -35,6 +36,21 @@ export interface CorporateProfileData {
 
 export function CorporateBrandPortal({ profile }: { profile: CorporateProfileData }) {
   const [followed, setFollowed] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+
+  const images = profile.heroImages && profile.heroImages.length > 0 ? profile.heroImages : ["https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=1600&q=80"];
+
+  function nextSlide() {
+    setCurrentSlide((prev) => (prev + 1) % images.length);
+  }
+
+  function prevSlide() {
+    setCurrentSlide((prev) => (prev - 1 + images.length) % images.length);
+  }
+
+  // YouTube ID 抽出ヘルパー
+  const youtubeId = profile.youtubeUrl ? profile.youtubeUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/)?.[1] : null;
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 font-sans">
@@ -73,20 +89,72 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
         </div>
       </header>
 
-      {/* 🏛️ 2. フルサイズ・ヒーローセクション (DENSOスタイル) */}
-      <section className="relative h-[65vh] min-h-[480px] w-full overflow-hidden bg-zinc-900">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={profile.heroImageUrl}
-          alt={profile.brandName}
-          className="h-full w-full object-cover opacity-85 brightness-90"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/30 to-transparent" />
+      {/* 🏛️ 2. フルサイズ・スライドショー ＆ YouTube動画 ヒーローセクション */}
+      <section className="relative h-[70vh] min-h-[500px] w-full overflow-hidden bg-zinc-950">
+        {/* スライドショー画像 */}
+        {images.map((img, index) => (
+          <div
+            key={index}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+              index === currentSlide ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={img}
+              alt={profile.brandName}
+              className="h-full w-full object-cover brightness-90"
+            />
+          </div>
+        ))}
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/40 to-transparent" />
+
+        {/* スライド操作矢印ボタン ＆ インジケーター (デンソー風) */}
+        {images.length > 1 && (
+          <div className="absolute left-8 top-12 z-20 flex items-center gap-3">
+            <button
+              onClick={prevSlide}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-colors hover:bg-white/40"
+            >
+              ‹
+            </button>
+            <button
+              onClick={nextSlide}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition-colors hover:bg-white/40"
+            >
+              ›
+            </button>
+            <div className="ml-2 flex gap-1.5">
+              {images.map((_, i) => (
+                <div
+                  key={i}
+                  onClick={() => setCurrentSlide(i)}
+                  className={`h-1.5 cursor-pointer rounded-full transition-all ${
+                    i === currentSlide ? "w-8 bg-white" : "w-2 bg-white/40"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
         
+        {/* ヒーローテキスト ＆ YouTube再生ボタン */}
         <div className="absolute bottom-16 left-0 right-0 z-10 mx-auto max-w-7xl px-8 text-white">
-          <span className="inline-block rounded-full bg-white/20 px-4 py-1.5 font-mono text-xs font-bold uppercase tracking-widest text-white backdrop-blur-md">
-            Official Brand Portal
-          </span>
+          <div className="flex flex-wrap items-center gap-4">
+            <span className="inline-block rounded-full bg-white/20 px-4 py-1.5 font-mono text-xs font-bold uppercase tracking-widest text-white backdrop-blur-md">
+              Official Brand Portal
+            </span>
+            {youtubeId && (
+              <button
+                onClick={() => setShowVideoModal(true)}
+                className="inline-flex items-center gap-2 rounded-full bg-red-600 px-4 py-1.5 text-xs font-black text-white shadow-lg transition-transform hover:scale-[1.05]"
+              >
+                <span>▶️</span>
+                <span>公式PV・YouTube動画を再生</span>
+              </button>
+            )}
+          </div>
+          
           <h1 className="mt-4 max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-5xl lg:text-6xl">
             {profile.brandName}
           </h1>
@@ -95,6 +163,29 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
           </p>
         </div>
       </section>
+
+      {/* 🎬 YouTube動画モーダルモーダル */}
+      {showVideoModal && youtubeId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
+          <div className="relative w-full max-w-4xl overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 p-2 shadow-2xl">
+            <button
+              onClick={() => setShowVideoModal(false)}
+              className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white hover:bg-rose-600"
+            >
+              ✕
+            </button>
+            <div className="aspect-video w-full overflow-hidden rounded-2xl">
+              <iframe
+                src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
+                title="YouTube Video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="h-full w-full border-0"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 🏛️ 3. Pick Up セクション (デンソー型 3〜4カラムグリッド) */}
       <section id="pickups" className="relative z-20 -mt-16 mx-auto max-w-7xl px-8 pb-20">

@@ -23,7 +23,12 @@ export default async function UserMySpacePage(props: {
     username,
     brandName: username === "oka" ? "株式会社 Future Studio" : `公式プロジェクト ${username}`,
     tagline: "リアルとデジタルの融合。ディープテックとフィジカルプロダクトの未来を構築する。",
-    heroImageUrl: "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=1600&q=80",
+    heroImages: [
+      "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1600&q=80",
+    ],
+    youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", // 週刊北九州・自社PV用動画URL
     aboutTitle: "フィジカルとデジタルを繋ぎ、ビジネスの非連続な成長を実現する",
     aboutDescription: `Future Studio は、AIエージェントシステム「軍師」、実物IPプロダクト「emolink」、小倉の魅力を詰めた「小倉コーラ」などを展開するディープテック＆ブランドカンパニーです。\n\n代表・岡浩平の指揮のもと、行政プロポーザル、イベントプラットフォームGAO HUB、地方創生知財プロダクトまでをワンストップで企画・開発・プロデュースしています。`,
     aboutImageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
