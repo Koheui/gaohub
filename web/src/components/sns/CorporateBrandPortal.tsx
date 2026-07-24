@@ -286,12 +286,16 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
           Pick up
         </h2>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {profile.pickups.map((item) => (
-            <Link
-              key={item.id}
-              href={item.href}
-              className="group overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl"
-            >
+          {profile.pickups.map((item) => {
+            const isExternal = item.href?.startsWith("http");
+            return (
+              <Link
+                key={item.id}
+                href={item.href}
+                target={isExternal ? "_blank" : undefined}
+                rel={isExternal ? "noopener noreferrer" : undefined}
+                className="group overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl"
+              >
               <div className="relative aspect-[16/10] overflow-hidden bg-zinc-100">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -316,7 +320,8 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
                 </div>
               </div>
             </Link>
-          ))}
+            );
+          })}
         </div>
       </section>
 

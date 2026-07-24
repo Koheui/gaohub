@@ -200,7 +200,6 @@ export default function SiteCmsDashboardPage() {
                   </div>
                 ))}
 
-                {/* 📷 ファイル選択アップロードエリア */}
                 <label className="flex h-28 w-44 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-300 bg-zinc-50 text-zinc-500 transition-colors hover:border-zinc-950 hover:bg-white hover:text-zinc-950">
                   <span className="text-2xl">➕</span>
                   <span className="mt-1 text-xs font-bold">画像をアップロード</span>
@@ -211,7 +210,6 @@ export default function SiteCmsDashboardPage() {
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      // ローカルプレビューURL生成 (将来 Firebase Storage / R2 へ直接アップロード)
                       const objectUrl = URL.createObjectURL(file);
                       setHeroImages([...heroImages, objectUrl]);
                     }}
@@ -223,21 +221,47 @@ export default function SiteCmsDashboardPage() {
           </div>
         </div>
 
-        {/* 3. Pick Up コンテンツ管理 */}
         <div className="rounded-3xl border border-zinc-200 bg-white p-7 shadow-sm">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-base font-black text-zinc-900">3. Pick Up グリッドコンテンツ (全3枠)</h2>
+              <h2 className="text-base font-black text-zinc-900">3. Pick Up グリッドコンテンツ (強調掲載・自由リンク)</h2>
               <p className="mt-1 text-xs text-zinc-500">
-                トップページ中央にデンソー型3カラムで強調掲載するコンテンツを設定します。
+                トップページ中央に強調掲載するリンクカードを設定します。イベントやECを行わない場合でも、公式Webサイト・SNS・お問い合わせ・取材記事などに自由設定できます。
               </p>
             </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setPickups([...pickups, { id: `p-${Date.now()}`, type: "custom" as any, badgeText: "🌐 公式サイト", title: "公式コーポレートサイト", subtitle: "最新情報や事業内容はこちらからご確認ください。", imageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80", href: "https://example.com" }])}
+                className="rounded-xl border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-xs font-bold text-zinc-900 hover:bg-zinc-100"
+              >
+                ➕ カスタム枠を追加
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2 rounded-2xl bg-zinc-50 p-3 border border-zinc-200">
+            <span className="text-xs font-bold text-zinc-400 self-center">ワンタップで枠を追加:</span>
             <button
               type="button"
-              onClick={() => setPickups([...pickups, { id: `p-${Date.now()}`, type: "event", badgeText: "🎟️ 注目イベント", title: "新規Pick Up", subtitle: "詳細説明", imageUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80", href: "/e/future-tech-conference-2027" }])}
-              className="rounded-xl border border-zinc-300 bg-zinc-50 px-3.5 py-1.5 text-xs font-bold text-zinc-900 hover:bg-zinc-100"
+              onClick={() => setPickups([...pickups, { id: `p-${Date.now()}`, type: "custom" as any, badgeText: "🌐 公式サイト", title: "公式Webサイト・企業情報", subtitle: "Future Studio の企業理念、事業実績、最新情報はこちら。", imageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80", href: "https://example.com" }])}
+              className="rounded-lg bg-white px-3 py-1 text-xs font-bold text-zinc-700 border border-zinc-200 hover:bg-zinc-100"
             >
-              ➕ 枠を追加
+              🌐 公式Webサイト
+            </button>
+            <button
+              type="button"
+              onClick={() => setPickups([...pickups, { id: `p-${Date.now()}`, type: "custom" as any, badgeText: "📱 公式 X", title: "公式 X (旧Twitter) アカウント", subtitle: "日々の開発裏話や最新ニュースをリアルタイムで発信中！", imageUrl: "https://images.unsplash.com/photo-1611605698335-8b1569810432?auto=format&fit=crop&w=800&q=80", href: "https://x.com" }])}
+              className="rounded-lg bg-white px-3 py-1 text-xs font-bold text-zinc-700 border border-zinc-200 hover:bg-zinc-100"
+            >
+              📱 公式 X (旧Twitter)
+            </button>
+            <button
+              type="button"
+              onClick={() => setPickups([...pickups, { id: `p-${Date.now()}`, type: "custom" as any, badgeText: "✉️ お問い合わせ", title: "パートナーシップ・取材のお問い合わせ", subtitle: "コラボレーション、ご取材、お仕事のご相談はこちら。", imageUrl: "https://images.unsplash.com/photo-1423666639041-f56000c27a9a?auto=format&fit=crop&w=800&q=80", href: "/#contact" }])}
+              className="rounded-lg bg-white px-3 py-1 text-xs font-bold text-zinc-700 border border-zinc-200 hover:bg-zinc-100"
+            >
+              ✉️ お問い合わせ
             </button>
           </div>
 
@@ -261,7 +285,7 @@ export default function SiteCmsDashboardPage() {
 
                 <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="text-[11px] font-bold text-zinc-500">コンテンツタイプ</label>
+                    <label className="text-[11px] font-bold text-zinc-500">コンテンツタイプ / テンプレート</label>
                     <select
                       value={item.type}
                       onChange={(e) => {
@@ -275,22 +299,25 @@ export default function SiteCmsDashboardPage() {
                           updated[idx].href = "/u/oka";
                         } else if (newType === "journal") {
                           updated[idx].badgeText = "📖 公式ジャーナル";
-                          updated[idx].title = "Future Studio 公式ジャーナル・マガジン";
-                          updated[idx].subtitle = "ディープテック、プロダクト開発の裏側、取材記事、思考のプロセスを届ける公式メディア。";
-                          updated[idx].href = "/dashboard/posts";
+                          updated[idx].title = "【祝・採択】北九州市「販路拡大支援助成金」採択決定！";
+                          updated[idx].subtitle = "AIエージェントと2,929件のCRMが創り出す自動営業ファンネルの裏側。";
+                          updated[idx].href = "/j/hanro-subsidy-2026";
+                        } else if (newType === "custom") {
+                          updated[idx].badgeText = "🌐 自由リンク";
                         }
                         setPickups(updated);
                       }}
                       className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-bold focus:outline-none"
                     >
+                      <option value="custom">🔗 自由カスタム (SNS・公式サイト・お問い合わせ等)</option>
                       <option value="event">🎟️ イベント</option>
-                      <option value="shop">📦 公式ECストア (ショップトップ)</option>
-                      <option value="journal">📖 公式ジャーナル (記事一覧トップ)</option>
+                      <option value="shop">📦 公式ECストア</option>
+                      <option value="journal">📖 公式ジャーナル記事</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-bold text-zinc-500">バッジタグ表記</label>
+                    <label className="text-[11px] font-bold text-zinc-500">バッジタグ表記 (自由設定)</label>
                     <input
                       type="text"
                       value={item.badgeText}
@@ -299,11 +326,11 @@ export default function SiteCmsDashboardPage() {
                         updated[idx].badgeText = e.target.value;
                         setPickups(updated);
                       }}
+                      placeholder="例: 🌐 OFFICIAL SITE, 📱 OFFICIAL X, ✉️ CONTACT"
                       className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-bold focus:outline-none"
                     />
                   </div>
 
-                  {/* 🎟️ 作成済みイベントとのワンクリック自動連動プルダウン */}
                   {item.type === "event" && (
                     <div className="sm:col-span-2 rounded-xl border border-purple-200 bg-purple-50/80 p-3.5 shadow-sm">
                       <label className="text-[11px] font-black uppercase tracking-wider text-purple-900 flex items-center gap-1.5">
@@ -328,9 +355,7 @@ export default function SiteCmsDashboardPage() {
                         className="mt-1.5 w-full rounded-lg border border-purple-300 bg-white px-3.5 py-2 text-xs font-bold text-zinc-900 focus:border-purple-600 focus:outline-none"
                       >
                         <option value="" disabled>
-                          {events.length > 0
-                            ? "-- 作成済みイベントを選択して同期 (1タップ入力) --"
-                            : "作成済みのイベントがまだありません"}
+                          -- 作成済みのイベントを選択 --
                         </option>
                         {events.map((ev) => (
                           <option key={ev.id} value={ev.id}>
