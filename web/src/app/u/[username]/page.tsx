@@ -18,30 +18,42 @@ export default async function UserMySpacePage(props: {
   params: Promise<{ username: string }>;
 }) {
   const { username } = await props.params;
-  const db = adminDb();
 
-  // 1. Firestore から siteConfigs を取得
-  const configSnap = await db.doc(`siteConfigs/${username}`).get();
-  const savedConfig = configSnap.exists ? configSnap.data() : null;
+  let savedConfig: any = null;
+  let publishedEvents: Array<{ id: string; title: string; slug: string; tagline: string; coverImageUrl: string }> = [];
 
-  // 2. 実際の公開イベント一覧を取得
-  const eventsSnap = await db
-    .collection("events")
-    .where("status", "==", "published")
-    .orderBy("createdAt", "desc")
-    .limit(5)
-    .get();
+  try {
+    const db = adminDb();
 
-  const publishedEvents = eventsSnap.docs.map((d) => {
-    const data = d.data();
-    return {
-      id: d.id,
-      title: data.title ?? "イベント",
-      slug: data.slug ?? d.id,
-      tagline: data.tagline ?? data.description ?? "",
-      coverImageUrl: data.coverImageUrl ?? "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80",
-    };
-  });
+    // 1. Firestore から siteConfigs を取得
+    const configSnap = await db.doc(`siteConfigs/${username}`).get();
+    if (configSnap.exists) {
+      savedConfig = configSnap.data();
+    }
+
+    // 2. 実際の公開イベント一覧を取得 (インデックス不要の単純クエリ + メモリ内ソート)
+    const eventsSnap = await db
+      .collection("events")
+      .where("status", "==", "published")
+      .get();
+
+    publishedEvents = eventsSnap.docs
+      .map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          title: data.title ?? "イベント",
+          slug: data.slug ?? d.id,
+          tagline: data.tagline ?? data.description ?? "",
+          coverImageUrl: data.coverImageUrl ?? "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80",
+          createdAt: data.createdAt?.toDate?.()?.getTime?.() ?? 0,
+        };
+      })
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, 5);
+  } catch (err) {
+    console.warn("Failed to fetch siteConfig or events for UserMySpacePage:", err);
+  }
 
   // PickUp の初期設定: 実際の公開イベントが存在すればそちらに自動差し替え
   let defaultPickups = savedConfig?.pickups;
