@@ -11,7 +11,7 @@
   * **Payments**: Stripe Connect (セルフサーブ決済 ＆ 主催者直通自動入金)
   * **Media/OGP**: Satori (Next.js ImageResponse) による動的宣伝バナー生成
   * **Mail/Notifications**: Resend (メール配信), Slack/LINE Webhook 連携
-  * **Hosting/Deploy**: Vercel Production (`https://web-rust-omega-87.vercel.app`)
+  * **Hosting/Deploy**: Vercel Production。独自ドメイン **`https://gaohub.jp`**(取得済み・DNS/Vercel Domains 紐付け中)。本番の `NEXT_PUBLIC_APP_URL` / `EMAIL_FROM` はこのドメインに合わせて設定する。
 
 ---
 

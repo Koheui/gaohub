@@ -173,7 +173,7 @@ export default function SiteCmsDashboardPage() {
           <p className="text-[11px] text-zinc-400">
             現在の公開URL:{" "}
             <code className="font-bold text-zinc-800">
-              {(process.env.NEXT_PUBLIC_APP_URL ?? "https://web-rust-omega-87.vercel.app").replace(/\/$/, "")}/u/{slug}
+              {(process.env.NEXT_PUBLIC_APP_URL ?? "https://gaohub.jp").replace(/\/$/, "")}/u/{slug}
             </code>
           </p>
         </div>

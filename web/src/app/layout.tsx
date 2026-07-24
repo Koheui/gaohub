@@ -13,7 +13,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// OGP/Twitter カードの画像や canonical を本番ドメインで解決するための基点。
+// 本番は Vercel 環境変数 NEXT_PUBLIC_APP_URL=https://gaohub.jp を使用する。
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://gaohub.jp"),
   title: "GAO HUB — イベント開催から決済までワンストップ",
   description:
     "カンファレンス・セミナーの集客、チケット決済、QR受付までをセルフサーブで。即日開催、透明な料金。",
