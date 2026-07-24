@@ -117,7 +117,7 @@ export default async function UserMySpacePage(props: {
       "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=1600&q=80",
       "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1600&q=80",
     ],
-    youtubeUrl: savedConfig?.youtubeUrl ?? "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    youtubeUrl: savedConfig?.youtubeUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     aboutTitle: savedConfig?.aboutTitle ?? "フィジカルとデジタルを繋ぎ、ビジネスの非連続な成長を実現する",
     aboutDescription:
       savedConfig?.aboutDescription ??

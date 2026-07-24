@@ -135,8 +135,16 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
     setCurrentSlide((prev) => (prev - 1 + images.length) % images.length);
   }
 
-  // YouTube ID 抽出ヘルパー
-  const youtubeId = profile.youtubeUrl ? profile.youtubeUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/)?.[1] : null;
+  // YouTube ID 抽出ヘルパー (shorts, embed, direct ID, watch?v= 全形式に対応)
+  function getYoutubeId(url?: string): string | null {
+    if (!url) return null;
+    const trimmed = url.trim();
+    if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) return trimmed;
+    const match = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
+    return match ? match[1] : null;
+  }
+
+  const youtubeId = getYoutubeId(profile.youtubeUrl);
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 font-sans">
@@ -237,9 +245,15 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
             <span className="inline-block rounded-full bg-white/20 px-4 py-1.5 font-mono text-xs font-bold uppercase tracking-widest text-white backdrop-blur-md">
               Official Brand Portal
             </span>
-            {youtubeId && (
+            {profile.youtubeUrl && (
               <button
-                onClick={() => setShowVideoModal(true)}
+                onClick={() => {
+                  if (youtubeId) {
+                    setShowVideoModal(true);
+                  } else if (profile.youtubeUrl) {
+                    window.open(profile.youtubeUrl, "_blank", "noopener,noreferrer");
+                  }
+                }}
                 className="inline-flex items-center gap-2 rounded-full bg-red-600 px-4 py-1.5 text-xs font-black text-white shadow-lg transition-transform hover:scale-[1.05]"
               >
                 <span>▶️</span>
