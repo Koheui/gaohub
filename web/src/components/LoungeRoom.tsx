@@ -24,49 +24,83 @@ type ContactTarget =
   | { kind: "attendee"; id: string; name: string }
   | { kind: "speaker"; id: string; name: string };
 
-/** カード内に展開するメッセージ送信フォーム(親の再レンダーで消えないようトップレベルで定義) */
+type LoungeContactPurpose = "funding" | "partnership" | "purchase" | "inquiry" | "greeting";
+
+/** カード内に展開するオファー送信フォーム */
 function ContactForm({
   targetName,
-  subject,
-  message,
+  purpose,
+  benefitSummary,
+  details,
   busy,
-  onSubjectChange,
-  onMessageChange,
+  onPurposeChange,
+  onBenefitSummaryChange,
+  onDetailsChange,
   onSubmit,
   onCancel,
 }: {
   targetName: string;
-  subject: string;
-  message: string;
+  purpose: LoungeContactPurpose;
+  benefitSummary: string;
+  details: string;
   busy: boolean;
-  onSubjectChange: (v: string) => void;
-  onMessageChange: (v: string) => void;
+  onPurposeChange: (v: LoungeContactPurpose) => void;
+  onBenefitSummaryChange: (v: string) => void;
+  onDetailsChange: (v: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
 }) {
   return (
-    <form onSubmit={onSubmit} className="mt-4 space-y-2 border-t border-dashed border-zinc-200 pt-4">
-      <p className="text-xs font-bold text-zinc-500">{targetName} さんへメッセージ</p>
-      <input
-        required
-        value={subject}
-        onChange={(e) => onSubjectChange(e.target.value)}
-        placeholder="件名"
-        maxLength={100}
-        className={inputCls}
-      />
-      <textarea
-        required
-        rows={3}
-        value={message}
-        onChange={(e) => onMessageChange(e.target.value)}
-        placeholder="メッセージ本文(返信は入力いただいたメールアドレスに届きます)"
-        maxLength={2000}
-        className={inputCls}
-      />
-      <div className="flex gap-2">
+    <form onSubmit={onSubmit} className="mt-4 space-y-3 border-t border-dashed border-zinc-200 pt-4 text-left">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-bold text-zinc-700">⚡ {targetName} さんへ構造化オファーを送信</p>
+        <span className="rounded bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-800">AI要約付き</span>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-[11px] font-bold text-zinc-500">1. 連絡目的を選択</label>
+        <select
+          value={purpose}
+          onChange={(e) => onPurposeChange(e.target.value as LoungeContactPurpose)}
+          className={inputCls}
+        >
+          <option value="funding">💰 資金調達・出資の相談 (VC/投資家)</option>
+          <option value="partnership">🤝 事業提携・PoC・共同開発の提案</option>
+          <option value="purchase">🛒 サービス導入・購入・発注検討</option>
+          <option value="inquiry">❓ 詳細についての問い合わせ</option>
+          <option value="greeting">💬 挨拶・情報交換</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-[11px] font-bold text-zinc-500">
+          2. 具体的な提案・相手へのメリット要約 <span className="text-red-500">*</span> (100文字以内)
+        </label>
+        <input
+          required
+          value={benefitSummary}
+          onChange={(e) => onBenefitSummaryChange(e.target.value)}
+          placeholder="例: 弊社のAI技術を活用した共同PoCおよび1,000万円スケールの実証実験のご提案"
+          maxLength={100}
+          className={inputCls}
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block text-[11px] font-bold text-zinc-500">3. 詳細本文・補足 (任意)</label>
+        <textarea
+          rows={3}
+          value={details}
+          onChange={(e) => onDetailsChange(e.target.value)}
+          placeholder="補足や自己紹介があればご記入ください（相手にはAIによる要約付きで届きます）"
+          maxLength={1500}
+          className={inputCls}
+        />
+      </div>
+
+      <div className="flex gap-2 pt-1">
         <button type="submit" disabled={busy} className={pillBtn}>
-          送信する
+          オファーを即時送信 🚀
         </button>
         <button type="button" onClick={onCancel} className={ghostBtn}>
           キャンセル
@@ -76,7 +110,7 @@ function ContactForm({
   );
 }
 
-const inputCls = "w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm";
+const inputCls = "w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none";
 const pillBtn =
   "rounded-full bg-zinc-950 px-4 py-2 text-xs font-black text-white transition-colors hover:bg-zinc-700 disabled:opacity-40";
 const ghostBtn =
@@ -122,8 +156,9 @@ export function LoungeRoom({
   const [bio, setBio] = useState(initialSelfProfile?.bio ?? "");
 
   const [contactTarget, setContactTarget] = useState<ContactTarget | null>(null);
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
+  const [purpose, setPurpose] = useState<LoungeContactPurpose>("greeting");
+  const [benefitSummary, setBenefitSummary] = useState("");
+  const [details, setDetails] = useState("");
   const [sentTo, setSentTo] = useState<string | null>(null);
 
   const qs = `registrationId=${encodeURIComponent(registrationId)}&k=${encodeURIComponent(qrToken)}`;
@@ -190,16 +225,18 @@ export function LoungeRoom({
           ...(contactTarget.kind === "attendee"
             ? { toRegistrationId: contactTarget.id }
             : { toSpeakerId: contactTarget.id }),
-          subject,
-          message,
+          purpose,
+          benefitSummary,
+          message: details,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "送信に失敗しました");
       setSentTo(`${contactTarget.kind}:${contactTarget.id}`);
       setContactTarget(null);
-      setSubject("");
-      setMessage("");
+      setPurpose("greeting");
+      setBenefitSummary("");
+      setDetails("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "送信に失敗しました");
     } finally {
@@ -210,11 +247,13 @@ export function LoungeRoom({
   const contactFormProps = contactTarget
     ? {
         targetName: contactTarget.name,
-        subject,
-        message,
+        purpose,
+        benefitSummary,
+        details,
         busy,
-        onSubjectChange: setSubject,
-        onMessageChange: setMessage,
+        onPurposeChange: setPurpose,
+        onBenefitSummaryChange: setBenefitSummary,
+        onDetailsChange: setDetails,
         onSubmit: sendContact,
         onCancel: () => setContactTarget(null),
       }

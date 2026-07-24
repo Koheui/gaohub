@@ -243,6 +243,36 @@ export interface SurveyResponseDoc {
 }
 
 /** コミュニティラウンジのカテゴリ別参加者プロフィール。events/{id}/loungeProfiles/{registrationId} */
+export type LoungeContactPurpose = "funding" | "partnership" | "purchase" | "inquiry" | "greeting";
+export type MessagePriority = "high" | "medium" | "low";
+export type MessageStatus = "pending" | "responded" | "declined";
+export type MessageResponseAction = "schedule_meeting" | "exchange_contacts" | "email" | "decline";
+
+/** 構造化ビジネスマッチングメッセージ。events/{id}/messages/{messageId} */
+export interface LoungeContactMessageDoc {
+  id: string;
+  eventId: string;
+  senderRegistrationId: string;
+  senderName: string;
+  senderEmail: string;
+  senderCompany: string;
+  senderRole: string;
+  recipientType: "speaker" | "registration";
+  recipientId: string; // registrationId or speakerId
+  recipientName: string;
+  recipientEmail: string;
+  purpose: LoungeContactPurpose;
+  benefitSummary: string; // 最大100文字のメリット要約
+  details: string; // 詳細本文
+  aiPriority: MessagePriority; // Gemini API等で自動分析された優先度
+  aiSummary: string; // AIによる1文要約
+  status: MessageStatus;
+  responseAction: MessageResponseAction | null;
+  responseNote?: string;
+  createdAt: Timestamp;
+  respondedAt: Timestamp | null;
+}
+
 export interface LoungeProfileDoc {
   id: string; // == registrationId
   registrationId: string;

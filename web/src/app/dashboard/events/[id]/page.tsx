@@ -132,6 +132,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
           ["sessions", "コンテンツ"],
           ["speakers", "登壇者"],
           ["sponsors", "スポンサー"],
+          ["messages", "オファー (AI)"],
           ["banner", "バナー"],
           ["tickets", "チケット"],
           ["attendees", "申込者"],
