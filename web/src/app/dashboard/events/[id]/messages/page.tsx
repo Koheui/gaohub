@@ -360,12 +360,12 @@ export default function EventMessagesPage({ params }: { params: Promise<{ id: st
                       ) : (
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-black ${
-                            msg.status === "accepted"
+                            msg.status === "responded"
                               ? "bg-emerald-100 text-emerald-800"
                               : "bg-zinc-100 text-zinc-500"
                           }`}
                         >
-                          {msg.status === "accepted" ? "✓ 受諾・商談接続済み" : "辞退済み"}
+                          {msg.status === "responded" ? "✓ 対応・商談接続済み" : "辞退済み"}
                         </span>
                       )}
                     </div>
