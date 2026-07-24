@@ -238,10 +238,10 @@ function JournalEditModal({
 
     const linkedEvent = matchedEv && matchedEv.id ? {
       id: matchedEv.id,
-      slug: matchedEv.slug,
+      slug: matchedEv.slug ?? matchedEv.id,
       title: matchedEv.title.replace("🎟️ ", ""),
-      dateText: matchedEv.dateText,
-      venueText: matchedEv.venueText,
+      dateText: matchedEv.dateText ?? "2027.03.03",
+      venueText: matchedEv.venueText ?? "北九州",
     } : undefined;
 
     const linkedProduct = matchedProd && matchedProd.id ? {
