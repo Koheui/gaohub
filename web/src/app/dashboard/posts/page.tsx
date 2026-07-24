@@ -204,25 +204,28 @@ function JournalEditModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
-        <h2 className="text-xl font-black text-zinc-900">
-          {post ? "ジャーナル記事の編集" : "新規ジャーナル記事の執筆 ✍️"}
-        </h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/70 p-4 sm:p-6 backdrop-blur-md">
+      <div className="w-full max-w-5xl max-h-[92vh] flex flex-col rounded-3xl bg-white p-6 shadow-2xl sm:p-8 overflow-hidden border border-zinc-200">
+        <div className="flex items-center justify-between border-b border-zinc-200 pb-4">
+          <h2 className="text-xl font-black text-zinc-900">
+            {post ? "ジャーナル記事の編集" : "新規ジャーナル記事の執筆 ✍️"}
+          </h2>
+          <span className="text-xs font-bold text-zinc-400">広大なフルビューエディタ</span>
+        </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4 text-left">
+        <form onSubmit={handleSubmit} className="mt-6 flex-1 overflow-y-auto pr-2 space-y-5 text-left">
           <div>
             <label className="text-xs font-bold text-zinc-500">記事タイトル *</label>
             <input
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="例: 【取材レポート】北九州発スタートアップの挑戦"
-              className="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm font-medium focus:border-zinc-900 focus:outline-none"
+              placeholder="例: 【祝・採択】北九州市「販路拡大支援助成金」採択決定！AIエージェントと2,929件のCRMが創り出す自動営業ファンネルの裏側"
+              className="mt-1.5 w-full rounded-2xl border border-zinc-300 px-4 py-3 text-base font-bold text-zinc-900 focus:border-zinc-900 focus:outline-none"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
               <label className="text-xs font-bold text-zinc-500">カテゴリ</label>
               <input
@@ -239,38 +242,39 @@ function JournalEditModal({
                 required
                 value={readTime}
                 onChange={(e) => setReadTime(e.target.value)}
-                placeholder="例: 5分"
+                placeholder="例: 6分"
+                className="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm focus:border-zinc-900 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-zinc-500">アイキャッチ画像URL</label>
+              <input
+                required
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm focus:border-zinc-900 focus:outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-bold text-zinc-500">アイキャッチ画像URL</label>
-            <input
-              required
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm focus:border-zinc-900 focus:outline-none"
-            />
-          </div>
-
-          <div>
             <label className="text-xs font-bold text-zinc-500">記事の要約・リード文 *</label>
             <textarea
               required
-              rows={2}
+              rows={3}
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               placeholder="記事の概要を2〜3文で記述してください"
-              className="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm focus:border-zinc-900 focus:outline-none"
+              className="mt-1.5 w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm focus:border-zinc-900 focus:outline-none leading-relaxed"
             />
           </div>
 
           <div>
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-zinc-500">記事本文 (Markdown・途中に写真挿入可)</label>
-              <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label className="text-xs font-bold text-zinc-500">
+                記事本文 (全体を見渡せる広大エリア・途中に写真挿入可能)
+              </label>
+              <div className="flex flex-wrap gap-1.5">
                 <button
                   type="button"
                   onClick={() => {
@@ -280,7 +284,7 @@ function JournalEditModal({
                       setContent((prev) => `${prev}\n\n![${caption}](${url})\n\n`);
                     }
                   }}
-                  className="rounded-lg bg-sky-50 px-2.5 py-1 text-[11px] font-bold text-sky-700 hover:bg-sky-100 border border-sky-200"
+                  className="rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700 hover:bg-sky-100 border border-sky-200"
                 >
                   📷 本文の途中に写真を挿入
                 </button>
@@ -290,7 +294,7 @@ function JournalEditModal({
                     const presetUrl = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80";
                     setContent((prev) => `${prev}\n\n![会場全体の盛り上がりと熱気](${presetUrl})\n\n`);
                   }}
-                  className="rounded-lg bg-zinc-100 px-2 py-1 text-[11px] font-bold text-zinc-600 hover:bg-zinc-200"
+                  className="rounded-lg bg-zinc-100 px-2.5 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-200"
                 >
                   + 🏛️ 会場風景
                 </button>
@@ -300,35 +304,35 @@ function JournalEditModal({
                     const presetUrl = "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80";
                     setContent((prev) => `${prev}\n\n![熱弁を振るう登壇ピッチセッション](${presetUrl})\n\n`);
                   }}
-                  className="rounded-lg bg-zinc-100 px-2 py-1 text-[11px] font-bold text-zinc-600 hover:bg-zinc-200"
+                  className="rounded-lg bg-zinc-100 px-2.5 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-200"
                 >
                   + 🎤 登壇風景
                 </button>
               </div>
             </div>
             <textarea
-              rows={8}
+              rows={18}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="ここに本文を入力してください... ボタンで本文中に写真を挿入できます (![キャプション](URL) 形式)"
-              className="mt-1.5 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm focus:border-zinc-900 focus:outline-none font-mono leading-relaxed"
+              placeholder="ここに本文を入力してください..."
+              className="mt-2 min-h-[420px] w-full resize-y rounded-2xl border border-zinc-300 px-5 py-4 text-base font-normal text-zinc-900 focus:border-zinc-900 focus:outline-none leading-relaxed font-sans"
             />
-            <p className="mt-1 text-[11px] text-zinc-400">
+            <p className="mt-1.5 text-xs text-zinc-400">
               💡 本文中に <code>![写真のキャプション](画像のURL)</code> と書くと、記事の途中に美しく写真が差し込まれます。
             </p>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-zinc-100">
+          <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-zinc-300 px-5 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50"
+              className="rounded-xl border border-zinc-300 px-6 py-3 text-xs font-bold text-zinc-700 hover:bg-zinc-50"
             >
               キャンセル
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-zinc-950 px-6 py-2.5 text-xs font-black text-white hover:bg-zinc-800"
+              className="rounded-xl bg-zinc-950 px-8 py-3 text-sm font-black text-white hover:bg-zinc-800 shadow-lg shadow-zinc-950/20 transition-transform active:scale-[0.98]"
             >
               記事を保存して公開 ✨
             </button>
