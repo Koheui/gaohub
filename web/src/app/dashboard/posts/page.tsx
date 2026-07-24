@@ -1,98 +1,101 @@
 "use client";
 
 import { useState } from "react";
-import { NewPostModal, type CreatedProductItem } from "@/components/sns/NewPostModal";
+import Link from "next/link";
 import { ui } from "@/lib/ui";
+
+export interface JournalPostItem {
+  id: string;
+  title: string;
+  category: string;
+  publishedAtText: string;
+  summary: string;
+  content: string;
+  imageUrl: string;
+  readTime: string;
+  isPublished: boolean;
+}
 
 export default function PostsDashboardPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("すべて");
-  const [sortBy, setSortBy] = useState<"featured" | "price-desc" | "price-asc" | "latest" | "stock">("featured");
+  const [editingPost, setEditingPost] = useState<JournalPostItem | null>(null);
 
-  // 初期ダミー出品商品リスト (複数商品 ＆ カテゴリ分類)
-  const [products, setProducts] = useState<CreatedProductItem[]>([
+  // 初期ジャーナル記事リスト
+  const [posts, setPosts] = useState<JournalPostItem[]>([
     {
-      id: "prod-1",
-      name: "小倉コーラ 原液シロップ (500mlパウチ)",
-      category: "ドリンク・フード",
-      priceJpy: 2800,
-      stock: 12,
-      description: "スパイシーなハーブと柑橘が織りなす小倉発のクラフトコーラ原液。",
-      imageUrls: ["https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=400&q=80"],
-      isDigital: false,
-      createdAtText: "2026.07.22",
+      id: "seqtrak-review-2026",
+      title: "【購入レビュー】YAMAHA SEQTRAKを選んだ4つの理由",
+      category: "製品レビュー",
+      publishedAtText: "2026.07.15",
+      summary: "YAMAHAがリリースしたオールインワングルーヴボックス「SEQTRAK」を購入。現場イベントやワークショップでの活用展望をレポート。",
+      content: `YAMAHA SEQTRAK を導入し、イベントやライブパフォーマンスでの音響演出に活用し始めました。\n\n1. トラックメイキングの圧倒的スピード感\n2. サンプラーとFM音源のハイブリッド表現\n3. 軽量かつバッテリー駆動で現場持ち込みが容易`,
+      imageUrl: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80",
+      readTime: "5分",
+      isPublished: true,
     },
     {
-      id: "prod-2",
-      name: "emolink 音楽想い出カード (5枚パック)",
-      category: "フィジカルグッズ",
-      priceJpy: 3500,
-      stock: 45,
-      description: "スマホをかざすだけで想い出の音楽や写真が蘇るNFC搭載コレクタブルカード。",
-      imageUrls: ["https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=400&q=80"],
-      isDigital: false,
-      createdAtText: "2026.07.20",
+      id: "j-2",
+      title: "emolinkが創り出す『物理思い出カード』の体験設計",
+      category: "プロダクト思考",
+      publishedAtText: "2026.07.10",
+      summary: "スマホをかざすだけで想い出の音楽や写真が蘇るフィジカルプロダクトの裏側と、世間感覚の調和について。",
+      content: `デジタルデータの氾濫に対する一つの回答として、手に触れられる物理カードに体験を閉じ込めるプロジェクト「emolink」の思想をまとめました。`,
+      imageUrl: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80",
+      readTime: "7分",
+      isPublished: true,
     },
     {
-      id: "prod-3",
-      name: "Future Studio 公式オリジナルTシャツ (L)",
-      category: "フィジカルグッズ",
-      priceJpy: 4800,
-      stock: 8,
-      description: "ヘビーウェイトコットン100%のブラックロゴTシャツ。",
-      imageUrls: ["https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=400&q=80"],
-      isDigital: false,
-      createdAtText: "2026.07.18",
-    },
-    {
-      id: "prod-4",
-      name: "AIエージェント『軍師』構築完全ガイド (PDF)",
-      category: "デジタルコンテンツ",
-      priceJpy: 9800,
-      stock: 99,
-      description: "業務自動化・ナレッジ連動AIシステム構築の実用解説書。",
-      imageUrls: ["https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80"],
-      isDigital: true,
-      createdAtText: "2026.07.22",
+      id: "j-3",
+      title: "地方創生とクラフトコーラ：小倉コーラ誕生秘話",
+      category: "地方創生・ストーリー",
+      publishedAtText: "2026.07.01",
+      summary: "北九州・小倉のスパイスと物語を詰め込んだクラフトコーラの開発ストーリーと直営EC展開への挑戦。",
+      content: `地場の素材とカルチャーを掛け合わせた新しいクラフトドリンクの立ち上げ経緯。`,
+      imageUrl: "https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=800&q=80",
+      readTime: "6分",
+      isPublished: true,
     },
   ]);
 
-  const categories = ["すべて", ...Array.from(new Set(products.map((p) => p.category)))];
+  const categories = ["すべて", ...Array.from(new Set(posts.map((p) => p.category)))];
 
-  // 1. カテゴリフィルタ
-  const filteredProducts = selectedCategory === "すべて"
-    ? [...products]
-    : products.filter((p) => p.category === selectedCategory);
+  const filteredPosts =
+    selectedCategory === "すべて" ? posts : posts.filter((p) => p.category === selectedCategory);
 
-  // 2. 配置順・価格順ソート処理
-  const sortedProducts = filteredProducts.sort((a, b) => {
-    if (sortBy === "price-desc") return b.priceJpy - a.priceJpy; // 価格が高い順
-    if (sortBy === "price-asc") return a.priceJpy - b.priceJpy;   // 価格が安い順
-    if (sortBy === "stock") return b.stock - a.stock;           // 在庫が多い順
-    return 0; // おすすめ・標準配置順
-  });
+  function handleSavePost(newPost: JournalPostItem) {
+    if (editingPost) {
+      setPosts((prev) => prev.map((p) => (p.id === newPost.id ? newPost : p)));
+    } else {
+      setPosts((prev) => [newPost, ...prev]);
+    }
+    setModalOpen(false);
+    setEditingPost(null);
+  }
 
   return (
-    <div className="max-w-6xl">
+    <div className="max-w-6xl space-y-6">
       {/* ヘッダー */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 pb-6">
         <div>
-          <h1 className={ui.h1}>EC商品出品 ＆ コミュニティ投稿管理</h1>
+          <h1 className={ui.h1}>ジャーナル・記事管理 📖</h1>
           <p className="mt-1 text-sm text-zinc-500">
-            同一フォームから複数のEC商品出品（物販/デジタル）、写真・動画投稿、公式記事を登録・一覧管理します。
+            公式メディアポータル（`/u/oka`）や単体記事ページ（`/j/[id]`）に掲載される公式ジャーナル・取材記事・ナレッジを投稿・編集します。
           </p>
         </div>
         <button
-          onClick={() => setModalOpen(true)}
-          className="rounded-xl bg-emerald-500 px-6 py-3 text-sm font-black text-white transition-transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-emerald-500/20"
+          onClick={() => {
+            setEditingPost(null);
+            setModalOpen(true);
+          }}
+          className="rounded-xl bg-zinc-950 px-6 py-3 text-sm font-black text-white transition-transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-zinc-950/20"
         >
-          新規商品出品・投稿 🛍️➕
+          + 新規ジャーナル記事を執筆 ✍️
         </button>
       </div>
 
-      {/* カテゴリフィルタ ＆ 配置順/価格ソートコントローラー */}
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
-        {/* カテゴリ切り替え */}
+      {/* カテゴリフィルタ */}
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap gap-2">
           {categories.map((cat) => (
             <button
@@ -108,82 +111,202 @@ export default function PostsDashboardPage() {
             </button>
           ))}
         </div>
-
-        {/* 配置順・価格ソートセレクト */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-bold text-zinc-400">並び順:</span>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            className="rounded-xl border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-xs font-black text-zinc-900 focus:border-zinc-950 focus:bg-white focus:outline-none"
-          >
-            <option value="featured">🌟 おすすめ配置順</option>
-            <option value="price-desc">⬇️ 価格が高い順 (高単価)</option>
-            <option value="price-asc">⬆️ 価格が安い順 (手頃)</option>
-            <option value="stock">📦 在庫が多い順</option>
-          </select>
-          <span className="font-mono text-xs font-bold text-zinc-400">
-            ({sortedProducts.length} 点)
-          </span>
-        </div>
+        <span className="font-mono text-xs font-bold text-zinc-400">
+          全 {filteredPosts.length} 件の記事
+        </span>
       </div>
 
-      {/* 出品商品・アイテムグリッド一覧 */}
-      <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {sortedProducts.map((item) => (
+      {/* 記事一覧グリッド */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {filteredPosts.map((post) => (
           <div
-            key={item.id}
+            key={post.id}
             className="flex flex-col justify-between overflow-hidden rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:shadow-md"
           >
             <div>
               <div className="relative aspect-video overflow-hidden rounded-2xl bg-zinc-100 border border-zinc-100">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={item.imageUrls[0]}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
+                <img src={post.imageUrl} alt="" className="h-full w-full object-cover" />
                 <span className="absolute left-3 top-3 rounded-full bg-zinc-950/80 px-3 py-1 font-mono text-[10px] font-bold text-white backdrop-blur-md">
-                  {item.category}
+                  {post.category}
                 </span>
-                {item.isDigital && (
-                  <span className="absolute right-3 top-3 rounded-full bg-blue-600 px-2.5 py-0.5 font-mono text-[9px] font-bold text-white">
-                    デジタル
-                  </span>
-                )}
+                <span className="absolute right-3 top-3 rounded-full bg-emerald-600 px-2.5 py-0.5 font-mono text-[9px] font-bold text-white">
+                  {post.isPublished ? "公開中" : "下書き"}
+                </span>
               </div>
 
               <div className="mt-4">
-                <h3 className="text-base font-black text-zinc-900 leading-snug">{item.name}</h3>
-                <p className="mt-1.5 text-xs text-zinc-500 line-clamp-2 leading-relaxed">
-                  {item.description}
+                <div className="flex items-center gap-2 text-[11px] font-bold text-zinc-400">
+                  <span>{post.publishedAtText}</span>
+                  <span>•</span>
+                  <span>読了時間 {post.readTime}</span>
+                </div>
+                <h3 className="mt-1 text-base font-black text-zinc-900 leading-snug">{post.title}</h3>
+                <p className="mt-2 text-xs text-zinc-500 line-clamp-3 leading-relaxed">
+                  {post.summary}
                 </p>
               </div>
             </div>
 
-            <div className="mt-6 border-t border-zinc-100 pt-4 flex items-center justify-between">
-              <div>
-                <span className="text-xl font-black text-zinc-900">¥{item.priceJpy.toLocaleString("ja-JP")}</span>
-                <span className="ml-1 text-[10px] text-zinc-400">(税込)</span>
-              </div>
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 border border-emerald-200">
-                在庫 {item.stock} 点
-              </span>
+            <div className="mt-6 flex items-center justify-between border-t border-zinc-100 pt-4">
+              <Link
+                href={`/j/${post.id}`}
+                target="_blank"
+                className="text-xs font-bold text-sky-600 hover:underline"
+              >
+                記事ページを表示 ↗
+              </Link>
+              <button
+                onClick={() => {
+                  setEditingPost(post);
+                  setModalOpen(true);
+                }}
+                className="rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200"
+              >
+                編集
+              </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* 新規投稿・マルチ出品モーダル */}
-      <NewPostModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onCreated={(newProduct) => {
-          if (newProduct) {
-            setProducts((prev) => [newProduct, ...prev]);
-          }
-        }}
-      />
+      {/* 執筆・編集モーダル */}
+      {modalOpen && (
+        <JournalEditModal
+          post={editingPost}
+          onClose={() => setModalOpen(false)}
+          onSave={handleSavePost}
+        />
+      )}
+    </div>
+  );
+}
+
+function JournalEditModal({
+  post,
+  onClose,
+  onSave,
+}: {
+  post: JournalPostItem | null;
+  onClose: () => void;
+  onSave: (p: JournalPostItem) => void;
+}) {
+  const [title, setTitle] = useState(post?.title ?? "");
+  const [category, setCategory] = useState(post?.category ?? "取材記事");
+  const [summary, setSummary] = useState(post?.summary ?? "");
+  const [content, setContent] = useState(post?.content ?? "");
+  const [imageUrl, setImageUrl] = useState(
+    post?.imageUrl ?? "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80"
+  );
+  const [readTime, setReadTime] = useState(post?.readTime ?? "5分");
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    onSave({
+      id: post?.id ?? `j-${Date.now()}`,
+      title,
+      category,
+      publishedAtText: new Date().toLocaleDateString("ja-JP").replaceAll("/", "."),
+      summary,
+      content,
+      imageUrl,
+      readTime,
+      isPublished: true,
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
+        <h2 className="text-xl font-black text-zinc-900">
+          {post ? "ジャーナル記事の編集" : "新規ジャーナル記事の執筆 ✍️"}
+        </h2>
+
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4 text-left">
+          <div>
+            <label className="text-xs font-bold text-zinc-500">記事タイトル *</label>
+            <input
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="例: 【取材レポート】北九州発スタートアップの挑戦"
+              className="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm font-medium focus:border-zinc-900 focus:outline-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold text-zinc-500">カテゴリ</label>
+              <input
+                required
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="例: 取材記事, 製品レビュー, 思考・ナレッジ"
+                className="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm focus:border-zinc-900 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-zinc-500">想定読了時間</label>
+              <input
+                required
+                value={readTime}
+                onChange={(e) => setReadTime(e.target.value)}
+                placeholder="例: 5分"
+                className="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm focus:border-zinc-900 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-zinc-500">アイキャッチ画像URL</label>
+            <input
+              required
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm focus:border-zinc-900 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-zinc-500">記事の要約・リード文 *</label>
+            <textarea
+              required
+              rows={2}
+              value={summary}
+              onChange={(e) => setSummary(e.target.value)}
+              placeholder="記事の概要を2〜3文で記述してください"
+              className="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm focus:border-zinc-900 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-zinc-500">記事本文 (Markdown可)</label>
+            <textarea
+              rows={6}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="ここに本文を入力してください..."
+              className="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm focus:border-zinc-900 focus:outline-none font-mono"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-zinc-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-zinc-300 px-5 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50"
+            >
+              キャンセル
+            </button>
+            <button
+              type="submit"
+              className="rounded-xl bg-zinc-950 px-6 py-2.5 text-xs font-black text-white hover:bg-zinc-800"
+            >
+              記事を保存して公開 ✨
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
