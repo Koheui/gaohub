@@ -69,8 +69,32 @@ export default function Home() {
         ))}
       </section>
 
-      <footer className="border-t border-zinc-100 py-8 text-center text-sm text-zinc-500">
-        © {new Date().getFullYear()} GAO HUB
+      <footer className="border-t border-zinc-200 bg-white py-12 text-center text-sm text-zinc-500">
+        <div className="mx-auto max-w-5xl px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="font-black text-zinc-950">GAO HUB</span>
+            <span className="text-xs text-zinc-400">| Future Studio</span>
+          </div>
+
+          <nav className="flex flex-wrap items-center justify-center gap-6 text-xs font-bold text-zinc-600">
+            <Link href="/terms" className="hover:text-zinc-950">
+              利用規約
+            </Link>
+            <Link href="/privacy" className="hover:text-zinc-950">
+              プライバシーポリシー
+            </Link>
+            <Link href="/tokushoho" className="hover:text-zinc-950">
+              特定商取引法に基づく表記
+            </Link>
+            <Link href="/contact" className="hover:text-zinc-950">
+              お問い合わせ
+            </Link>
+          </nav>
+
+          <span className="font-mono text-xs text-zinc-400">
+            © {new Date().getFullYear()} GAO HUB
+          </span>
+        </div>
       </footer>
     </main>
   );
