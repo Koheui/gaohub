@@ -88,42 +88,46 @@ export default function EventMessagesPage({ params }: { params: Promise<{ id: st
             </Link>
           </div>
           <h1 className="mt-1 text-2xl font-black tracking-tight text-zinc-950 sm:text-3xl">
-            オファー ＆ リアルタイム通知コントロール
+            1-on-1 ダイレクトオファー ＆ リアルタイム通信基盤
           </h1>
           <p className="mt-1 text-xs text-zinc-500">
-            イベント開催中の「その瞬間」にユーザー・登壇者・出展者をつなぐ即時通知システム ＆ アフターキュレーション
+            エンドユーザー ↔ 登壇者・出展者・ユーザー同士の完全プライベートな直接コミュニケーションを安全にサポート
           </p>
         </div>
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-black text-emerald-800 shrink-0">
+          🔒 当事者間 1-on-1 プライバシー保護
+        </span>
       </div>
 
-      {/* 🚨 イベント中：リアルタイム即時通知 ＆ Slack/LINE/メール連携パネル */}
-      <div className="rounded-2xl border-2 border-amber-400/80 bg-amber-500/5 p-6 shadow-sm space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-500/20 pb-4">
+      {/* 🔒 1-on-1 プライバシー ＆ 個別通知モデルの解説 */}
+      <div className="rounded-2xl border-2 border-emerald-500/80 bg-emerald-500/5 p-6 shadow-sm space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-500/20 pb-4">
           <div className="flex items-center gap-2.5">
             <span className="flex h-3 w-3 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
             </span>
             <h2 className="text-base font-black text-zinc-950">
-              ⚡ イベント当日・リアルタイム即時通知設定 (Live Instant Alerts)
+              🛡️ エンドユーザー ↔ 登壇者/出展者 完全直接コミュニケーション
             </h2>
           </div>
-          <span className="rounded-full bg-amber-500/20 px-3 py-1 font-mono text-[10px] font-extrabold uppercase tracking-wider text-amber-900">
-            リアルタイム配信中 🟢
+          <span className="rounded-full bg-emerald-600 px-3 py-1 font-mono text-[10px] font-extrabold uppercase tracking-wider text-white">
+            1-on-1 PRIVACY SECURED 🔒
           </span>
         </div>
 
-        <p className="text-xs text-zinc-600 leading-relaxed">
-          イベント開催中はメッセージが届いた「その瞬間」に登壇者・出展者・スタッフの手元へ即時通知される必要があります。
-          以下の通知チャネルを有効にすることで、現場でのコミュニケーションを逃さずスピード対応できます。
+        <p className="text-xs text-zinc-700 leading-relaxed font-medium">
+          <strong>他の登壇者・他の出展者・第三者には一切閲覧できません。</strong><br />
+          メッセージは「送信したエンドユーザー」と「指定された宛先の登壇者・出展者本人」の2者間のみで暗号化・ダイレクト通信されます。
+          主催者が介入することなく、各登壇者・出展者は自身の専用マイページ/ラウンジから自分宛てのメッセージのみを即時受診・返信できます。
         </p>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 pt-2">
-          {/* 即時メール通知 */}
+          {/* 個別即時メール通知 */}
           <div className="rounded-xl border border-zinc-300 bg-white p-4 shadow-sm flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-zinc-950">📧 メール即時通知</span>
+                <span className="text-xs font-black text-zinc-950">📧 本人宛て個別メール通知</span>
                 <input
                   type="checkbox"
                   checked={emailAlert}
@@ -132,19 +136,19 @@ export default function EventMessagesPage({ params }: { params: Promise<{ id: st
                 />
               </div>
               <p className="mt-2 text-[11px] text-zinc-500 leading-normal">
-                オファー受信時に登壇者・主催者の登録メールへ即時通知を送る
+                メッセージが届いた「その宛先の登壇者・出展者本人のメール」にのみ直接届きます
               </p>
             </div>
             <span className={`mt-3 text-[10px] font-bold ${emailAlert ? "text-emerald-600" : "text-zinc-400"}`}>
-              {emailAlert ? "✓ 即時転送有効" : "無効"}
+              {emailAlert ? "✓ 当事者個別に即時通知" : "無効"}
             </span>
           </div>
 
-          {/* ブラウザ即時通知 */}
+          {/* 本人専用PWA/ブラウザ通知 */}
           <div className="rounded-xl border border-zinc-300 bg-white p-4 shadow-sm flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-zinc-950">🔔 ブラウザ/PWA即時通知</span>
+                <span className="text-xs font-black text-zinc-950">🔔 本人専用スマホ即時通知</span>
                 <input
                   type="checkbox"
                   checked={browserAlert}
@@ -153,20 +157,20 @@ export default function EventMessagesPage({ params }: { params: Promise<{ id: st
                 />
               </div>
               <p className="mt-2 text-[11px] text-zinc-500 leading-normal">
-                ダッシュボードや現場スマホ画面上でポプアップ即時通知音を鳴らす
+                受領者本人がスマホでラウンジを開いている時のみポップアップ通知
               </p>
             </div>
             <span className={`mt-3 text-[10px] font-bold ${browserAlert ? "text-emerald-600" : "text-zinc-400"}`}>
-              {browserAlert ? "✓ 画面内ポップアップ有効" : "無効"}
+              {browserAlert ? "✓ 本人端末のみ通知" : "無効"}
             </span>
           </div>
 
-          {/* 現場チャットラウンジ直通リンク */}
-          <div className="rounded-xl border border-amber-300 bg-amber-100/60 p-4 shadow-sm flex flex-col justify-between">
+          {/* 1-on-1 コミュニティラウンジ */}
+          <div className="rounded-xl border border-emerald-300 bg-emerald-100/60 p-4 shadow-sm flex flex-col justify-between">
             <div>
-              <span className="text-xs font-black text-amber-950">💬 現場リアルタイムラウンジ</span>
-              <p className="mt-2 text-[11px] text-amber-900/80 leading-normal">
-                イベント中に参加者と登壇者が直接チャット会話できるラウンジへ移動
+              <span className="text-xs font-black text-emerald-950">💬 1-on-1 ラウンジ直接対話</span>
+              <p className="mt-2 text-[11px] text-emerald-900/80 leading-normal">
+                当事者同士が直接チャットで名刺交換・商談・挨拶を行えるプライベート空間
               </p>
             </div>
             <Link
@@ -174,7 +178,7 @@ export default function EventMessagesPage({ params }: { params: Promise<{ id: st
               target="_blank"
               className="mt-3 inline-flex items-center justify-center rounded-lg bg-zinc-950 px-3 py-1.5 text-xs font-black text-white hover:bg-zinc-800 transition-all shadow-sm"
             >
-              ライブチャットラウンジを開く ↗
+              1-on-1 ラウンジ画面を開く ↗
             </Link>
           </div>
         </div>
