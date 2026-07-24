@@ -33,44 +33,42 @@ export interface JournalArticleData {
 
 export const INITIAL_JOURNAL_ARTICLES: JournalArticleData[] = [
   {
-    id: "gaohub-architecture-2026",
-    title: "【開発裏話】AIエージェントと人間が協働する次世代イベントプラットフォーム「GAO HUB」の設計思想",
+    id: "physical-ui-design-2026",
+    title: "【デザイン思考】現代のWeb UIにおいて「フィジカルな質感」が求められる理由",
     category: "プロダクト思考",
     publishedAtText: "2026.07.24",
-    summary: "イベント準備から集客LP自動生成、Stripe Connect決済、当日のPWA即時受付、EC物販、ジャーナル連動までをワンストップで完結させるマルチテナントSaaS「GAO HUB」の設計思想と開発の裏側。",
-    content: `イベント運営のあらゆるステップをシンプルに統合するプラットフォーム「GAO HUB」の設計思想について解説します。\n\n■ 1. なぜ既存のイベント管理ツールでは不十分なのか\n従来のイベントツールは集客のみ、決済のみ、あるいは名簿管理のみに分断されており、主催者は複数のサービスを行き来する手間を強いられていました。GAO HUB では「開催準備 → 自動LP生成 → セルフサーブチケット販売 → PWA即時受付 → EC物販 ＆ メディア配信」を一元管理できます。\n\n![GAO HUB システムアーキテクチャ](https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1200&q=80)\n\n■ 2. ディープテックとUI/UXの融合\nAIエージェントによるバナー自動生成（@vercel/og / Satori）や、高速なリアルタイム受付、特定の配信ルールに配慮したスマートな配信エンジンを内包しています。\n\n![ダッシュボードとデザインシステム](https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80)\n\n■ 3. フィジカルとデジタルの新しい関係性\nオンラインでのイベント体験にとどまらず、現場でのコレクタブルカードやオリジナルプロダクトのEC購買をシームレスに繋ぐことで、継続的なコミュニティを形成します。`,
-    imageUrl: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80",
+    summary: "フラットデザインの次に来る表現とは？画面の中に自然な影やテクスチャ、静かなグラデーションを取り入れ、ユーザーの認知負荷を下げながら愛着を生み出すWebUI設計論。",
+    content: `デジタルプロダクトのデザインは、過度な装飾を削ぎ落とした「完全なフラットデザイン」の時代を経て、静かで心地よい「適度なフィジカル感（物理的な手触り）」を融合させるフェーズへと移行しています。\n\n■ 1. なぜ「手触り感」が認知負荷を寄せるのか\n人間は物理世界で触れてきた質感や重み、光の反射に無意識の安心感を覚えます。画面内のボタンやカードに微細なシャドウや微かなノイズテクスチャを加えることで、操作可能な領域が直感的に理解できるようになります。\n\n![現代のUIデザインと質感表現](https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=1200&q=80)\n\n■ 2. ディテールに宿る体験価値\n単なる飾りとしての装飾ではなく、ユーザーが次のアクションへ自然に誘導されるアフォーダンスとしてのデザイン設計が求められます。`,
+    imageUrl: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=800&q=80",
     readTime: "5分",
     isPublished: true,
-    authorName: "岡 浩平 / Future Studio",
-    authorUsername: "oka",
+    authorName: "クリエイティブチーム",
+    authorUsername: "design",
     authorAvatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-    authorBio: "Future Studio 代表。ディープテック、フィジカルプロダクト(emolink)、小倉コーラ、AIエージェントの社会実装を推進中。",
+    authorBio: "UI/UXデザインとWebアプリケーションのグラフィック設計を探求するデザインラボ。",
     contentParagraphs: [
-      "イベント運営のあらゆるステップをシンプルに統合するプラットフォーム「GAO HUB」の設計思想について解説します。",
-      "■ 1. なぜ既存のイベント管理ツールでは不十分なのか\n従来のイベントツールは集客のみ、決済のみ、あるいは名簿管理のみに分断されており、主催者は複数のサービスを行き来する手間を強いられていました。GAO HUB では『開催準備 → 自動LP生成 → セルフサーブチケット販売 → PWA即時受付 → EC物販 ＆ メディア配信』を一元管理できます。",
-      "![GAO HUB システムアーキテクチャ](https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1200&q=80)",
-      "■ 2. ディープテックとUI/UXの融合\nAIエージェントによるバナー自動生成（@vercel/og / Satori）や、高速なリアルタイム受付、スマートな配信エンジンを内包しています。",
-      "![ダッシュボードとデザインシステム](https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80)",
-      "■ 3. フィジカルとデジタルの新しい関係性\nオンラインでのイベント体験にとどまらず、現場でのコレクタブルカードやオリジナルプロダクトのEC購買をシームレスに繋ぐことで、継続的なコミュニティを形成します。"
+      "デジタルプロダクトのデザインは、過度な装飾を削ぎ落とした『完全なフラットデザイン』の時代を経て、静かで心地よい『適度なフィジカル感（物理的な手触り）』を融合させるフェーズへと移行しています。",
+      "■ 1. なぜ『手触り感』が認知負荷を寄せるのか\n人間は物理世界で触れてきた質感や重み、光の反射に無意識の安心感を覚えます。画面内のボタンやカードに微細なシャドウや微かなノイズテクスチャを加えることで、操作可能な領域が直感的に理解できるようになります。",
+      "![現代のUIデザインと質感表現](https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=1200&q=80)",
+      "■ 2. ディテールに宿る体験価値\n単なる飾りとしての装飾ではなく、ユーザーが次のアクションへ自然に誘導されるアフォーダンスとしてのデザイン設計が求められます。"
     ],
     imageUrls: [
-      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1000&q=80"
+      "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=1000&q=80"
     ],
     linkedEvent: {
-      id: "cYEHtekZIp0aWhgNbp1u",
+      id: "future-tech-conference-2027",
       slug: "future-tech-conference-2027",
       title: "Future Tech Conference 2027",
       dateText: "2027.03.03 (水) 10:00 START",
-      venueText: "北九州小倉メインホール / Online",
+      venueText: "メインホール / Online",
     },
     linkedProduct: {
-      id: "kokura-cola-01",
-      name: "小倉コーラ 原液シロップ (500mlパウチ)",
-      priceJpy: 2800,
-      imageUrl: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=400&q=80",
+      id: "sample-item-01",
+      name: "デザインガイドブック (2026年版)",
+      priceJpy: 2400,
+      imageUrl: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80",
     },
-    likeCount: 38,
+    likeCount: 24,
   },
   {
     id: "seqtrak-review-2026",

@@ -100,10 +100,10 @@ export default async function UserMySpacePage(props: {
         id: "p-3",
         type: "journal",
         badgeText: "📖 注目ジャーナル",
-        title: fetchedPosts[0] ? fetchedPosts[0].title : "【開発裏話】次世代イベントSaaS「GAO HUB」の設計思想",
-        subtitle: fetchedPosts[0] ? fetchedPosts[0].summary : "イベント準備から自動LP生成、Stripe決済、PWA受付、EC物販、ジャーナル連動までを一元統合する裏側。",
-        imageUrl: fetchedPosts[0] ? fetchedPosts[0].imageUrl : "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80",
-        href: fetchedPosts[0] ? `/j/${fetchedPosts[0].id}` : "/j/gaohub-architecture-2026",
+        title: fetchedPosts[0] ? fetchedPosts[0].title : "【デザイン思考】現代のWeb UIにおいて「フィジカルな質感」が求められる理由",
+        subtitle: fetchedPosts[0] ? fetchedPosts[0].summary : "画面の中に自然な影やテクスチャ、静かなグラデーションを取り入れ、認知負荷を下げるWebUI設計論。",
+        imageUrl: fetchedPosts[0] ? fetchedPosts[0].imageUrl : "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=800&q=80",
+        href: fetchedPosts[0] ? `/j/${fetchedPosts[0].id}` : "/j/physical-ui-design-2026",
       },
     ];
   }
