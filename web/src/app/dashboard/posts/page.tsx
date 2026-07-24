@@ -184,6 +184,24 @@ function JournalEditModal({
   const [readTime, setReadTime] = useState(post?.readTime ?? "5分");
   const [uploading, setUploading] = useState(false);
 
+  // 連動イベント ＆ 連動ECプロダクトの選択 State
+  const [selectedEventId, setSelectedEventId] = useState<string>(post?.linkedEvent?.slug ?? "");
+  const [selectedProductId, setSelectedProductId] = useState<string>(post?.linkedProduct?.id ?? "");
+
+  const sampleEvents = [
+    { id: "", title: "連動なし (非表示)" },
+    { id: "future-tech-conference-2027", title: "🎟️ Future Tech Conference 2027", slug: "future-tech-conference-2027", dateText: "2027.03.03 (水) 10:00 START", venueText: "北九州小倉メインホール / Online" },
+    { id: "work-and-role-2027", title: "🎟️ WORK AND ROLE 2027", slug: "work-and-role-2027", dateText: "2027.03.04 (木) 09:30 START", venueText: "北九州国際会議場" },
+  ];
+
+  const sampleProducts = [
+    { id: "", name: "連動なし (非表示)" },
+    { id: "kokura-cola-01", name: "📦 小倉コーラ 原液シロップ (500mlパウチ) - ¥2,800", priceJpy: 2800, imageUrl: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=400&q=80" },
+    { id: "emolink-cards", name: "📦 emolink 音楽想い出カード (5枚パック) - ¥3,500", priceJpy: 3500, imageUrl: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=400&q=80" },
+    { id: "tshirt-l", name: "📦 Future Studio 公式オリジナルTシャツ (L) - ¥4,800", priceJpy: 4800, imageUrl: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=400&q=80" },
+    { id: "ai-guide-pdf", name: "📦 AIエージェント『軍師』構築完全ガイド (PDF) - ¥9,800", priceJpy: 9800, imageUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80" },
+  ];
+
   async function handleUploadFile(file: File | undefined) {
     if (!file) return;
     setUploading(true);
@@ -214,6 +232,25 @@ function JournalEditModal({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    const matchedEv = sampleEvents.find((ev) => ev.id === selectedEventId);
+    const matchedProd = sampleProducts.find((p) => p.id === selectedProductId);
+
+    const linkedEvent = matchedEv && matchedEv.id ? {
+      id: matchedEv.id,
+      slug: matchedEv.slug,
+      title: matchedEv.title.replace("🎟️ ", ""),
+      dateText: matchedEv.dateText,
+      venueText: matchedEv.venueText,
+    } : undefined;
+
+    const linkedProduct = matchedProd && matchedProd.id ? {
+      id: matchedProd.id,
+      name: matchedProd.name.split(" - ")[0].replace("📦 ", ""),
+      priceJpy: matchedProd.priceJpy!,
+      imageUrl: matchedProd.imageUrl!,
+    } : undefined;
+
     onSave({
       id: post?.id ?? `j-${Date.now()}`,
       title,
@@ -229,6 +266,8 @@ function JournalEditModal({
       authorBio: post?.authorBio ?? "Future Studio 代表。ディープテック、フィジカルプロダクト(emolink)、小倉コーラ、AIエージェントの社会実装を推進中。",
       contentParagraphs: content ? content.split("\n\n") : [summary],
       imageUrls: post?.imageUrls ?? [],
+      linkedEvent,
+      linkedProduct,
       likeCount: post?.likeCount ?? 0,
     });
   }
@@ -297,6 +336,48 @@ function JournalEditModal({
                 placeholder="https://... またはファイル選択"
                 className="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm focus:border-zinc-900 focus:outline-none"
               />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 bg-zinc-50 border border-zinc-200 p-4 rounded-2xl">
+            <div>
+              <label className="text-xs font-bold text-zinc-700 flex items-center gap-1">
+                <span>🎟️ 記事下に表示する連動イベント</span>
+              </label>
+              <select
+                value={selectedEventId}
+                onChange={(e) => setSelectedEventId(e.target.value)}
+                className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-bold text-zinc-900 focus:border-zinc-950 focus:outline-none"
+              >
+                {sampleEvents.map((ev) => (
+                  <option key={ev.id} value={ev.id}>
+                    {ev.title}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[10px] text-zinc-400">
+                選択したイベントの参加登録カードが記事末尾に挿入されます
+              </p>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-zinc-700 flex items-center gap-1">
+                <span>📦 記事下に表示する連動EC商品</span>
+              </label>
+              <select
+                value={selectedProductId}
+                onChange={(e) => setSelectedProductId(e.target.value)}
+                className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-bold text-zinc-900 focus:border-zinc-950 focus:outline-none"
+              >
+                {sampleProducts.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[10px] text-zinc-400">
+                選択した商品の1タップ購入カードが記事末尾に挿入されます
+              </p>
             </div>
           </div>
 
