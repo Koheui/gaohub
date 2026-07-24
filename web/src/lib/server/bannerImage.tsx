@@ -208,7 +208,7 @@ function SpeakerRow({
   speakers: PublicSpeaker[];
   scale: number;
 }) {
-  const avatarSize = 92 * scale;
+  const avatarSize = 120 * scale;
   const overlap = avatarSize * 0.32;
   if (speakers.length === 0) return null;
   return (
@@ -236,10 +236,10 @@ function SpeakerRow({
               alt={sp.name}
               width={avatarSize}
               height={avatarSize}
-              style={{ width: avatarSize, height: avatarSize, objectFit: "cover" }}
+              style={{ width: avatarSize, height: avatarSize, objectFit: "cover", borderRadius: avatarSize }}
             />
           ) : (
-            <span style={{ fontSize: 32 * scale, fontWeight: 900, color: "#52525b" }}>
+            <span style={{ fontSize: 40 * scale, fontWeight: 900, color: "#52525b" }}>
               {sp.name.charAt(0)}
             </span>
           )}
@@ -272,16 +272,16 @@ function SpeakerShowcase({
   compact?: boolean;
 }) {
   if (speakers.length === 0) return null;
-  // 人数が増えるほど1人あたりのカードを小さくして折り返す
-  const baseSize = speakers.length <= 2 ? 200 : speakers.length <= 4 ? 156 : 112;
-  const photoSize = (compact ? baseSize * 0.72 : baseSize) * scale;
-  const nameSize = (compact ? 17 : 22) * scale;
-  const subSize = (compact ? 12 : 13) * scale;
-  const gapTop = (compact ? 8 : 14) * scale;
+  // 人数が増えるほど1人あたりのカードを小さくして折り返す (写真サイズを大幅拡大)
+  const baseSize = speakers.length <= 2 ? 240 : speakers.length <= 4 ? 180 : 136;
+  const photoSize = (compact ? baseSize * 0.78 : baseSize) * scale;
+  const nameSize = (compact ? 19 : 24) * scale;
+  const subSize = (compact ? 13 : 14) * scale;
+  const gapTop = (compact ? 10 : 16) * scale;
   // テキスト(会社名・肩書き)が写真より広くなりがちなので、最低幅を別に確保する
-  const cardWidth = Math.max(photoSize + 24 * scale, (compact ? 170 : 210) * scale);
+  const cardWidth = Math.max(photoSize + 24 * scale, (compact ? 190 : 230) * scale);
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: (compact ? 18 : 28) * scale, alignItems: "flex-start" }}>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: (compact ? 20 : 32) * scale, alignItems: "flex-start" }}>
       {speakers.map((sp) => (
         <div
           key={sp.id}
@@ -311,10 +311,10 @@ function SpeakerShowcase({
                 alt={sp.name}
                 width={photoSize}
                 height={photoSize}
-                style={{ width: photoSize, height: photoSize, objectFit: "cover" }}
+                style={{ width: photoSize, height: photoSize, objectFit: "cover", borderRadius: photoSize }}
               />
             ) : (
-              <span style={{ fontSize: photoSize * 0.38, fontWeight: 900, color: "#52525b" }}>
+              <span style={{ fontSize: photoSize * 0.4, fontWeight: 900, color: "#52525b" }}>
                 {sp.name.charAt(0)}
               </span>
             )}
@@ -1022,7 +1022,8 @@ function renderSessionMonochrome(args: SessionBannerArgs): ImageResponse {
   const shown = speakers.slice(0, isTall ? 5 : 4);
   const titleLen = session.title.length;
   const titleSize = (titleLen <= 16 ? 72 : titleLen <= 32 ? 54 : 42) * (isTall ? scale * 0.95 : 0.82);
-  const thumb = (isTall ? 96 : 82) * scale;
+  const thumb = (isTall ? 136 : 116) * scale;
+  const hasSpeakers = shown.length > 0;
 
   return new ImageResponse(
     (
@@ -1047,18 +1048,8 @@ function renderSessionMonochrome(args: SessionBannerArgs): ImageResponse {
             border: `${2 * scale}px solid #111`,
           }}
         />
-        {/* 中央の水平ルール */}
-        <div
-          style={{
-            position: "absolute",
-            left: 24 * scale,
-            top: dim.height * 0.52,
-            width: dim.width - 48 * scale,
-            height: `${1 * scale}px`,
-            backgroundColor: "#111",
-          }}
-        />
         <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: `${60 * scale}px ${60 * scale}px` }}>
+          {/* ヘッダー（日時・トラック） */}
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <span style={{ fontSize: 17 * scale, letterSpacing: "0.28em", textTransform: "uppercase", color: "#111" }}>
               {dateText} ・ {timeText}
@@ -1069,40 +1060,58 @@ function renderSessionMonochrome(args: SessionBannerArgs): ImageResponse {
               </span>
             )}
           </div>
-          <div style={{ display: "flex", flex: 1, alignItems: "center", marginTop: 20 * scale }}>
-            <div style={{ fontSize: titleSize, lineHeight: 1.06, letterSpacing: "-0.02em", color: "#111", maxWidth: dim.width - 130 * scale }}>
+
+          {/* セッションタイトル */}
+          <div style={{ display: "flex", flex: 1, alignItems: "center", marginTop: 12 * scale }}>
+            <div style={{ fontSize: titleSize, lineHeight: 1.08, letterSpacing: "-0.02em", color: "#111", maxWidth: dim.width - 130 * scale }}>
               {session.title}
             </div>
           </div>
-          <div style={{ display: "flex", gap: 26 * scale, alignItems: "flex-start", marginBottom: 8 * scale }}>
-            {shown.map((sp) => (
-              <div key={sp.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: thumb + 20 * scale }}>
-                <div
-                  style={{
-                    display: "flex",
-                    width: thumb,
-                    height: thumb,
-                    borderRadius: thumb,
-                    border: `${2 * scale}px solid #111`,
-                    backgroundColor: "#e5e5e5",
-                    overflow: "hidden",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  {sp.photoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={sp.photoUrl} alt={sp.name} width={thumb} height={thumb} style={{ width: thumb, height: thumb, objectFit: "cover" }} />
-                  ) : (
-                    <span style={{ fontSize: thumb * 0.4, fontWeight: 900, color: "#111" }}>{sp.name.charAt(0)}</span>
-                  )}
-                </div>
-                <span style={{ marginTop: 8 * scale, fontSize: 14 * scale, fontWeight: 900, color: "#111", textAlign: "center" }}>
-                  {truncate(sp.name, 10)}
-                </span>
+
+          {/* 登壇者がいる場合：仕切り線 ＆ 登壇者アバター列 */}
+          {hasSpeakers && (
+            <div style={{ display: "flex", flexDirection: "column", marginTop: 12 * scale }}>
+              <div
+                style={{
+                  width: "100%",
+                  height: `${1 * scale}px`,
+                  backgroundColor: "#111",
+                  marginBottom: 20 * scale,
+                }}
+              />
+              <div style={{ display: "flex", gap: 32 * scale, alignItems: "flex-start", marginBottom: 12 * scale }}>
+                {shown.map((sp) => (
+                  <div key={sp.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: thumb + 24 * scale }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        width: thumb,
+                        height: thumb,
+                        borderRadius: thumb,
+                        border: `${3 * scale}px solid #111`,
+                        backgroundColor: "#e5e5e5",
+                        overflow: "hidden",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {sp.photoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={sp.photoUrl} alt={sp.name} width={thumb} height={thumb} style={{ width: thumb, height: thumb, objectFit: "cover", borderRadius: thumb }} />
+                      ) : (
+                        <span style={{ fontSize: thumb * 0.4, fontWeight: 900, color: "#111" }}>{sp.name.charAt(0)}</span>
+                      )}
+                    </div>
+                    <span style={{ marginTop: 10 * scale, fontSize: 16 * scale, fontWeight: 900, color: "#111", textAlign: "center" }}>
+                      {truncate(sp.name, 10)}
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {/* フッター */}
           <div
             style={{
               display: "flex",
@@ -1110,6 +1119,7 @@ function renderSessionMonochrome(args: SessionBannerArgs): ImageResponse {
               justifyContent: "space-between",
               borderTop: "2px solid #111",
               paddingTop: 14 * scale,
+              marginTop: hasSpeakers ? 0 : 20 * scale,
             }}
           >
             <span style={{ fontSize: 15 * scale, letterSpacing: "0.12em", color: "#555" }}>{truncate(event.title, 26)}</span>
