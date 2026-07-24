@@ -6,6 +6,7 @@ import { ui } from "@/lib/ui";
 import { db } from "@/lib/firebase/client";
 import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
 import { INITIAL_JOURNAL_ARTICLES, type JournalArticleData } from "@/lib/journalData";
+import { uploadPostImage } from "@/lib/upload";
 
 export interface JournalPostItem extends JournalArticleData {}
 
