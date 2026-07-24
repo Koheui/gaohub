@@ -14,6 +14,7 @@ export interface JournalArticleData {
   authorAvatarUrl?: string;
   authorBio: string;
   publishedAtText: string;
+  readTime?: string;
   contentParagraphs: string[];
   imageUrls: string[];
   linkedEvent?: {
@@ -98,6 +99,12 @@ export function JournalArticleView({ article }: { article: JournalArticleData })
             <span>{article.publishedAtText}</span>
             <span>・</span>
             <span>GAO HUB Journal</span>
+            {article.readTime && article.readTime !== "非表示" && (
+              <>
+                <span>・</span>
+                <span>読了時間 約{article.readTime}</span>
+              </>
+            )}
           </div>
           <button
             onClick={toggleLike}

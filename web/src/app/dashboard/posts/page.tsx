@@ -121,8 +121,12 @@ export default function PostsDashboardPage() {
               <div className="mt-4">
                 <div className="flex items-center gap-2 text-[11px] font-bold text-zinc-400">
                   <span>{post.publishedAtText}</span>
-                  <span>•</span>
-                  <span>読了時間 {post.readTime}</span>
+                  {post.readTime && post.readTime !== "非表示" && (
+                    <>
+                      <span>•</span>
+                      <span>読了時間 {post.readTime}</span>
+                    </>
+                  )}
                 </div>
                 <h3 className="mt-1 text-base font-black text-zinc-900 leading-snug">{post.title}</h3>
                 <p className="mt-2 text-xs text-zinc-500 line-clamp-3 leading-relaxed">
@@ -181,8 +185,15 @@ function JournalEditModal({
   const [imageUrl, setImageUrl] = useState(
     post?.imageUrl ?? "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80"
   );
-  const [readTime, setReadTime] = useState(post?.readTime ?? "5分");
   const [uploading, setUploading] = useState(false);
+  const [hideReadTime, setHideReadTime] = useState<boolean>(
+    post?.readTime === "非表示" || post?.readTime === ""
+  );
+
+  // 文字数ベースの自動計算 (一般的に1分あたり500文字換算)
+  const totalCharCount = (summary?.length ?? 0) + (content?.length ?? 0);
+  const calculatedMinutes = Math.max(1, Math.ceil(totalCharCount / 500));
+  const autoReadTimeText = `${calculatedMinutes}分`;
 
   // 連動イベント ＆ 連動ECプロダクトの選択 State
   const [selectedEventId, setSelectedEventId] = useState<string>(post?.linkedEvent?.slug ?? "");
@@ -259,7 +270,7 @@ function JournalEditModal({
       summary,
       content,
       imageUrl,
-      readTime,
+      readTime: hideReadTime ? "非表示" : autoReadTimeText,
       isPublished: true,
       authorName: post?.authorName ?? "岡 浩平 / Future Studio",
       authorUsername: post?.authorUsername ?? "oka",
@@ -306,14 +317,21 @@ function JournalEditModal({
               />
             </div>
             <div>
-              <label className="text-xs font-bold text-zinc-500">想定読了時間</label>
-              <input
-                required
-                value={readTime}
-                onChange={(e) => setReadTime(e.target.value)}
-                placeholder="例: 6分"
-                className="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm focus:border-zinc-900 focus:outline-none"
-              />
+              <label className="text-xs font-bold text-zinc-500">想定読了時間 (自動算出)</label>
+              <div className="mt-1 flex items-center justify-between gap-2 rounded-xl border border-zinc-300 bg-zinc-50 px-3.5 py-2">
+                <span className="text-xs font-bold text-zinc-900">
+                  {hideReadTime ? "非表示" : `⏱️ 約 ${calculatedMinutes}分 (${totalCharCount}字)`}
+                </span>
+                <label className="cursor-pointer flex items-center gap-1 text-[11px] font-bold text-zinc-600">
+                  <input
+                    type="checkbox"
+                    checked={hideReadTime}
+                    onChange={(e) => setHideReadTime(e.target.checked)}
+                    className="rounded border-zinc-300 text-zinc-950 focus:ring-0"
+                  />
+                  <span>非表示にする</span>
+                </label>
+              </div>
             </div>
             <div>
               <div className="flex items-center justify-between">
