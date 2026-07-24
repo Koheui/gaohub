@@ -5,6 +5,7 @@ import {
   type BannerSize,
   type SessionBannerStyle,
 } from "@/lib/server/bannerImage";
+import { normalizeHexColor } from "@/lib/color";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -78,7 +79,11 @@ export async function GET(req: NextRequest, context: any) {
     const allSpeakers = await getPublicSpeakers(eventId);
     const speakers = pickSpeakers(allSpeakers, session.speakerIds);
 
-    const image = await renderSessionBannerImage(event, session, speakers, size, style);
+    // ?color=#rrggbb でアクセントカラーを上書き
+    const colorOverride = normalizeHexColor(searchParams.get("color"));
+    const renderEvent = colorOverride ? { ...event, themeColor: colorOverride } : event;
+
+    const image = await renderSessionBannerImage(renderEvent, session, speakers, size, style);
 
     const buffer = await image.arrayBuffer();
     const headers = new Headers();

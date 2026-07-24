@@ -20,6 +20,18 @@ type BannerStyle =
   | "timetable";
 type Target = "event" | string;
 
+const COLOR_PRESETS: { label: string; value: string | null }[] = [
+  { label: "イベント既定", value: null },
+  { label: "オレンジ", value: "#ea580c" },
+  { label: "レッド", value: "#dc2626" },
+  { label: "ローズ", value: "#e11d48" },
+  { label: "パープル", value: "#7c3aed" },
+  { label: "ブルー", value: "#2563eb" },
+  { label: "シアン", value: "#0891b2" },
+  { label: "グリーン", value: "#059669" },
+  { label: "インク", value: "#18181b" },
+];
+
 const SIZE_OPTIONS: { id: BannerSize; label: string; use: string; width: number; height: number }[] = [
   { id: "wide", label: "Wide", use: "X / OGP / note", width: 1200, height: 630 },
   { id: "square", label: "Square", use: "Instagram投稿", width: 1080, height: 1080 },
@@ -107,6 +119,7 @@ export default function BannerPage({ params }: { params: Promise<{ id: string }>
   const [target, setTarget] = useState<Target>("event");
   const [selected, setSelected] = useState<BannerSize>("wide");
   const [bannerStyle, setBannerStyle] = useState<BannerStyle>("classic");
+  const [color, setColor] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [applying, setApplying] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);

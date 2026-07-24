@@ -117,10 +117,13 @@ export default async function UserMySpacePage(props: {
     brandName: savedConfig?.brandName ?? (username === "oka" ? "Future Studio 株式会社" : `公式プロジェクト ${username}`),
     tagline: savedConfig?.tagline ?? "リアルとデジタルの融合。ディープテックとフィジカルプロダクトの未来を構築する。",
     heroImages: savedConfig?.heroImages ?? [
-      "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=1600&q=80",
       "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1600&q=80",
     ],
     youtubeUrl: savedConfig?.youtubeUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    heroYoutubeAsSlide: savedConfig?.heroYoutubeAsSlide ?? false,
+    logoUrl: savedConfig?.logoUrl ?? undefined,
+    iconUrl: savedConfig?.iconUrl ?? undefined,
     aboutTitle: savedConfig?.aboutTitle ?? "フィジカルとデジタルを繋ぎ、ビジネスの非連続な成長を実現する",
     aboutDescription:
       savedConfig?.aboutDescription ??

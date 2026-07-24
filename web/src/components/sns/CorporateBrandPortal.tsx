@@ -8,12 +8,16 @@ import { ShopCartDrawer } from "@/components/shop/ShopCartDrawer";
 import { CheckoutModal } from "@/components/shop/CheckoutModal";
 import type { CartItem, ShopProduct, ShopOrder } from "@/lib/types";
 
+type HeroSlide = { kind: "image"; src: string } | { kind: "video"; id: string };
+
 export interface CorporateProfileData {
   username: string;
   brandName: string;          // 例: 株式会社 Future Studio / DENSO JAPAN
   tagline: string;            // 例: Crafting the Core / リアルとデジタルの融合
   heroImages: string[];       // スライドショー用画像の配列
   youtubeUrl?: string;        // YouTube動画URL (例: https://www.youtube.com/watch?v=...)
+  heroYoutubeAsSlide?: boolean; // YouTube動画をヒーロースライドショーの1枚として表示するか
+  iconUrl?: string;           // 丸型プロフィールアイコン (ジャーナル著者アイコン等)
   aboutTitle: string;         // 例: 将来のビジョンと技術の社会実装
   aboutDescription: string;   // 企業概要・ミッション
   aboutImageUrl: string;      // 企業・現場の代表写真
@@ -125,26 +129,38 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
     setCartItems([]);
   }
 
-  const images = profile.heroImages && profile.heroImages.length > 0 ? profile.heroImages : ["https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=1600&q=80"];
-
-  function nextSlide() {
-    setCurrentSlide((prev) => (prev + 1) % images.length);
-  }
-
-  function prevSlide() {
-    setCurrentSlide((prev) => (prev - 1 + images.length) % images.length);
-  }
-
-  // YouTube ID 抽出ヘルパー (shorts, embed, direct ID, watch?v= 全形式に対応)
+  // YouTube ID 抽出ヘルパー (shorts, embed, live, direct ID, watch?v= 全形式に対応)
   function getYoutubeId(url?: string): string | null {
     if (!url) return null;
     const trimmed = url.trim();
     if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) return trimmed;
-    const match = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
+    const match = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|live\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
     return match ? match[1] : null;
   }
 
   const youtubeId = getYoutubeId(profile.youtubeUrl);
+
+  const heroImages =
+    profile.heroImages && profile.heroImages.length > 0
+      ? profile.heroImages
+      : [
+          "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1600&q=80",
+          "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1600&q=80",
+        ];
+
+  // ヒーロースライド: YouTube動画を「1枚目のスライド」として混ぜられる
+  const slides: HeroSlide[] = [
+    ...(profile.heroYoutubeAsSlide && youtubeId ? [{ kind: "video" as const, id: youtubeId }] : []),
+    ...heroImages.map((src) => ({ kind: "image" as const, src })),
+  ];
+
+  function nextSlide() {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  }
+
+  function prevSlide() {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  }
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 font-sans">
@@ -156,9 +172,23 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
       {/* 🏛️ 1. グローバルヘッダー (コーレパートサイト風洗練バー) */}
       <header className="sticky top-0 z-50 border-b border-zinc-200/80 bg-white/90 px-8 py-4 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="text-xl font-black tracking-tighter text-zinc-950">
-              {profile.brandName}
+          <div className="flex items-center gap-4">
+            <Link href="/" className="flex items-center gap-3">
+              {profile.logoUrl ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={profile.logoUrl}
+                    alt={profile.brandName}
+                    className="h-8 w-auto max-w-[200px] object-contain"
+                  />
+                  <span className="sr-only">{profile.brandName}</span>
+                </>
+              ) : (
+                <span className="text-xl font-black tracking-tighter text-zinc-950">
+                  {profile.brandName}
+                </span>
+              )}
             </Link>
             <span className="hidden font-mono text-xs text-zinc-400 md:inline">
               | {profile.tagline}
@@ -192,26 +222,45 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
 
       {/* 🏛️ 2. フルサイズ・スライドショー ＆ YouTube動画 ヒーローセクション */}
       <section className="relative h-[70vh] min-h-[500px] w-full overflow-hidden bg-zinc-950">
-        {/* スライドショー画像 */}
-        {images.map((img, index) => (
+        {/* スライドショー: 画像スライド ＆ YouTube動画スライド */}
+        {slides.map((slide, index) => (
           <div
             key={index}
             className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
               index === currentSlide ? "opacity-100" : "opacity-0 pointer-events-none"
             }`}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={img}
-              alt={profile.brandName}
-              className="h-full w-full object-cover brightness-90"
-            />
+            {slide.kind === "video" ? (
+              // 背景として無音ループ再生するYouTube動画スライド。
+              // 16:9動画を画面いっぱいにトリミング表示 (object-cover相当) する。
+              <div className="absolute inset-0 overflow-hidden">
+                <iframe
+                  src={
+                    index === currentSlide
+                      ? `https://www.youtube-nocookie.com/embed/${slide.id}?autoplay=1&mute=1&loop=1&playlist=${slide.id}&controls=0&modestbranding=1&playsinline=1&rel=0`
+                      : "about:blank"
+                  }
+                  title="Hero Video"
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                  className="pointer-events-none absolute left-1/2 top-1/2 h-[56.25vw] min-h-full w-[177.77vh] min-w-full -translate-x-1/2 -translate-y-1/2 border-0 brightness-90"
+                />
+              </div>
+            ) : (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={slide.src}
+                  alt={profile.brandName}
+                  className="h-full w-full object-cover brightness-90"
+                />
+              </>
+            )}
           </div>
         ))}
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/40 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/40 to-transparent" />
 
         {/* スライド操作矢印ボタン ＆ インジケーター (デンソー風) */}
-        {images.length > 1 && (
+        {slides.length > 1 && (
           <div className="absolute left-8 top-12 z-20 flex items-center gap-3">
             <button
               onClick={prevSlide}
@@ -226,13 +275,13 @@ export function CorporateBrandPortal({ profile }: { profile: CorporateProfileDat
               ›
             </button>
             <div className="ml-2 flex gap-1.5">
-              {images.map((_, i) => (
+              {slides.map((slide, i) => (
                 <div
                   key={i}
                   onClick={() => setCurrentSlide(i)}
                   className={`h-1.5 cursor-pointer rounded-full transition-all ${
                     i === currentSlide ? "w-8 bg-white" : "w-2 bg-white/40"
-                  }`}
+                  } ${slide.kind === "video" ? "ring-1 ring-red-400" : ""}`}
                 />
               ))}
             </div>

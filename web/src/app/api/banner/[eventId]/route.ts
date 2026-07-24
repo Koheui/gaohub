@@ -8,6 +8,7 @@ import {
   type EventArtisticStyle,
   type EventBannerStyle,
 } from "@/lib/server/bannerImage";
+import { normalizeHexColor } from "@/lib/color";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,12 +53,16 @@ export async function GET(req: NextRequest, context: any) {
     }
     const speakers = await getPublicSpeakers(eventId);
 
+    // ?color=#rrggbb でアクセントカラーを上書き(全スタイルが event.themeColor を参照)
+    const colorOverride = normalizeHexColor(searchParams.get("color"));
+    const renderEvent = colorOverride ? { ...event, themeColor: colorOverride } : event;
+
     const image =
       style === "timetable"
-        ? await renderTimetableBannerImage(event, await getPublicSessions(eventId), speakers, size)
+        ? await renderTimetableBannerImage(renderEvent, await getPublicSessions(eventId), speakers, size)
         : style === "classic"
-          ? await renderBannerImage(event, speakers, size)
-          : await renderEventArtisticBanner(event, speakers, size, style as EventArtisticStyle);
+          ? await renderBannerImage(renderEvent, speakers, size)
+          : await renderEventArtisticBanner(renderEvent, speakers, size, style as EventArtisticStyle);
 
     const buffer = await image.arrayBuffer();
     const headers = new Headers();

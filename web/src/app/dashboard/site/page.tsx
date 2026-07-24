@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
+import { uploadSiteImage } from "@/lib/upload";
 import type { EventDoc } from "@/lib/types";
 import { ui } from "@/lib/ui";
 
@@ -17,6 +18,10 @@ export default function SiteCmsDashboardPage() {
     "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1600&q=80",
   ]);
   const [youtubeUrl, setYoutubeUrl] = useState("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+  const [heroYoutubeAsSlide, setHeroYoutubeAsSlide] = useState(false);
+  const [logoUrl, setLogoUrl] = useState("");
+  const [iconUrl, setIconUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [pickups, setPickups] = useState([
     {
       id: "p-1",
@@ -74,6 +79,9 @@ export default function SiteCmsDashboardPage() {
           if (cfg.tagline) setTagline(cfg.tagline);
           if (cfg.heroImages) setHeroImages(cfg.heroImages);
           if (cfg.youtubeUrl) setYoutubeUrl(cfg.youtubeUrl);
+          if (typeof cfg.heroYoutubeAsSlide === "boolean") setHeroYoutubeAsSlide(cfg.heroYoutubeAsSlide);
+          if (cfg.logoUrl) setLogoUrl(cfg.logoUrl);
+          if (cfg.iconUrl) setIconUrl(cfg.iconUrl);
           if (cfg.pickups) {
             const sanitized = cfg.pickups.map((p: any) =>
               p.href === "/dashboard/posts" ? { ...p, href: "/j/hanro-subsidy-2026" } : p
@@ -89,6 +97,29 @@ export default function SiteCmsDashboardPage() {
 
     return () => unsubEvents();
   }, []);
+
+  // ファイルを実際に Firebase Storage へアップロードして永続URLを返す。
+  // (以前は URL.createObjectURL による blob: URL を保存していたため、
+  //  リロード後や公開ページでは画像が消えてしまっていた)
+  async function uploadImage(
+    file: File,
+    prefix: "logo" | "icon" | "hero" | "about" | "pickup"
+  ): Promise<string | null> {
+    if (!file.type.startsWith("image/")) {
+      alert("画像ファイルを選択してください");
+      return null;
+    }
+    setUploading(true);
+    try {
+      const currentSlug = slug || localStorage.getItem("gaohub_user_slug") || "oka";
+      return await uploadSiteImage(currentSlug, file, prefix);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "画像のアップロードに失敗しました");
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -108,8 +139,11 @@ export default function SiteCmsDashboardPage() {
           slug: formattedSlug,
           brandName,
           tagline,
+          logoUrl,
+          iconUrl,
           heroImages,
           youtubeUrl,
+          heroYoutubeAsSlide,
           pickups,
           aboutTitle,
           aboutDescription,
@@ -203,6 +237,95 @@ export default function SiteCmsDashboardPage() {
               />
             </div>
           </div>
+
+          {/* ロゴ ＆ プロフィールアイコンのアップロード */}
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {/* ロゴ (ヘッダー掲出用・横長) */}
+            <div>
+              <label className="text-xs font-bold text-zinc-500">
+                ブランドロゴ <span className="font-normal text-zinc-400">(ヘッダーに掲出。設定すると社名テキストの代わりに表示)</span>
+              </label>
+              <div className="mt-2 flex items-center gap-4">
+                <div className="flex h-16 w-40 items-center justify-center overflow-hidden rounded-xl border border-zinc-300 bg-zinc-50">
+                  {logoUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={logoUrl} alt="ロゴ" className="max-h-full max-w-full object-contain p-1.5" />
+                  ) : (
+                    <span className="text-[11px] font-bold text-zinc-400">ロゴなし</span>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="cursor-pointer rounded-xl border border-zinc-300 bg-white px-4 py-2 text-xs font-bold text-zinc-900 shadow-sm transition-transform hover:scale-[1.02] hover:bg-zinc-50">
+                    🖼️ ロゴをアップロード
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        if (!file) return;
+                        const url = await uploadImage(file, "logo");
+                        if (url) setLogoUrl(url);
+                      }}
+                    />
+                  </label>
+                  {logoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setLogoUrl("")}
+                      className="text-[11px] font-bold text-rose-600 hover:underline"
+                    >
+                      ロゴを削除して社名テキストに戻す
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* プロフィールアイコン (丸型・ジャーナル著者等) */}
+            <div>
+              <label className="text-xs font-bold text-zinc-500">
+                プロフィールアイコン <span className="font-normal text-zinc-400">(丸型。ジャーナル記事の著者アイコン等に使用)</span>
+              </label>
+              <div className="mt-2 flex items-center gap-4">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-300 bg-zinc-50">
+                  {iconUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={iconUrl} alt="アイコン" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-[11px] font-bold text-zinc-400">なし</span>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="cursor-pointer rounded-xl border border-zinc-300 bg-white px-4 py-2 text-xs font-bold text-zinc-900 shadow-sm transition-transform hover:scale-[1.02] hover:bg-zinc-50">
+                    👤 アイコンをアップロード
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        if (!file) return;
+                        const url = await uploadImage(file, "icon");
+                        if (url) setIconUrl(url);
+                      }}
+                    />
+                  </label>
+                  {iconUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setIconUrl("")}
+                      className="text-[11px] font-bold text-rose-600 hover:underline"
+                    >
+                      アイコンを削除
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* 2. ヒーローセクション (スライドショー ＆ YouTube) */}
@@ -218,6 +341,22 @@ export default function SiteCmsDashboardPage() {
                 onChange={(e) => setYoutubeUrl(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm font-medium focus:border-zinc-950 focus:bg-white focus:outline-none"
               />
+
+              {/* YouTubeをヒーロースライドショーに混ぜるトグル */}
+              <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3.5">
+                <input
+                  type="checkbox"
+                  checked={heroYoutubeAsSlide}
+                  onChange={(e) => setHeroYoutubeAsSlide(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-zinc-950"
+                />
+                <span className="text-xs">
+                  <span className="font-bold text-zinc-900">この動画をヒーロースライドショーの1枚目として表示する ▶️</span>
+                  <span className="mt-0.5 block text-[11px] text-zinc-500">
+                    背景で無音ループ再生されます。スライドショーの画像と一緒に自動で切り替わります。（音声付きの全画面再生は、ヒーロー上の「▶️ 公式PVを再生」ボタンから利用できます）
+                  </span>
+                </span>
+              </label>
             </div>
 
             <div>
@@ -251,11 +390,12 @@ export default function SiteCmsDashboardPage() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0];
+                      e.target.value = "";
                       if (!file) return;
-                      const objectUrl = URL.createObjectURL(file);
-                      setHeroImages([...heroImages, objectUrl]);
+                      const url = await uploadImage(file, "hero");
+                      if (url) setHeroImages((prev) => [...prev, url]);
                     }}
                     className="hidden"
                   />
@@ -512,13 +652,17 @@ export default function SiteCmsDashboardPage() {
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => {
+                          onChange={async (e) => {
                             const file = e.target.files?.[0];
+                            e.target.value = "";
                             if (!file) return;
-                            const objectUrl = URL.createObjectURL(file);
-                            const updated = [...pickups];
-                            updated[idx].imageUrl = objectUrl;
-                            setPickups(updated);
+                            const url = await uploadImage(file, "pickup");
+                            if (!url) return;
+                            setPickups((prev) => {
+                              const updated = [...prev];
+                              updated[idx] = { ...updated[idx], imageUrl: url };
+                              return updated;
+                            });
                           }}
                           className="hidden"
                         />
@@ -588,11 +732,12 @@ export default function SiteCmsDashboardPage() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0];
+                      e.target.value = "";
                       if (!file) return;
-                      const objectUrl = URL.createObjectURL(file);
-                      setAboutImageUrl(objectUrl);
+                      const url = await uploadImage(file, "about");
+                      if (url) setAboutImageUrl(url);
                     }}
                     className="hidden"
                   />
@@ -603,11 +748,14 @@ export default function SiteCmsDashboardPage() {
         </div>
 
         {/* 保存ボタン */}
-        <div className="flex justify-end pt-4">
+        <div className="flex items-center justify-end gap-3 pt-4">
+          {uploading && (
+            <span className="text-xs font-bold text-zinc-500">画像をアップロード中…⏳</span>
+          )}
           <button
             type="submit"
-            disabled={saving}
-            className="rounded-xl bg-zinc-950 px-8 py-3.5 text-sm font-black text-white transition-transform hover:scale-[1.02] active:scale-[0.98]"
+            disabled={saving || uploading}
+            className="rounded-xl bg-zinc-950 px-8 py-3.5 text-sm font-black text-white transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving ? "保存中…" : "公式Webサイトの設定を保存・公開 ✨"}
           </button>

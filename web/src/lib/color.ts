@@ -1,3 +1,10 @@
+/** 任意入力を #rrggbb(小文字)に正規化する。不正値は null。バナーの色上書き用。 */
+export function normalizeHexColor(input: string | null | undefined): string | null {
+  if (!input) return null;
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(input.trim());
+  return m ? `#${m[1].toLowerCase()}` : null;
+}
+
 /** #rrggbb → HSL */
 export function hexToHsl(hex: string): { h: number; s: number; l: number } {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());

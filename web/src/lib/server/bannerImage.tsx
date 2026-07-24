@@ -98,6 +98,29 @@ function computeBackground(event: PublicEvent): string {
   return `linear-gradient(150deg, ${PAPER} 0%, ${PAPER} 35%, ${color} 95%)`;
 }
 
+/**
+ * フィルムグレイン(粒子感)を全面に敷く。ノイズPNGは 96x96 の小さなタイルなので、
+ * cover で引き伸ばすと1粒が巨大化して汚く見える。ネイティブ解像度のまま repeat で
+ * タイリングして、細かい上質な粒状感にする。
+ */
+function Grain({ opacity }: { opacity: number }) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        backgroundImage: `url(${NOISE_PNG_DATA_URI})`,
+        backgroundRepeat: "repeat",
+        backgroundSize: "96px 96px",
+        opacity,
+      }}
+    />
+  );
+}
+
 /** バナー共通の背景レイヤー(テンプレート背景 + カバー画像 + フィルムグレインノイズ) */
 function BannerBackdrop({
   event,
@@ -139,64 +162,10 @@ function BannerBackdrop({
           />
         </>
       )}
-      {/* フィルムグレインノイズ(ざらざらした粒子感) */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={NOISE_PNG_DATA_URI}
-        alt=""
-        width={dim.width}
-        height={dim.height}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          opacity: 0.35,
-        }}
-      />
+      {/* フィルムグレインノイズ(ざらざらした粒子感)。cover 引き伸ばしは粒が
+          巨大化するため、ネイティブ解像度のまま repeat でタイリングする */}
+      <Grain opacity={0.22} />
     </>
-  );
-}
-
-/** バナー共通のフッター(イベント名 + Powered by GAO HUB) */
-function BannerFooter({
-  eventTitle,
-  scale,
-}: {
-  eventTitle: string;
-  scale: number;
-}) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        borderTop: `${4 * scale}px solid ${INK}`,
-        paddingTop: 22 * scale,
-      }}
-    >
-      <span
-        style={{
-          fontSize: 18 * scale,
-          letterSpacing: "0.1em",
-          color: "rgba(24,24,27,0.6)",
-        }}
-      >
-        {truncate(eventTitle, 24)}
-      </span>
-      <span
-        style={{
-          fontSize: 30 * scale,
-          letterSpacing: "0.12em",
-          color: INK,
-        }}
-      >
-        GAO HUB
-      </span>
-    </div>
   );
 }
 
@@ -258,99 +227,6 @@ function truncate(s: string, max: number): string {
 }
 
 /**
- * 登壇者を写真+名前+肩書のカードとして並べる。セッションバナー用(登壇者が主役)。
- * compact は Wide(横長・低い)サイズ向けの縮小指定 — 縦スペースが少ないため、
- * 全情報を確実に収める(切れさせない)ことを優先してサイズを詰める。
- */
-function SpeakerShowcase({
-  speakers,
-  scale,
-  compact = false,
-}: {
-  speakers: PublicSpeaker[];
-  scale: number;
-  compact?: boolean;
-}) {
-  if (speakers.length === 0) return null;
-  // 人数が増えるほど1人あたりのカードを小さくして折り返す (写真サイズを大幅拡大)
-  const baseSize = speakers.length <= 2 ? 240 : speakers.length <= 4 ? 180 : 136;
-  const photoSize = (compact ? baseSize * 0.78 : baseSize) * scale;
-  const nameSize = (compact ? 19 : 24) * scale;
-  const subSize = (compact ? 13 : 14) * scale;
-  const gapTop = (compact ? 10 : 16) * scale;
-  // テキスト(会社名・肩書き)が写真より広くなりがちなので、最低幅を別に確保する
-  const cardWidth = Math.max(photoSize + 24 * scale, (compact ? 190 : 230) * scale);
-  return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: (compact ? 20 : 32) * scale, alignItems: "flex-start" }}>
-      {speakers.map((sp) => (
-        <div
-          key={sp.id}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            width: cardWidth,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              width: photoSize,
-              height: photoSize,
-              borderRadius: photoSize,
-              backgroundColor: "#d4d4d8",
-              overflow: "hidden",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {sp.photoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={sp.photoUrl}
-                alt={sp.name}
-                width={photoSize}
-                height={photoSize}
-                style={{ width: photoSize, height: photoSize, objectFit: "cover", borderRadius: photoSize }}
-              />
-            ) : (
-              <span style={{ fontSize: photoSize * 0.4, fontWeight: 900, color: "#52525b" }}>
-                {sp.name.charAt(0)}
-              </span>
-            )}
-          </div>
-          <span
-            style={{
-              marginTop: gapTop,
-              fontSize: nameSize,
-              fontWeight: 900,
-              color: INK,
-              textAlign: "center",
-            }}
-          >
-            {truncate(sp.name, 12)}
-          </span>
-          {/* 会社名・肩書きは縦に使う行数を抑えるため1行にまとめ、
-              折り返し崩れを避けるため事前に切り詰めて確定させる */}
-          {(sp.company || sp.title) && (
-            <span
-              style={{
-                marginTop: 3 * scale,
-                fontSize: subSize,
-                color: "rgba(24,24,27,0.6)",
-                textAlign: "center",
-              }}
-            >
-              {truncate([sp.company, sp.title].filter(Boolean).join(" / "), compact ? 18 : 22)}
-            </span>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/**
  * イベント告知バナーを生成する。テンプレート(kodak/spectrum/aurora)に応じた
  * 背景に、タイトル・日時・会場・登壇者の顔写真を載せる。3サイズ共通ロジック。
  */
@@ -377,6 +253,7 @@ export async function renderBannerImage(
   const titleSize = baseTitleSize * (isTall ? scale * 0.92 : 1);
 
   const shownSpeakers = speakers.filter((s) => s.name).slice(0, size === "story" ? 6 : 5);
+  const accent = accentRgba(event, 1);
 
   return new ImageResponse(
     (
@@ -388,68 +265,102 @@ export async function renderBannerImage(
           flexDirection: "column",
           position: "relative",
           backgroundColor: PAPER,
-          backgroundImage: computeBackground(event),
           fontFamily: fontData ? "NotoSansJP" : "sans-serif",
         }}
       >
-        <BannerBackdrop event={event} dim={dim} scale={scale} />
+        {/* grain(紙の粒子感) */}
+        <Grain opacity={0.22} />
 
+        {/* 上部: 紙地(日付ピル + 特大タイトル + アクセント罫線 + スペック) */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             flex: 1,
-            padding: `${56 * scale}px ${72 * scale}px`,
+            padding: `${52 * scale}px ${64 * scale}px`,
+            justifyContent: "space-between",
+            position: "relative",
           }}
         >
-          {/* スペック行 */}
-          <div style={{ display: "flex", gap: 56 * scale, flexWrap: "wrap" }}>
-            <Spec label="Date" value={dateText} scale={scale} />
-            <Spec label="Doors" value={doorsText} scale={scale} />
-            <Spec label="Venue" value={venueText} scale={scale} />
+          <div style={{ display: "flex" }}>
+            <span
+              style={{
+                display: "flex",
+                borderRadius: 999,
+                backgroundColor: accent,
+                color: "#ffffff",
+                fontSize: 18 * scale,
+                fontWeight: 900,
+                letterSpacing: "0.16em",
+                padding: `${10 * scale}px ${22 * scale}px`,
+              }}
+            >
+              {dateText}
+            </span>
           </div>
 
-          {/* タイトル */}
-          <div style={{ display: "flex", flex: 1, alignItems: "center" }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
             <div
               style={{
                 fontSize: titleSize,
-                lineHeight: 1.03,
-                letterSpacing: "-0.03em",
+                lineHeight: 1.02,
+                letterSpacing: "-0.035em",
                 color: INK,
-                maxWidth: dim.width - 144 * scale,
-
+                maxWidth: dim.width - 128 * scale,
               }}
             >
               {event.title}
             </div>
+            <div style={{ display: "flex", width: 112 * scale, height: 8 * scale, backgroundColor: accent, marginTop: 26 * scale }} />
           </div>
 
-          {/* 登壇者 */}
-          {shownSpeakers.length > 0 && (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                marginBottom: 28 * scale,
-              }}
-            >
+          <div style={{ display: "flex", gap: 56 * scale, flexWrap: "wrap" }}>
+            <Spec label="Doors" value={doorsText} scale={scale} />
+            <Spec label="Venue" value={venueText} scale={scale} />
+          </div>
+        </div>
+
+        {/* 下部: アクセントバンド(登壇者行 + GAO HUB) */}
+        <div
+          style={{
+            display: "flex",
+            position: "relative",
+            backgroundColor: accent,
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: `${26 * scale}px ${64 * scale}px`,
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              backgroundImage: "linear-gradient(150deg, rgba(255,255,255,0.14) 0%, transparent 45%, rgba(0,0,0,0.26) 100%)",
+            }}
+          />
+          <Grain opacity={0.14} />
+          <div style={{ display: "flex", alignItems: "center", gap: 26 * scale, position: "relative" }}>
+            {shownSpeakers.length > 0 && <SpeakerRow speakers={shownSpeakers} scale={scale} />}
+            {shownSpeakers.length > 0 && (
               <span
                 style={{
                   fontSize: 16 * scale,
-                  letterSpacing: "0.3em",
+                  letterSpacing: "0.28em",
                   textTransform: "uppercase",
-                  color: "rgba(24,24,27,0.55)",
-                  marginBottom: 14 * scale,
+                  color: "rgba(255,255,255,0.92)",
                 }}
               >
                 Speakers
               </span>
-              <SpeakerRow speakers={shownSpeakers} scale={scale} />
-            </div>
-          )}
-
-          <BannerFooter eventTitle="GAO HUB" scale={scale} />
+            )}
+          </div>
+          <span style={{ position: "relative", fontSize: 27 * scale, letterSpacing: "0.12em", color: "#ffffff" }}>
+            GAO HUB
+          </span>
         </div>
       </div>
     ),
@@ -496,10 +407,83 @@ export async function renderSessionBannerImage(
   if (style === "monochrome-minimal") return renderSessionMonochrome(shared);
   if (style === "split-duotone") return renderSessionSplitDuotone(shared);
 
+  // ─── クラシック(エディトリアル・ボールド) ───
+  // 左: トラックのピル + 特大タイトル + アクセント罫線 + 日時。
+  // 右: アクセントカラーのブロック上に登壇者写真を角丸スクエアカードで主役配置。
+  const accent = accentRgba(event, 1);
+  const hero = speakers.slice(0, 4);
+  const nSpk = Math.max(hero.length, 1);
+  const isWide = !isTall;
+
   const titleLen = session.title.length;
-  const baseTitleSize = titleLen <= 16 ? 72 : titleLen <= 32 ? 54 : 40;
-  // Wide は縦が狭く2行になった際のスペースが厳しいため、やや小さめに倒す
-  const titleSize = baseTitleSize * (isTall ? scale * 0.92 : 0.84);
+  const baseTitle = titleLen <= 14 ? 84 : titleLen <= 26 ? 62 : titleLen <= 40 ? 46 : 38;
+  const titleSize = baseTitle * (isWide ? 1 : scale);
+
+  const photo = (nSpk <= 2 ? 188 : 150) * scale;
+  const cardW = photo;
+  const cardsBoxW = 2 * cardW + 22 * scale; // 2列で折り返す
+
+  const SpeakerCards = (
+    <div
+      style={{
+        position: "relative",
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 22 * scale,
+        width: cardsBoxW,
+        justifyContent: "center",
+        alignItems: "flex-start",
+      }}
+    >
+      {hero.map((sp) => (
+        <div
+          key={sp.id}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", width: cardW }}
+        >
+          <div
+            style={{
+              display: "flex",
+              width: photo,
+              height: photo,
+              borderRadius: 26 * scale,
+              border: `${3 * scale}px solid rgba(255,255,255,0.92)`,
+              backgroundColor: "#d4d4d8",
+              overflow: "hidden",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: `0 ${10 * scale}px ${26 * scale}px rgba(0,0,0,0.22)`,
+            }}
+          >
+            {sp.photoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={sp.photoUrl}
+                alt={sp.name}
+                width={photo}
+                height={photo}
+                style={{ width: photo, height: photo, objectFit: "cover" }}
+              />
+            ) : (
+              <span style={{ fontSize: photo * 0.4, fontWeight: 900, color: "#52525b" }}>
+                {sp.name.charAt(0)}
+              </span>
+            )}
+          </div>
+          <span
+            style={{
+              marginTop: 10 * scale,
+              fontSize: 16 * scale,
+              fontWeight: 900,
+              color: "#ffffff",
+              textAlign: "center",
+            }}
+          >
+            {truncate(sp.name, 10)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
 
   return new ImageResponse(
     (
@@ -508,63 +492,115 @@ export async function renderSessionBannerImage(
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
+          flexDirection: isWide ? "row" : "column",
           position: "relative",
           backgroundColor: PAPER,
-          backgroundImage: computeBackground(event),
           fontFamily: fontData ? "NotoSansJP" : "sans-serif",
         }}
       >
-        <BannerBackdrop event={event} dim={dim} scale={scale} />
-
+        {/* テキスト側(紙地) */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
-            flex: 1,
-            padding: `${56 * scale}px ${72 * scale}px`,
+            flexBasis: isWide ? "60%" : "auto",
+            flex: isWide ? "0 0 60%" : "1",
+            padding: `${52 * scale}px ${52 * scale}px`,
+            justifyContent: "space-between",
+            position: "relative",
           }}
         >
-          {/* スペック行 */}
-          <div style={{ display: "flex", gap: 56 * scale, flexWrap: "wrap" }}>
-            <Spec label="Date" value={dateText} scale={scale} />
-            <Spec label="Time" value={timeText} scale={scale} />
-            {session.track && <Spec label="Track" value={session.track} scale={scale} />}
+          {/* grain(紙の粒子感) */}
+          <Grain opacity={0.22} />
+          {/* キッカー(トラックのピル) */}
+          <div style={{ display: "flex", position: "relative" }}>
+            <span
+              style={{
+                display: "flex",
+                borderRadius: 999,
+                backgroundColor: accent,
+                color: "#ffffff",
+                fontSize: 17 * scale,
+                fontWeight: 900,
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                padding: `${9 * scale}px ${20 * scale}px`,
+              }}
+            >
+              {truncate(session.track || "Session", 18)}
+            </span>
           </div>
 
-          {/* セッションタイトル */}
-          <div style={{ display: "flex", marginTop: (isTall ? 32 : 20) * scale }}>
+          {/* タイトル + アクセント罫線 + 日時 */}
+          <div style={{ display: "flex", flexDirection: "column", position: "relative" }}>
             <div
               style={{
                 fontSize: titleSize,
-                lineHeight: 1.08,
-                letterSpacing: "-0.02em",
+                lineHeight: 1.03,
+                letterSpacing: "-0.035em",
                 color: INK,
-                maxWidth: dim.width - 144 * scale,
-
+                maxWidth: isWide ? dim.width * 0.6 - 104 * scale : dim.width - 104 * scale,
               }}
             >
               {session.title}
             </div>
+            <div style={{ display: "flex", width: 96 * scale, height: 7 * scale, backgroundColor: accent, marginTop: 24 * scale }} />
+            <span
+              style={{
+                marginTop: 20 * scale,
+                fontSize: 23 * scale,
+                letterSpacing: "0.06em",
+                color: "rgba(24,24,27,0.72)",
+              }}
+            >
+              {dateText}  ・  {timeText}
+            </span>
           </div>
 
-          {/* 登壇者(主役として大きく表示)。alignItems は center にすると
-              コンテナが窮屈な場合に上下へはみ出すため、常に上詰めにする。
-              Wide は縦が狭いので SpeakerShowcase を compact 表示にする */}
+          {/* フッター */}
           <div
             style={{
               display: "flex",
-              flex: 1,
-              alignItems: "flex-start",
-              marginTop: (isTall ? 24 : 16) * scale,
-              marginBottom: 16 * scale,
-              overflow: "hidden",
+              position: "relative",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderTop: `${3 * scale}px solid ${INK}`,
+              paddingTop: 16 * scale,
             }}
           >
-            <SpeakerShowcase speakers={speakers} scale={scale} compact={!isTall} />
+            <span style={{ fontSize: 16 * scale, letterSpacing: "0.1em", color: "rgba(24,24,27,0.6)" }}>
+              {truncate(event.title, 22)}
+            </span>
+            <span style={{ fontSize: 26 * scale, letterSpacing: "0.12em", color: INK }}>GAO HUB</span>
           </div>
+        </div>
 
-          <BannerFooter eventTitle={event.title} scale={scale} />
+        {/* 登壇者側(アクセントブロック) */}
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+            position: "relative",
+            backgroundColor: accent,
+            overflow: "hidden",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: `${36 * scale}px`,
+          }}
+        >
+          {/* 立体感のための光/影レイヤー */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              backgroundImage: "linear-gradient(150deg, rgba(255,255,255,0.16) 0%, transparent 42%, rgba(0,0,0,0.30) 100%)",
+            }}
+          />
+          <Grain opacity={0.16} />
+          {SpeakerCards}
         </div>
       </div>
     ),
