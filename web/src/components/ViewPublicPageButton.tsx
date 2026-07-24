@@ -37,7 +37,7 @@ export function ViewPublicPageButton({ eventId }: { eventId: string }) {
       href={`/e/${slug}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center justify-center rounded-full border-2 border-zinc-950 px-3.5 py-1.5 text-[11px] font-black tracking-tight text-zinc-950 transition-colors hover:bg-zinc-950 hover:text-white"
+      className="inline-flex shrink-0 items-center justify-center rounded-full border-2 border-zinc-950 px-3.5 py-1.5 text-[11px] font-black tracking-tight text-zinc-950 whitespace-nowrap transition-colors hover:bg-zinc-950 hover:text-white shadow-sm"
     >
       公開ページを見る ↗
     </a>
