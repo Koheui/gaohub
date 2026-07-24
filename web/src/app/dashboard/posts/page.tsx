@@ -4,17 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { ui } from "@/lib/ui";
 
-export interface JournalPostItem {
-  id: string;
-  title: string;
-  category: string;
-  publishedAtText: string;
-  summary: string;
-  content: string;
-  imageUrl: string;
-  readTime: string;
-  isPublished: boolean;
-}
+import { INITIAL_JOURNAL_ARTICLES, type JournalArticleData } from "@/lib/journalData";
+
+export interface JournalPostItem extends JournalArticleData {}
 
 export default function PostsDashboardPage() {
   const [modalOpen, setModalOpen] = useState(false);
@@ -22,41 +14,7 @@ export default function PostsDashboardPage() {
   const [editingPost, setEditingPost] = useState<JournalPostItem | null>(null);
 
   // 初期ジャーナル記事リスト
-  const [posts, setPosts] = useState<JournalPostItem[]>([
-    {
-      id: "seqtrak-review-2026",
-      title: "【購入レビュー】YAMAHA SEQTRAKを選んだ4つの理由",
-      category: "製品レビュー",
-      publishedAtText: "2026.07.15",
-      summary: "YAMAHAがリリースしたオールインワングルーヴボックス「SEQTRAK」を購入。現場イベントやワークショップでの活用展望をレポート。",
-      content: `YAMAHA SEQTRAK を導入し、イベントやライブパフォーマンスでの音響演出に活用し始めました。\n\n1. トラックメイキングの圧倒的スピード感\n2. サンプラーとFM音源のハイブリッド表現\n3. 軽量かつバッテリー駆動で現場持ち込みが容易`,
-      imageUrl: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80",
-      readTime: "5分",
-      isPublished: true,
-    },
-    {
-      id: "j-2",
-      title: "emolinkが創り出す『物理思い出カード』の体験設計",
-      category: "プロダクト思考",
-      publishedAtText: "2026.07.10",
-      summary: "スマホをかざすだけで想い出の音楽や写真が蘇るフィジカルプロダクトの裏側と、世間感覚の調和について。",
-      content: `デジタルデータの氾濫に対する一つの回答として、手に触れられる物理カードに体験を閉じ込めるプロジェクト「emolink」の思想をまとめました。`,
-      imageUrl: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80",
-      readTime: "7分",
-      isPublished: true,
-    },
-    {
-      id: "j-3",
-      title: "地方創生とクラフトコーラ：小倉コーラ誕生秘話",
-      category: "地方創生・ストーリー",
-      publishedAtText: "2026.07.01",
-      summary: "北九州・小倉のスパイスと物語を詰め込んだクラフトコーラの開発ストーリーと直営EC展開への挑戦。",
-      content: `地場の素材とカルチャーを掛け合わせた新しいクラフトドリンクの立ち上げ経緯。`,
-      imageUrl: "https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=800&q=80",
-      readTime: "6分",
-      isPublished: true,
-    },
-  ]);
+  const [posts, setPosts] = useState<JournalPostItem[]>(INITIAL_JOURNAL_ARTICLES);
 
   const categories = ["すべて", ...Array.from(new Set(posts.map((p) => p.category)))];
 
@@ -280,14 +238,54 @@ function JournalEditModal({
           </div>
 
           <div>
-            <label className="text-xs font-bold text-zinc-500">記事本文 (Markdown可)</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-zinc-500">記事本文 (Markdown・途中に写真挿入可)</label>
+              <div className="flex flex-wrap gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = prompt("挿入する写真・画像のURLを入力してください:");
+                    if (url) {
+                      const caption = prompt("写真のキャプション（説明）を入力してください:") ?? "";
+                      setContent((prev) => `${prev}\n\n![${caption}](${url})\n\n`);
+                    }
+                  }}
+                  className="rounded-lg bg-sky-50 px-2.5 py-1 text-[11px] font-bold text-sky-700 hover:bg-sky-100 border border-sky-200"
+                >
+                  📷 本文の途中に写真を挿入
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const presetUrl = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80";
+                    setContent((prev) => `${prev}\n\n![会場全体の盛り上がりと熱気](${presetUrl})\n\n`);
+                  }}
+                  className="rounded-lg bg-zinc-100 px-2 py-1 text-[11px] font-bold text-zinc-600 hover:bg-zinc-200"
+                >
+                  + 🏛️ 会場風景
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const presetUrl = "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80";
+                    setContent((prev) => `${prev}\n\n![熱弁を振るう登壇ピッチセッション](${presetUrl})\n\n`);
+                  }}
+                  className="rounded-lg bg-zinc-100 px-2 py-1 text-[11px] font-bold text-zinc-600 hover:bg-zinc-200"
+                >
+                  + 🎤 登壇風景
+                </button>
+              </div>
+            </div>
             <textarea
-              rows={6}
+              rows={8}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="ここに本文を入力してください..."
-              className="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm focus:border-zinc-900 focus:outline-none font-mono"
+              placeholder="ここに本文を入力してください... ボタンで本文中に写真を挿入できます (![キャプション](URL) 形式)"
+              className="mt-1.5 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm focus:border-zinc-900 focus:outline-none font-mono leading-relaxed"
             />
+            <p className="mt-1 text-[11px] text-zinc-400">
+              💡 本文中に <code>![写真のキャプション](画像のURL)</code> と書くと、記事の途中に美しく写真が差し込まれます。
+            </p>
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-zinc-100">

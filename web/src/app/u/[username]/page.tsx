@@ -1,5 +1,6 @@
 import { CorporateBrandPortal, type CorporateProfileData } from "@/components/sns/CorporateBrandPortal";
 import { adminDb } from "@/lib/firebase/admin";
+import { INITIAL_JOURNAL_ARTICLES } from "@/lib/journalData";
 
 export const dynamic = "force-dynamic";
 
@@ -83,9 +84,9 @@ export default async function UserMySpacePage(props: {
         id: "p-3",
         type: "journal",
         badgeText: "📖 注目ジャーナル",
-        title: "【購入レビュー】YAMAHA SEQTRAKを選んだ4つの理由",
-        subtitle: "実機音源・トラックメイキングの魅力と現場イベントでの活用展望を徹底レポート。",
-        imageUrl: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80",
+        title: "【祝・採択】北九州市「販路拡大支援助成金」採択決定！",
+        subtitle: "AIエージェントと2,929件のCRMが創り出す自動営業ファンネルの裏側。",
+        imageUrl: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80",
         href: "/dashboard/posts",
       },
     ];
@@ -108,15 +109,13 @@ export default async function UserMySpacePage(props: {
     aboutImageUrl: savedConfig?.aboutImageUrl ?? "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
     followerCount: 2450,
     pickups: defaultPickups,
-    journals: [
-      {
-        id: "seqtrak-review-2026",
-        title: "【購入レビュー】YAMAHA SEQTRAKを選んだ4つの理由",
-        publishedAtText: "2026.07.15",
-        imageUrl: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80",
-        summary: "YAMAHAがリリースしたグルーヴボックス「SEQTRAK」を購入。現場イベントやワークショップでの活用展望をレポート。",
-      },
-    ],
+    journals: INITIAL_JOURNAL_ARTICLES.map((item) => ({
+      id: item.id,
+      title: item.title,
+      publishedAtText: item.publishedAtText,
+      imageUrl: item.imageUrl,
+      summary: item.summary,
+    })),
   };
 
   return <CorporateBrandPortal profile={corporateProfile} />;

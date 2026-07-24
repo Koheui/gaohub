@@ -110,15 +110,33 @@ export function JournalArticleView({ article }: { article: JournalArticleData })
           </button>
         </div>
 
-        {/* 本文段落 */}
+        {/* 本文段落 ＆ インライン写真挿入対応 */}
         <div className="mt-8 space-y-6 text-base font-medium leading-relaxed text-zinc-800">
-          {article.contentParagraphs.map((paragraph, idx) => (
-            <p key={idx} className="whitespace-pre-wrap">
-              {paragraph}
-            </p>
-          ))}
+          {article.contentParagraphs.map((paragraph, idx) => {
+            // Markdown形式 ![alt](url) や [image: url] の検知
+            const imgMatch = paragraph.match(/^!\[(.*?)\]\((.*?)\)$/) || paragraph.match(/^\[image:\s*(.*?)\]$/);
+            if (imgMatch) {
+              const alt = imgMatch[1] || "";
+              const url = imgMatch[2] || imgMatch[1];
+              return (
+                <figure key={idx} className="my-8 space-y-2">
+                  <div className="overflow-hidden rounded-3xl border border-zinc-200 shadow-xl">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt={alt} className="w-full object-cover" />
+                  </div>
+                  {alt && <figcaption className="text-center text-xs font-bold text-zinc-400">{alt}</figcaption>}
+                </figure>
+              );
+            }
 
-          {/* 記事挿入写真 */}
+            return (
+              <p key={idx} className="whitespace-pre-wrap">
+                {paragraph}
+              </p>
+            );
+          })}
+
+          {/* 記事末尾の追加写真ギャラリー */}
           {article.imageUrls.length > 0 && (
             <div className="my-8 space-y-4">
               {article.imageUrls.map((url, i) => (
