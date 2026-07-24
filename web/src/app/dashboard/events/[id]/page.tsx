@@ -14,7 +14,7 @@ import {
 import { db } from "@/lib/firebase/client";
 import { useAuth } from "@/components/AuthProvider";
 import type { EventDoc, Registration } from "@/lib/types";
-import { EventForm, eventToFormValues, type EventFormValues } from "@/components/EventForm";
+import { EventForm, TEMPLATES, eventToFormValues, type EventFormValues } from "@/components/EventForm";
 import { CoverImageUploader } from "@/components/CoverImageUploader";
 import { ViewPublicPageButton } from "@/components/ViewPublicPageButton";
 import { formatDateRange } from "@/lib/format";
@@ -167,31 +167,96 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         <CoverImageUploader eventId={id} coverImageUrl={event.coverImageUrl} />
       </div>
 
+      {/* 🎨 LPデザインスタイル・テーマカラー選択セクション */}
+      <div className={`mt-10 p-6 ${ui.card}`}>
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 pb-4">
+          <div>
+            <h2 className={ui.h2}>🎨 LPデザインテンプレート ＆ スタイル</h2>
+            <p className="mt-1 text-xs text-zinc-500">
+              公開LP (`/e/{event.slug}`) の全体デザイン世界観を選択できます。ワンクリックで切り替えられます。
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold text-zinc-500">テーマカラー:</span>
+            <input
+              type="color"
+              value={event.themeColor || "#18181b"}
+              onChange={async (e) => {
+                const color = e.target.value;
+                await updateDoc(doc(db, "events", id), { themeColor: color });
+              }}
+              className="h-9 w-14 cursor-pointer rounded-lg border border-zinc-300 shadow-sm"
+              title="テーマカラーを変更"
+            />
+          </div>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {TEMPLATES.map((t) => {
+            const isSelected = (event.template || "kodak") === t.id;
+            return (
+              <button
+                type="button"
+                key={t.id}
+                onClick={async () => {
+                  await updateDoc(doc(db, "events", id), { template: t.id });
+                }}
+                className={`group relative overflow-hidden rounded-2xl border-2 text-left transition-all duration-200 ${
+                  isSelected
+                    ? "border-zinc-950 bg-zinc-950 text-white shadow-xl ring-2 ring-zinc-950/20"
+                    : "border-zinc-200 bg-white text-zinc-900 hover:-translate-y-0.5 hover:border-zinc-400 hover:shadow-md"
+                }`}
+              >
+                <div className="h-20 w-full" style={{ background: t.swatch }} />
+                <div className="p-4">
+                  <div className="flex items-center justify-between">
+                    <p className={`text-base font-black ${isSelected ? "text-white" : "text-zinc-950"}`}>
+                      {t.name}
+                    </p>
+                    {isSelected && (
+                      <span className="rounded-full bg-white/20 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
+                        選択中 ✓
+                      </span>
+                    )}
+                  </div>
+                  <p className={`mt-1 text-xs ${isSelected ? "text-zinc-300" : "text-zinc-500"}`}>
+                    {t.desc}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="mt-10">
         <div className="flex items-center justify-between">
-          <h2 className={ui.h2}>イベント情報</h2>
-          <button onClick={() => setEditing((v) => !v)} className={ui.btnText}>
-            {editing ? "閉じる" : "編集する"}
+          <div>
+            <h2 className={ui.h2}>イベント基本情報</h2>
+            <p className="mt-1 text-xs text-zinc-500">タイトル・会場・説明・日時・詳細設定を編集できます</p>
+          </div>
+          <button onClick={() => setEditing((v) => !v)} className={ui.btn}>
+            {editing ? "編集を閉じる" : "基本情報を編集する ✏️"}
           </button>
         </div>
         {editing ? (
-          <div className="mt-4">
+          <div className="mt-6 rounded-2xl border-2 border-zinc-950 bg-white p-6 shadow-xl">
             <EventForm
               initial={eventToFormValues(event)}
-              submitLabel="保存"
+              submitLabel="保存して適用"
               onSubmit={handleUpdate}
               slugEditable={false}
             />
           </div>
         ) : (
-          <dl className="mt-4 space-y-2 text-sm">
-            <div className="flex gap-4">
-              <dt className="w-24 text-zinc-500">会場</dt>
-              <dd>{event.venueName || "未設定"} {event.venueAddress}</dd>
+          <dl className={`mt-4 space-y-4 p-6 ${ui.card}`}>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 border-b border-zinc-100 pb-3">
+              <dt className="w-32 font-bold text-zinc-500 text-xs uppercase tracking-wider">会場・場所</dt>
+              <dd className="font-medium text-sm text-zinc-900">{event.venueName || "未設定"} {event.venueAddress}</dd>
             </div>
-            <div className="flex gap-4">
-              <dt className="w-24 text-zinc-500">説明</dt>
-              <dd className="whitespace-pre-wrap">{event.description || "未設定"}</dd>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+              <dt className="w-32 font-bold text-zinc-500 text-xs uppercase tracking-wider">説明・概要</dt>
+              <dd className="whitespace-pre-wrap text-sm text-zinc-800 leading-relaxed">{event.description || "未設定"}</dd>
             </div>
           </dl>
         )}

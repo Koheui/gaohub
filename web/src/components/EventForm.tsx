@@ -24,7 +24,7 @@ export interface EventFormValues {
   endsAtLocal: string;
 }
 
-const TEMPLATES: { id: EventTemplate; name: string; desc: string; swatch: string }[] = [
+export const TEMPLATES: { id: EventTemplate; name: string; desc: string; swatch: string }[] = [
   {
     id: "kodak",
     name: "Kodak",
