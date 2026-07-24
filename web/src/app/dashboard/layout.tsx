@@ -48,7 +48,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <header className="relative z-20 border-b-2 border-zinc-950 bg-[#f6f5f2]/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
           <div className="flex items-center gap-8">
-            <Link href="/dashboard" className="text-lg font-black tracking-tighter">
+            <Link href="/dashboard/site" className="text-lg font-black tracking-tighter">
               GAO<span className="text-zinc-400"> </span>HUB
             </Link>
             <nav className="flex items-center gap-6">

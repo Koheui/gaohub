@@ -62,7 +62,7 @@ function LoginForm() {
 
   async function afterAuth() {
     await ensureUserProfile();
-    router.push("/dashboard");
+    router.push("/dashboard/site");
   }
 
   async function handleSubmit(e: React.FormEvent) {
