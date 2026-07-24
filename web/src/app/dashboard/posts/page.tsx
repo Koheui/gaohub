@@ -182,6 +182,35 @@ function JournalEditModal({
     post?.imageUrl ?? "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80"
   );
   const [readTime, setReadTime] = useState(post?.readTime ?? "5分");
+  const [uploading, setUploading] = useState(false);
+
+  async function handleUploadFile(file: File | undefined) {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadPostImage(file);
+      const defaultName = file.name.split(".")[0];
+      const caption = prompt("写真のキャプション（解説文）を入力してください:", defaultName) ?? defaultName;
+      setContent((prev) => `${prev}\n\n![${caption}](${url})\n\n`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "画像のアップロードに失敗しました");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleCoverUploadFile(file: File | undefined) {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadPostImage(file);
+      setImageUrl(url);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "画像のアップロードに失敗しました");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -248,11 +277,24 @@ function JournalEditModal({
               />
             </div>
             <div>
-              <label className="text-xs font-bold text-zinc-500">アイキャッチ画像URL</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-zinc-500">アイキャッチ画像</label>
+                <label className="cursor-pointer text-[10px] font-bold text-sky-600 hover:underline">
+                  {uploading ? "アップ中…" : "📁 ファイル選択"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploading}
+                    className="hidden"
+                    onChange={(e) => handleCoverUploadFile(e.target.files?.[0])}
+                  />
+                </label>
+              </div>
               <input
                 required
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="https://... またはファイル選択"
                 className="mt-1 w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm focus:border-zinc-900 focus:outline-none"
               />
             </div>
@@ -275,7 +317,19 @@ function JournalEditModal({
               <label className="text-xs font-bold text-zinc-500">
                 記事本文 (全体を見渡せる広大エリア・途中に写真挿入可能)
               </label>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {/* 🌟 1クリック ファイル直接アップロード＆即時挿入ボタン */}
+                <label className="cursor-pointer rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] flex items-center gap-1">
+                  <span>{uploading ? "アップロード中… ⏳" : "📁 写真ファイルを選択して本文に直接挿入 📸"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploading}
+                    className="hidden"
+                    onChange={(e) => handleUploadFile(e.target.files?.[0])}
+                  />
+                </label>
+
                 <button
                   type="button"
                   onClick={() => {
@@ -285,9 +339,9 @@ function JournalEditModal({
                       setContent((prev) => `${prev}\n\n![${caption}](${url})\n\n`);
                     }
                   }}
-                  className="rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700 hover:bg-sky-100 border border-sky-200"
+                  className="rounded-lg bg-zinc-100 px-2.5 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-200"
                 >
-                  📷 本文の途中に写真を挿入
+                  🔗 URL指定
                 </button>
                 <button
                   type="button"
@@ -298,16 +352,6 @@ function JournalEditModal({
                   className="rounded-lg bg-zinc-100 px-2.5 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-200"
                 >
                   + 🏛️ 会場風景
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const presetUrl = "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80";
-                    setContent((prev) => `${prev}\n\n![熱弁を振るう登壇ピッチセッション](${presetUrl})\n\n`);
-                  }}
-                  className="rounded-lg bg-zinc-100 px-2.5 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-200"
-                >
-                  + 🎤 登壇風景
                 </button>
               </div>
             </div>
