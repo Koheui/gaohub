@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { sendUnansweredReminderEmail } from "@/lib/email";
+import { appUrl } from "@/lib/format";
 
 /**
  * 予約リマインド送信 cron エンドポイント。
@@ -57,7 +58,8 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const origin = req.headers.get("origin") ?? "https://gaohub.com";
+  // cron 経由は origin ヘッダーが無いため、常に本番URL(NEXT_PUBLIC_APP_URL)を使う
+  const origin = appUrl("");
   let sent = 0;
 
   for (const group of Object.values(grouped)) {

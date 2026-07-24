@@ -171,7 +171,10 @@ export default function SiteCmsDashboardPage() {
             />
           </div>
           <p className="text-[11px] text-zinc-400">
-            現在の公開URL: <code className="font-bold text-zinc-800">https://web-rust-omega-87.vercel.app/u/{slug}</code>
+            現在の公開URL:{" "}
+            <code className="font-bold text-zinc-800">
+              {(process.env.NEXT_PUBLIC_APP_URL ?? "https://web-rust-omega-87.vercel.app").replace(/\/$/, "")}/u/{slug}
+            </code>
           </p>
         </div>
 

@@ -3,6 +3,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { verifyLoungeAccess } from "@/lib/server/lounge";
 import { sendStructuredContactEmail, sendLoungeContactEmail } from "@/lib/email";
 import { curateMessage } from "@/lib/server/aiCurator";
+import { appUrl } from "@/lib/format";
 import { LoungeContactPurpose } from "@/lib/types";
 import { FieldValue } from "firebase-admin/firestore";
 
@@ -138,7 +139,8 @@ export async function POST(req: NextRequest) {
 
   await msgRef.set(messageData);
 
-  const origin = req.headers.get("origin") ?? "https://gaohub.com";
+  // メール内リンクは本番URL(NEXT_PUBLIC_APP_URL)に統一する
+  const origin = appUrl("");
   const inboxUrl = `${origin}/dashboard/events/${auth.eventId}/messages`;
   const respondBaseUrl = `${origin}/api/lounge/messages/respond`;
 
