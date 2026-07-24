@@ -100,10 +100,10 @@ export default async function UserMySpacePage(props: {
         id: "p-3",
         type: "journal",
         badgeText: "📖 注目ジャーナル",
-        title: "【祝・採択】北九州市「販路拡大支援助成金」採択決定！",
-        subtitle: "AIエージェントと2,929件のCRMが創り出す自動営業ファンネルの裏側。",
-        imageUrl: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80",
-        href: "/dashboard/posts",
+        title: fetchedPosts[0] ? fetchedPosts[0].title : "【祝・採択】北九州市「販路拡大支援助成金」採択決定！",
+        subtitle: fetchedPosts[0] ? fetchedPosts[0].summary : "AIエージェントと2,929件のCRMが創り出す自動営業ファンネルの裏側。",
+        imageUrl: fetchedPosts[0] ? fetchedPosts[0].imageUrl : "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80",
+        href: fetchedPosts[0] ? `/j/${fetchedPosts[0].id}` : "/j/hanro-subsidy-2026",
       },
     ];
   }

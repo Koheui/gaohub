@@ -39,10 +39,10 @@ export default function SiteCmsDashboardPage() {
       id: "p-3",
       type: "journal" as const,
       badgeText: "📖 公式ジャーナル",
-      title: "Future Studio 公式ジャーナル・マガジン",
-      subtitle: "ディープテック、プロダクト開発の裏側、取材記事、思考のプロセスを届ける公式メディア。",
-      imageUrl: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80",
-      href: "/dashboard/posts",
+      title: "【祝・採択】北九州市「販路拡大支援助成金」採択決定！",
+      subtitle: "AIエージェントと2,929件のCRMが創り出す自動営業ファンネルの裏側。",
+      imageUrl: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80",
+      href: "/j/hanro-subsidy-2026",
     },
   ]);
   const [aboutTitle, setAboutTitle] = useState("フィジカルとデジタルを繋ぎ、ビジネスの非連続な成長を実現する");
@@ -68,7 +68,12 @@ export default function SiteCmsDashboardPage() {
           if (cfg.tagline) setTagline(cfg.tagline);
           if (cfg.heroImages) setHeroImages(cfg.heroImages);
           if (cfg.youtubeUrl) setYoutubeUrl(cfg.youtubeUrl);
-          if (cfg.pickups) setPickups(cfg.pickups);
+          if (cfg.pickups) {
+            const sanitized = cfg.pickups.map((p: any) =>
+              p.href === "/dashboard/posts" ? { ...p, href: "/j/hanro-subsidy-2026" } : p
+            );
+            setPickups(sanitized);
+          }
           if (cfg.aboutTitle) setAboutTitle(cfg.aboutTitle);
           if (cfg.aboutDescription) setAboutDescription(cfg.aboutDescription);
           if (cfg.aboutImageUrl) setAboutImageUrl(cfg.aboutImageUrl);
