@@ -22,6 +22,7 @@ export default async function UserMySpacePage(props: {
 
   let savedConfig: any = null;
   let publishedEvents: Array<{ id: string; title: string; slug: string; tagline: string; coverImageUrl: string }> = [];
+  let fetchedPosts: Array<{ id: string; title: string; publishedAtText: string; imageUrl: string; summary: string }> = [];
 
   try {
     const db = adminDb();
@@ -32,7 +33,7 @@ export default async function UserMySpacePage(props: {
       savedConfig = configSnap.data();
     }
 
-    // 2. 実際の公開イベント一覧を取得 (インデックス不要の単純クエリ + メモリ内ソート)
+    // 2. 実際の公開イベント一覧を取得
     const eventsSnap = await db
       .collection("events")
       .where("status", "==", "published")
@@ -52,8 +53,23 @@ export default async function UserMySpacePage(props: {
       })
       .sort((a, b) => b.createdAt - a.createdAt)
       .slice(0, 5);
+
+    // 3. 実際の投稿記事一覧を取得
+    const postsSnap = await db.collection("posts").get();
+    if (!postsSnap.empty) {
+      fetchedPosts = postsSnap.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          title: data.title ?? "ジャーナル記事",
+          publishedAtText: data.publishedAtText ?? "2026.07.24",
+          imageUrl: data.imageUrl ?? "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80",
+          summary: data.summary ?? "",
+        };
+      });
+    }
   } catch (err) {
-    console.warn("Failed to fetch siteConfig or events for UserMySpacePage:", err);
+    console.warn("Failed to fetch siteConfig, events, or posts for UserMySpacePage:", err);
   }
 
   // PickUp の初期設定: 実際の公開イベントが存在すればそちらに自動差し替え
@@ -109,13 +125,15 @@ export default async function UserMySpacePage(props: {
     aboutImageUrl: savedConfig?.aboutImageUrl ?? "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
     followerCount: 2450,
     pickups: defaultPickups,
-    journals: INITIAL_JOURNAL_ARTICLES.map((item) => ({
-      id: item.id,
-      title: item.title,
-      publishedAtText: item.publishedAtText,
-      imageUrl: item.imageUrl,
-      summary: item.summary,
-    })),
+    journals: fetchedPosts.length > 0
+      ? fetchedPosts
+      : INITIAL_JOURNAL_ARTICLES.map((item) => ({
+          id: item.id,
+          title: item.title,
+          publishedAtText: item.publishedAtText,
+          imageUrl: item.imageUrl,
+          summary: item.summary,
+        })),
   };
 
   return <CorporateBrandPortal profile={corporateProfile} />;

@@ -95,5 +95,15 @@ service cloud.firestore {
             .hasOnly(['checkedInAt', 'checkedInBy']);
       allow delete: if false;
     }
+
+    match /posts/{postId} {
+      allow read: if true;
+      allow write: if signedIn();
+    }
+
+    match /siteConfigs/{username} {
+      allow read: if true;
+      allow write: if signedIn();
+    }
   }
 }

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ui } from "@/lib/ui";
-
+import { db } from "@/lib/firebase/client";
+import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
 import { INITIAL_JOURNAL_ARTICLES, type JournalArticleData } from "@/lib/journalData";
 
 export interface JournalPostItem extends JournalArticleData {}
@@ -13,19 +14,42 @@ export default function PostsDashboardPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("すべて");
   const [editingPost, setEditingPost] = useState<JournalPostItem | null>(null);
 
-  // 初期ジャーナル記事リスト
+  // ジャーナル記事リスト State
   const [posts, setPosts] = useState<JournalPostItem[]>(INITIAL_JOURNAL_ARTICLES);
+
+  // Firestore の posts コレクションからリアルタイム取得
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "posts"), (snapshot) => {
+      if (!snapshot.empty) {
+        const fetchedPosts = snapshot.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        })) as JournalPostItem[];
+        setPosts(fetchedPosts);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const categories = ["すべて", ...Array.from(new Set(posts.map((p) => p.category)))];
 
   const filteredPosts =
     selectedCategory === "すべて" ? posts : posts.filter((p) => p.category === selectedCategory);
 
-  function handleSavePost(newPost: JournalPostItem) {
-    if (editingPost) {
-      setPosts((prev) => prev.map((p) => (p.id === newPost.id ? newPost : p)));
-    } else {
-      setPosts((prev) => [newPost, ...prev]);
+  async function handleSavePost(newPost: JournalPostItem) {
+    try {
+      // Local State 更新
+      if (editingPost) {
+        setPosts((prev) => prev.map((p) => (p.id === newPost.id ? newPost : p)));
+      } else {
+        setPosts((prev) => [newPost, ...prev]);
+      }
+
+      // Firestore に永続保存
+      await setDoc(doc(db, "posts", newPost.id), newPost, { merge: true });
+    } catch (err) {
+      console.error("Failed to save post to Firestore:", err);
     }
     setModalOpen(false);
     setEditingPost(null);
@@ -170,6 +194,12 @@ function JournalEditModal({
       imageUrl,
       readTime,
       isPublished: true,
+      authorName: post?.authorName ?? "岡 浩平 / Future Studio",
+      authorUsername: post?.authorUsername ?? "oka",
+      authorBio: post?.authorBio ?? "Future Studio 代表。ディープテック、フィジカルプロダクト(emolink)、小倉コーラ、AIエージェントの社会実装を推進中。",
+      contentParagraphs: content ? content.split("\n\n") : [summary],
+      imageUrls: post?.imageUrls ?? [],
+      likeCount: post?.likeCount ?? 0,
     });
   }
 
