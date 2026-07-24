@@ -119,10 +119,16 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             onClick={togglePublish}
             className={event.status === "published" ? ui.btnGhost : ui.btn}
           >
-            {event.status === "published" ? "非公開にする" : "公開する →"}
+            {event.status === "published" ? "非公開にする" : "公開する (LPを一般閲覧可能にする) →"}
           </button>
         </div>
       </div>
+
+      {event.status === "draft" && (
+        <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs font-medium text-amber-900 flex items-center justify-between">
+          <span>⚠️ <strong>現在は「下書き」状態です。</strong> 外部一般からの閲覧用URL (<code>/e/{event.slug}</code>) を有効化するには、上の「公開する」ボタンを押してください。</span>
+        </div>
+      )}
 
       <nav className="mt-8 flex flex-wrap gap-x-6 gap-y-2 border-b-2 border-zinc-950">
         <span className="-mb-0.5 border-b-4 border-zinc-950 pb-2 text-[11px] font-black uppercase tracking-[0.2em]">

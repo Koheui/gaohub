@@ -1,4 +1,5 @@
 import { CorporateBrandPortal, type CorporateProfileData } from "@/components/sns/CorporateBrandPortal";
+import { adminDb } from "@/lib/firebase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -17,31 +18,45 @@ export default async function UserMySpacePage(props: {
   params: Promise<{ username: string }>;
 }) {
   const { username } = await props.params;
+  const db = adminDb();
 
-  // デンソー型公式コーポレート / ブランドポータルのモックデータ
-  const corporateProfile: CorporateProfileData = {
-    username,
-    brandName: username === "oka" ? "Future Studio 株式会社" : `公式プロジェクト ${username}`,
-    tagline: "リアルとデジタルの融合。ディープテックとフィジカルプロダクトの未来を構築する。",
-    heroImages: [
-      "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=1600&q=80",
-      "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1600&q=80",
-      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1600&q=80",
-    ],
-    youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", // 週刊北九州・自社PV用動画URL
-    aboutTitle: "フィジカルとデジタルを繋ぎ、ビジネスの非連続な成長を実現する",
-    aboutDescription: `Future Studio は、AIエージェントシステム「軍師」、実物IPプロダクト「emolink」、小倉の魅力を詰めた「小倉コーラ」などを展開するディープテック＆ブランドカンパニーです。\n\n代表・岡浩平の指揮のもと、行政プロポーザル、イベントプラットフォームGAO HUB、地方創生知財プロダクトまでをワンストップで企画・開発・プロデュースしています。`,
-    aboutImageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
-    followerCount: 2450,
-    pickups: [
+  // 1. Firestore から siteConfigs を取得
+  const configSnap = await db.doc(`siteConfigs/${username}`).get();
+  const savedConfig = configSnap.exists ? configSnap.data() : null;
+
+  // 2. 実際の公開イベント一覧を取得
+  const eventsSnap = await db
+    .collection("events")
+    .where("status", "==", "published")
+    .orderBy("createdAt", "desc")
+    .limit(5)
+    .get();
+
+  const publishedEvents = eventsSnap.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      title: data.title ?? "イベント",
+      slug: data.slug ?? d.id,
+      tagline: data.tagline ?? data.description ?? "",
+      coverImageUrl: data.coverImageUrl ?? "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80",
+    };
+  });
+
+  // PickUp の初期設定: 実際の公開イベントが存在すればそちらに自動差し替え
+  let defaultPickups = savedConfig?.pickups;
+
+  if (!defaultPickups || defaultPickups.length === 0) {
+    const firstEvent = publishedEvents[0];
+    defaultPickups = [
       {
         id: "p-1",
         type: "event",
         badgeText: "🎟️ 注目イベント",
-        title: "Future Tech Conference 2027",
-        subtitle: "AIエージェントと人間が織りなす次世代開発の最前線。福岡・小倉にてリアル＆オンライン開催。",
-        imageUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80",
-        href: "/e/future-tech-conference-2027",
+        title: firstEvent ? firstEvent.title : "Future Tech Conference 2027",
+        subtitle: firstEvent ? firstEvent.tagline || "最新のテクノロジーカンファレンス" : "AIエージェントと人間が織りなす次世代開発の最前線。",
+        imageUrl: firstEvent ? firstEvent.coverImageUrl : "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80",
+        href: firstEvent ? `/e/${firstEvent.slug}` : "/e/future-tech-conference-2027",
       },
       {
         id: "p-2",
@@ -50,7 +65,7 @@ export default async function UserMySpacePage(props: {
         title: "小倉コーラ 原液シロップ (500ml)",
         subtitle: "ハーブと柑橘が織りなす小倉発のクラフトコーラ。炭酸やミルクで割って楽しめます。",
         imageUrl: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=800&q=80",
-        href: "/u/oka",
+        href: `/u/${username}`,
       },
       {
         id: "p-3",
@@ -59,9 +74,28 @@ export default async function UserMySpacePage(props: {
         title: "【購入レビュー】YAMAHA SEQTRAKを選んだ4つの理由",
         subtitle: "実機音源・トラックメイキングの魅力と現場イベントでの活用展望を徹底レポート。",
         imageUrl: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80",
-        href: "/j/seqtrak-review-2026",
+        href: "/dashboard/posts",
       },
+    ];
+  }
+
+  // デンソー型公式コーポレート / ブランドポータルのデータ組み立て
+  const corporateProfile: CorporateProfileData = {
+    username,
+    brandName: savedConfig?.brandName ?? (username === "oka" ? "Future Studio 株式会社" : `公式プロジェクト ${username}`),
+    tagline: savedConfig?.tagline ?? "リアルとデジタルの融合。ディープテックとフィジカルプロダクトの未来を構築する。",
+    heroImages: savedConfig?.heroImages ?? [
+      "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1600&q=80",
     ],
+    youtubeUrl: savedConfig?.youtubeUrl ?? "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    aboutTitle: savedConfig?.aboutTitle ?? "フィジカルとデジタルを繋ぎ、ビジネスの非連続な成長を実現する",
+    aboutDescription:
+      savedConfig?.aboutDescription ??
+      `Future Studio は、AIエージェントシステム「軍師」、実物IPプロダクト「emolink」、小倉の魅力を詰めた「小倉コーラ」などを展開するディープテック＆ブランドカンパニーです。`,
+    aboutImageUrl: savedConfig?.aboutImageUrl ?? "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
+    followerCount: 2450,
+    pickups: defaultPickups,
     journals: [
       {
         id: "seqtrak-review-2026",
@@ -69,20 +103,6 @@ export default async function UserMySpacePage(props: {
         publishedAtText: "2026.07.15",
         imageUrl: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80",
         summary: "YAMAHAがリリースしたグルーヴボックス「SEQTRAK」を購入。現場イベントやワークショップでの活用展望をレポート。",
-      },
-      {
-        id: "j-2",
-        title: "emolinkが創り出す『物理思い出カード』の体験設計",
-        publishedAtText: "2026.07.10",
-        imageUrl: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80",
-        summary: "スマホをかざすだけで想い出の音楽や写真が蘇るフィジカルプロダクトの裏側と、世間感覚の調和について。",
-      },
-      {
-        id: "j-3",
-        title: "地方創生とクラフトコーラ：小倉コーラ誕生秘話",
-        publishedAtText: "2026.07.01",
-        imageUrl: "https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=800&q=80",
-        summary: "北九州・小倉のスパイスと物語を詰め込んだクラフトコーラの開発ストーリーと直営EC展開への挑戦。",
       },
     ],
   };

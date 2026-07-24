@@ -54,27 +54,57 @@ export default function SiteCmsDashboardPage() {
 
   useEffect(() => {
     const q = query(collection(db, "events"), orderBy("createdAt", "desc"));
-    return onSnapshot(q, (snap) => {
+    const unsubEvents = onSnapshot(q, (snap) => {
       setEvents(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as EventDoc));
     });
+
+    // 既存の保存済みサイト設定をロード
+    fetch("/api/site-config?username=oka")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.config) {
+          const cfg = data.config;
+          if (cfg.brandName) setBrandName(cfg.brandName);
+          if (cfg.tagline) setTagline(cfg.tagline);
+          if (cfg.heroImages) setHeroImages(cfg.heroImages);
+          if (cfg.youtubeUrl) setYoutubeUrl(cfg.youtubeUrl);
+          if (cfg.pickups) setPickups(cfg.pickups);
+          if (cfg.aboutTitle) setAboutTitle(cfg.aboutTitle);
+          if (cfg.aboutDescription) setAboutDescription(cfg.aboutDescription);
+          if (cfg.aboutImageUrl) setAboutImageUrl(cfg.aboutImageUrl);
+        }
+      })
+      .catch((err) => console.warn("Failed to load site config:", err));
+
+    return () => unsubEvents();
   }, []);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     try {
-      console.log("[SiteCMS] Saved portal config:", {
-        brandName,
-        tagline,
-        heroImages,
-        youtubeUrl,
-        aboutTitle,
-        aboutDescription,
-        aboutImageUrl,
+      const res = await fetch("/api/site-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: "oka",
+          brandName,
+          tagline,
+          heroImages,
+          youtubeUrl,
+          pickups,
+          aboutTitle,
+          aboutDescription,
+          aboutImageUrl,
+        }),
       });
-      alert("公式Webサイトの変更を保存・即時反映しました！✨");
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? "保存に失敗しました");
+      }
+      alert("公式Webサイトの変更を保存・即時反映しました！✨ (/u/oka に反映されます)");
     } catch (err) {
-      alert("保存に失敗しました");
+      alert(err instanceof Error ? err.message : "保存に失敗しました");
     } finally {
       setSaving(false);
     }
