@@ -27,8 +27,11 @@ export default async function UserMySpacePage(props: {
   try {
     const db = adminDb();
 
-    // 1. Firestore から siteConfigs を取得
-    const configSnap = await db.doc(`siteConfigs/${username}`).get();
+    // 1. Firestore から siteConfigs を取得 (フォールバック検索対応)
+    let configSnap = await db.doc(`siteConfigs/${username}`).get();
+    if (!configSnap.exists && username !== "oka") {
+      configSnap = await db.doc("siteConfigs/oka").get();
+    }
     if (configSnap.exists) {
       savedConfig = configSnap.data();
     }

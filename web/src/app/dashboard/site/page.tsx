@@ -9,6 +9,7 @@ import { ui } from "@/lib/ui";
 
 export default function SiteCmsDashboardPage() {
   const [events, setEvents] = useState<EventDoc[]>([]);
+  const [slug, setSlug] = useState("oka");
   const [brandName, setBrandName] = useState("Future Studio 株式会社");
   const [tagline, setTagline] = useState("リアルとデジタルの融合。ディープテックとフィジカルプロダクトの未来を構築する。");
   const [heroImages, setHeroImages] = useState([
@@ -58,12 +59,17 @@ export default function SiteCmsDashboardPage() {
       setEvents(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as EventDoc));
     });
 
+    // ローカルストレージまたは初期設定から保存済みスラグを読み込む
+    const savedSlug = localStorage.getItem("gaohub_user_slug") || "oka";
+    setSlug(savedSlug);
+
     // 既存の保存済みサイト設定をロード
-    fetch("/api/site-config?username=oka")
+    fetch(`/api/site-config?username=${savedSlug}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.config) {
           const cfg = data.config;
+          if (cfg.slug) setSlug(cfg.slug);
           if (cfg.brandName) setBrandName(cfg.brandName);
           if (cfg.tagline) setTagline(cfg.tagline);
           if (cfg.heroImages) setHeroImages(cfg.heroImages);
@@ -86,13 +92,20 @@ export default function SiteCmsDashboardPage() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
+    const formattedSlug = slug.toLowerCase().trim().replace(/[^a-z0-9\-]/g, "");
+    if (!formattedSlug) {
+      alert("公開URLスラグを正しい形式で入力してください (半角英数字・ハイフン)");
+      return;
+    }
+
     setSaving(true);
     try {
       const res = await fetch("/api/site-config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          username: "oka",
+          username: formattedSlug,
+          slug: formattedSlug,
           brandName,
           tagline,
           heroImages,
@@ -107,7 +120,9 @@ export default function SiteCmsDashboardPage() {
         const data = await res.json();
         throw new Error(data.error ?? "保存に失敗しました");
       }
-      alert("公式Webサイトの変更を保存・即時反映しました！✨ (/u/oka に反映されます)");
+      localStorage.setItem("gaohub_user_slug", formattedSlug);
+      setSlug(formattedSlug);
+      alert(`公式Webサイトの設定と公開URL (/u/${formattedSlug}) を保存・更新しました！✨`);
     } catch (err) {
       alert(err instanceof Error ? err.message : "保存に失敗しました");
     } finally {
@@ -116,24 +131,50 @@ export default function SiteCmsDashboardPage() {
   }
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-4xl space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 pb-6">
         <div>
-          <h1 className={ui.h1}>公式Webサイト CMS編集 🏛️</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            デンソー型の公式コーポレート/ブランドWebポータル (`/u/oka`) のデザインとコンテンツを編集します。
+          <h1 className="text-3xl font-black tracking-tight text-zinc-950">ウェブページ CMS 🌐</h1>
+          <p className="mt-1 text-xs text-zinc-500">
+            公式ブランドポータル（<code>/u/{slug}</code>）の掲載コンテンツ・URL設定・デザインを自由に変更・即時反映できます。
           </p>
         </div>
         <Link
-          href="/u/oka"
+          href={`/u/${slug}`}
           target="_blank"
-          className="rounded-xl border border-zinc-300 bg-white px-5 py-2.5 text-xs font-black text-zinc-900 shadow-sm transition-transform hover:scale-[1.02]"
+          className="rounded-full bg-zinc-950 px-5 py-2.5 text-xs font-black text-white hover:bg-zinc-800 transition-transform hover:scale-105 shadow-md"
         >
-          公開Webサイトを確認する ↗️
+          公開ページをプレビュー ↗
         </Link>
       </div>
 
-      <form onSubmit={handleSave} className="mt-8 space-y-8">
+      <form onSubmit={handleSave} className="space-y-8">
+        {/* 🔗 0. 公開URLスラグ（ユーザーネーム）設定 */}
+        <div className="rounded-2xl border-2 border-zinc-950 bg-white p-6 shadow-sm space-y-4">
+          <h2 className="text-lg font-black text-zinc-950 flex items-center gap-2">
+            <span>🔗 公開ページURL（スラグ）の変更</span>
+            <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold text-amber-900">自由変更可能</span>
+          </h2>
+          <p className="text-xs text-zinc-500">
+            公開WebサイトのURL末尾（`/u/[username]`）を自由に変更できます。企業名やブランド名に合わせた英数字に設定できます。
+          </p>
+          <div className="flex items-center gap-2 max-w-lg">
+            <span className="font-mono text-xs font-bold text-zinc-500">/u/</span>
+            <input
+              type="text"
+              required
+              pattern="[a-zA-Z0-9\-]+"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9\-]/g, ""))}
+              placeholder="例: future-studio や oka"
+              className="w-full rounded-xl border-2 border-zinc-300 px-3.5 py-2.5 text-sm font-mono font-bold focus:border-zinc-950 focus:outline-none"
+            />
+          </div>
+          <p className="text-[11px] text-zinc-400">
+            現在の公開URL: <code className="font-bold text-zinc-800">https://web-rust-omega-87.vercel.app/u/{slug}</code>
+          </p>
+        </div>
+
         {/* 1. 基本ブランディング */}
         <div className="rounded-3xl border border-zinc-200 bg-white p-7 shadow-sm">
           <h2 className="text-base font-black text-zinc-900">1. 基本ブランディング</h2>
