@@ -149,14 +149,6 @@ function EventList({ orgId }: { orgId: string }) {
 
 export default function DashboardPage() {
   const { user, profile } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (profile?.orgId) {
-      router.replace("/dashboard/site");
-    }
-  }, [profile, router]);
-
   if (!user) return null;
   if (!profile)
     return (
@@ -165,9 +157,5 @@ export default function DashboardPage() {
       </p>
     );
   if (!profile.orgId) return <CreateOrgForm uid={user.uid} />;
-  return (
-    <div className="py-8 text-center text-xs font-mono text-zinc-400">
-      Webページダッシュボードへ移動中...
-    </div>
-  );
+  return <EventList orgId={profile.orgId} />;
 }
